@@ -1,0 +1,20 @@
+:root {
+  --adzu-blue: #003366;
+  --adzu-gold: #c59b27;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f8f9fa;
+  color: #333333;
+}
+
+.brand-header {
+  background-color: var(--adzu-blue);
+  color: #ffffff;
+}
+
+.card-dashboard {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
