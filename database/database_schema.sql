@@ -218,22 +218,3 @@ CREATE TABLE IF NOT EXISTS `notifications` (
         ON UPDATE CASCADE,
     INDEX `idx_recipient` (`recipient_type`, `recipient_id`, `is_read`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =============================================================================
--- OPTIONAL INITIAL SEED DATA FOR DEVELOPMENT / TESTING
--- =============================================================================
-
--- Sample ERB Administration Accounts (Default passwords hashed using bcrypt 'password123')
-INSERT INTO `admins` (`admin_id`, `first_name`, `last_name`, `email`, `password_hash`, `role`, `specialization`, `contact_number`)
-VALUES 
-(1, 'Maria', 'Santos', 'chair.rec@adzu.edu.ph', '$2y$10$e73X4qWf302o4vYw65fN/e3V3rR8WjE5xJ.z4jFm.7jL8lM.q8zKO', 'Ethics Chair', 'Bioethics & Health Sciences', '09171234567'),
-(2, 'Jose', 'Rizal', 'staff.rec@adzu.edu.ph', '$2y$10$e73X4qWf302o4vYw65fN/e3V3rR8WjE5xJ.z4jFm.7jL8lM.q8zKO', 'Staff', 'Administrative Operations', '09181234568'),
-(3, 'Elena', 'Torres', 'reviewer1@adzu.edu.ph', '$2y$10$e73X4qWf302o4vYw65fN/e3V3rR8WjE5xJ.z4jFm.7jL8lM.q8zKO', 'Reviewer', 'Social Sciences & Qualitative Research', '09191234569'),
-(4, 'Carlos', 'Mendoza', 'reviewer2@adzu.edu.ph', '$2y$10$e73X4qWf302o4vYw65fN/e3V3rR8WjE5xJ.z4jFm.7jL8lM.q8zKO', 'Reviewer', 'Information Technology & Data Privacy', '09201234570')
-ON DUPLICATE KEY UPDATE `email`=`email`;
-
--- Sample Applicant
-INSERT INTO `applicants` (`applicant_id`, `first_name`, `last_name`, `email`, `password_hash`, `contact_number`, `affiliation_type`, `department_agency`)
-VALUES 
-(1, 'Juan', 'Dela Cruz', 'delacruz.juan@adzu.edu.ph', '$2y$10$e73X4qWf302o4vYw65fN/e3V3rR8WjE5xJ.z4jFm.7jL8lM.q8zKO', '09159876543', 'Internal', 'Computer Science Department')
-ON DUPLICATE KEY UPDATE `email`=`email`;
