@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { apiClient } from './services/api';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/Auth/AdminLogin';
+import ApplicantLogin from './pages/Auth/ApplicantLogin';
+import ApplicantDashboard from './pages/ApplicantDashboard';
 
 function App() {
   const [serverStatus, setServerStatus] = useState({ status: 'connecting', message: 'Checking API...' });
@@ -14,7 +16,7 @@ function App() {
 
   return (
     <>
-      <AdminDashboard />
+      <ApplicantDashboard />
     </>
   );
 }
