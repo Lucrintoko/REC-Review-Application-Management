@@ -31,3 +31,5 @@ backend/uploads/documents/*
 !backend/uploads/documents/.gitkeep
 backend/uploads/decisions/*
 !backend/uploads/decisions/.gitkeep
+
+Screenshots/
