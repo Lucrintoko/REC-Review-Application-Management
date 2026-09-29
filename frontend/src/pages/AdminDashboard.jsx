@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import adzuSeal from '../assets/AdZU Seal.png';
+import ResearchProtocolModal from '../components/ResearchProtocolModal';
 
 function AdminDashboard() {
     const adminName = "Sean Matthew Araneta";
@@ -32,6 +33,7 @@ function AdminDashboard() {
         { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023' },
         { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023' },
     ];
+    const [selectedProtocol, setSelectedProtocol] = useState(null);
 
     // Ensures that Protocol Area Dashboard will always occupy 4x4 grid
     const emptySLots = Array.from({ length: Math.max(0, 16 - protocolData.length) })
@@ -74,7 +76,7 @@ function AdminDashboard() {
 
             <main className='container my-4 flex-grow-1'>
 
-                {/* Dashboard Identifier */}
+                {/* Research Protocol Dashboard Identifier */}
                 <div className='row justify-content-between align-items-center'>
                     {/* LEFT SIDE: Dashboard Icon */}
                     <div className='col-auto d-flex align-items-center gap-3'>
@@ -88,7 +90,7 @@ function AdminDashboard() {
                     </div>
 
                     {/* RIGHT SIDE: Search Bar and Filter */}
-                    <div className='col-12 col-md-6 col-lg-5 mt-3 mt-md-0 d-flex align-items-center  gap-3'>
+                    <div className='col-12 col-md-6 col-lg-5 mt-3 mt-md-0 d-flex align-items-center gap-3'>
 
                         {/* Filter */}
                         <button className='btn btn-outline-secondary border shadow-sm d-flex align-items-center ' type='button'>
@@ -100,7 +102,7 @@ function AdminDashboard() {
                         {/* Search Bar */}
                         <div className='input-group shadow-sm'>
                             {/* Text Input */}
-                            <input type="text" className='form-control' placeholder='Search protocol...' />
+                            <input type="text" className='form-control text-truncate' placeholder='Search protocol...' />
 
                             {/* Search Button */}
                             <button className='btn btn-primary' type='button'>
@@ -133,7 +135,14 @@ function AdminDashboard() {
                                             <div key={index} className='col col-md-3'>
                                                 
                                                 {/* Individual protocol cards */}
-                                                <div className='card h-100 border-0 shadow-sm rounded-4 overflow-hidden' style={{ backgroundColor: '#f4f6f8' }}>
+                                                <div 
+                                                    className='card h-100 border-0 shadow-sm rounded-4 overflow-hidden' 
+                                                    onClick={() => setSelectedProtocol(protocol)}
+                                                    style={{ 
+                                                        backgroundColor: '#f4f6f8', 
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
 
                                                     {/* Header Section of Research Protocol */}
                                                     <div className='brand-header text-white p-2 d-flex align-items-center' style={{ fontSize: '0.65rem' }}>
@@ -155,7 +164,7 @@ function AdminDashboard() {
 
                                                     {/* Body Section of Research Protocol */}
                                                     <div className='card-body d-flex justify-content-center align-items-center' style={{ minHeight: '100px' }}>
-                                                        <p className='mb-0 text-center fw-medium text-dark fs-6 text-uppercase'>
+                                                        <p className='mb-0 text-center fw-medium text-dark text-uppercase' style={{ fontSize: '1.4rem' }}>
                                                             {protocol.status}
                                                         </p>
                                                     </div>
@@ -170,12 +179,28 @@ function AdminDashboard() {
                                             </div>
                                         ))}
                                         
-                                </div>
+                                    </div>
 
-                            </div>
+                                </div>  
 
                             </div>
                         </div>
+                    </div>
+
+                </div>
+
+                {/* Statistics Dashboard */}
+                <div className='row d-flex justify-content-center align-items-center mt-3'>
+
+                    {/* Statistics Dashboard Identifier */}
+                    <div className='col d-flex justify-content-center align-items-center gap-3'>
+                        <i
+                            className='bi bi-bar-chart-fill border border-3 border-dark p-1 rounded fs-3'
+                            style={{
+                                lineHeight: 1
+                            }}
+                        ></i>
+                        <p className='fw-bold fs-5 mb-1'>Statistics</p>
                     </div>
 
                 </div>
@@ -185,6 +210,14 @@ function AdminDashboard() {
             <footer>
                 
             </footer>
+
+        {/* Modal Display Functionalities */}
+        {selectedProtocol && (
+            <ResearchProtocolModal
+                protocol={selectedProtocol}
+                onClose={() => setSelectedProtocol(null)}
+            />
+        )}
 
       </div>
   );

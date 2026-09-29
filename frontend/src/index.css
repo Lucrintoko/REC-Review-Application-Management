@@ -41,3 +41,50 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
+
+/* --- Custom Color Utility Classes --- */
+
+/* Text Colors */
+.text-theme-primary { color: var(--primary); }
+.text-theme-onPrimary { color: var(--onPrimary); }
+.text-theme-primaryContainer { color: var(--primaryContainer); }
+.text-theme-onPrimaryContainer { color: var(--onPrimaryContainer); }
+
+.text-theme-secondary { color: var(--secondary); }
+.text-theme-onSecondary { color: var(--onSecondary); }
+.text-theme-secondaryContainer { color: var(--secondaryContainer); }
+.text-theme-onSecondaryContainer { color: var(--onSecondaryContainer); }
+
+.text-theme-tertiary { color: var(--tertiary); }
+.text-theme-onTertiary { color: var(--onTertiary); }
+.text-theme-tertiaryContainer { color: var(--tertiaryContainer); }
+.text-theme-onTertiaryContainer { color: var(--onTertiaryContainer); }
+
+.text-theme-background { color: var(--background); }
+.text-theme-onBackground { color: var(--onBackground); }
+
+.text-theme-surfaceContainer { color: var(--surfaceContainer); }
+.text-theme-onSurfaceContainer { color: var(--onSurfaceContainer); }
+
+
+/* Background Colors */
+.bg-theme-primary { background-color: var(--primary); }
+.bg-theme-onPrimary { background-color: var(--onPrimary); }
+.bg-theme-primaryContainer { background-color: var(--primaryContainer); }
+.bg-theme-onPrimaryContainer { background-color: var(--onPrimaryContainer); }
+
+.bg-theme-secondary { background-color: var(--secondary); }
+.bg-theme-onSecondary { background-color: var(--onSecondary); }
+.bg-theme-secondaryContainer { background-color: var(--secondaryContainer); }
+.bg-theme-onSecondaryContainer { background-color: var(--onSecondaryContainer); }
+
+.bg-theme-tertiary { background-color: var(--tertiary); }
+.bg-theme-onTertiary { background-color: var(--onTertiary); }
+.bg-theme-tertiaryContainer { background-color: var(--tertiaryContainer); }
+.bg-theme-onTertiaryContainer { background-color: var(--onTertiaryContainer); }
+
+.bg-theme-background { background-color: var(--background); }
+.bg-theme-onBackground { background-color: var(--onBackground); }
+
+.bg-theme-surfaceContainer { background-color: var(--surfaceContainer); }
+.bg-theme-onSurfaceContainer { background-color: var(--onSurfaceContainer); }
