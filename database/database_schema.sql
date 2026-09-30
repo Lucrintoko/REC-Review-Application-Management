@@ -218,3 +218,23 @@ CREATE TABLE IF NOT EXISTS `notifications` (
         ON UPDATE CASCADE,
     INDEX `idx_recipient` (`recipient_type`, `recipient_id`, `is_read`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- 8. Initial Seed Data
+-- Provides baseline applicant and research applications for dashboard testing.
+-- -----------------------------------------------------------------------------
+INSERT INTO `applicants` (`applicant_id`, `first_name`, `last_name`, `email`, `password_hash`, `contact_number`, `affiliation_type`, `department_agency`)
+VALUES 
+(1, 'Juan', 'Dela Cruz', 'jdelacruz@adzu.edu.ph', '$2y$10$abcdefghijklmnopqrstuv', '09171234567', 'Internal', 'College of Science and Information Technology')
+ON DUPLICATE KEY UPDATE `first_name` = VALUES(`first_name`);
+
+INSERT INTO `research_applications` (`application_id`, `protocol_code`, `applicant_id`, `research_title`, `research_type`, `review_type`, `status`, `submission_date`, `decision_date`, `clearance_date`)
+VALUES
+(1, 'REC-2026-001', 1, 'Ethical Implications of AI-Assisted Clinical Diagnostics in Zamboanga City Health Centers', 'Undergraduate', 'Expedited', 'Under Review', '2026-09-15', NULL, NULL),
+(2, 'REC-2026-002', 1, 'Prevalence of Digital Burnout Among Healthcare Workers in Western Mindanao', 'Faculty', 'Exempted', 'Clearance Granted', '2026-09-10', '2026-09-20', '2026-09-20'),
+(3, 'REC-2026-003', 1, 'Biocultural Diversity and Indigenous Health Practices in Rural Communities', 'Graduate', 'Full Board', 'Draft', '2026-09-22', NULL, NULL),
+(4, 'REC-2026-004', 1, 'Psychological Resilience in Post-Pandemic Blended Learning Environments', 'Undergraduate', 'Expedited', 'Payment Verified', '2026-09-18', NULL, NULL),
+(5, 'REC-2026-005', 1, 'Assessing Telehealth Privacy Protocols in Regional Public Hospitals', 'Externally Funded', 'Full Board', 'Revisions Required', '2026-09-05', NULL, NULL),
+(6, 'REC-2026-006', 1, 'Longitudinal Study on Community Water Fluoridation and Dental Health', 'Faculty', 'Expedited', 'Submitted', '2026-08-28', NULL, NULL),
+(7, 'REC-2026-007', 1, 'Pediatric Nutritional Interventions in Urban Coastal Barangays', 'Graduate', 'Expedited', 'Payment Pending', '2026-09-24', NULL, NULL)
+ON DUPLICATE KEY UPDATE `research_title` = VALUES(`research_title`);
