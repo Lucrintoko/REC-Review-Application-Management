@@ -6,37 +6,45 @@ function AdminDashboard() {
     const adminName = "Sean Matthew Araneta";
     const role = "Secretariat";
     const protocolData = [                                      
-        { id: '2026-0751', title: 'Early Childhood Bilingualism and Its Long-Term Influence on Executive Function Development', type: 'FULL BOARD', status: 'AMENDING', date: 'DEC 4, 2023' },
-        { id: '2026-0297', title: 'Cellular Agriculture and Cultured Meat: Nutritional Equivalence and Scalability Economics', type: 'EXEMPTED', status: 'ONGOING REVIEW', date: 'DEC 5, 2023' },
-        { id: '2026-1317', title: 'Quantifying Urban Heat Island Mitigation via Green Roofs and Permeable Pavements', type: 'EXEMPTED', status: 'CONSOLIDATION', date: 'DEC 10, 2023' },
-        { id: '2026-1437', title: 'The Effectiveness of Virtual Lab Simulations in Chemistry Education for Remote Learners', type: 'EXEMPTED', status: 'AMENDING', date: 'DEC 9, 2023' },
-        { id: '2026-0065', title: 'Nurse Staffing Ratios and Their Direct Correlation with Postoperative Patient Mortality', type: 'EXPEDITED', status: 'DELIBERATION', date: 'DEC 3, 2023' },
-        { id: '2026-0777', title: 'Intellectual Property Rights and Fair Use Boundaries in Generative Model Training Datasets', type: 'EXPEDITED', status: 'CONSOLIDATION', date: 'DEC 5, 2023' },
-        { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023' },
-        { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023' },
+        { id: '2026-0751', title: 'Early Childhood Bilingualism and Its Long-Term Influence on Executive Function Development', type: 'FULL BOARD', status: 'AMENDING', date: 'DEC 4, 2023', researchers: ['Juan Dela Cruz', 'Maria Clara'] },
+        { id: '2026-0297', title: 'Cellular Agriculture and Cultured Meat: Nutritional Equivalence and Scalability Economics', type: 'EXEMPTED', status: 'ONGOING REVIEW', date: 'DEC 5, 2023', researchers: ['Jose Rizal'] },
+        { id: '2026-1317', title: 'Quantifying Urban Heat Island Mitigation via Green Roofs and Permeable Pavements', type: 'EXEMPTED', status: 'CONSOLIDATION', date: 'DEC 10, 2023', researchers: ['Andres Bonifacio', 'Emilio Aguinaldo', 'Apolinario Mabini'] },
+        { id: '2026-1437', title: 'The Effectiveness of Virtual Lab Simulations in Chemistry Education for Remote Learners', type: 'EXEMPTED', status: 'AMENDING', date: 'DEC 9, 2023', researchers: ['Gabriela Silang'] },
+        { id: '2026-0065', title: 'Nurse Staffing Ratios and Their Direct Correlation with Postoperative Patient Mortality', type: 'EXPEDITED', status: 'DELIBERATION', date: 'DEC 3, 2023', researchers: ['Antonio Luna', 'Marcelo H. del Pilar'] },
+        { id: '2026-0777', title: 'Intellectual Property Rights and Fair Use Boundaries in Generative Model Training Datasets', type: 'EXPEDITED', status: 'CONSOLIDATION', date: 'DEC 5, 2023', researchers: ['Emilio Jacinto'] },
+        { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023', researchers: ['Melchora Aquino', 'Gregoria de Jesus', 'Teresa Magbanua'] },
+        { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023', researchers: ['Miguel Malvar'] },
 
-        { id: '2026-0751', title: 'Early Childhood Bilingualism and Its Long-Term Influence on Executive Function Development', type: 'FULL BOARD', status: 'AMENDING', date: 'DEC 4, 2023' },
-        { id: '2026-0297', title: 'Cellular Agriculture and Cultured Meat: Nutritional Equivalence and Scalability Economics', type: 'EXEMPTED', status: 'ONGOING REVIEW', date: 'DEC 5, 2023' },
-        { id: '2026-1317', title: 'Quantifying Urban Heat Island Mitigation via Green Roofs and Permeable Pavements', type: 'EXEMPTED', status: 'CONSOLIDATION', date: 'DEC 10, 2023' },
-        { id: '2026-1437', title: 'The Effectiveness of Virtual Lab Simulations in Chemistry Education for Remote Learners', type: 'EXEMPTED', status: 'AMENDING', date: 'DEC 9, 2023' },
-        { id: '2026-0065', title: 'Nurse Staffing Ratios and Their Direct Correlation with Postoperative Patient Mortality', type: 'EXPEDITED', status: 'DELIBERATION', date: 'DEC 3, 2023' },
-        { id: '2026-0777', title: 'Intellectual Property Rights and Fair Use Boundaries in Generative Model Training Datasets', type: 'EXPEDITED', status: 'CONSOLIDATION', date: 'DEC 5, 2023' },
-        { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023' },
-        { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023' },
+        { id: '2026-0751', title: 'Early Childhood Bilingualism and Its Long-Term Influence on Executive Function Development', type: 'FULL BOARD', status: 'AMENDING', date: 'DEC 4, 2023', researchers: ['Juan Dela Cruz', 'Maria Clara'] },
+        { id: '2026-0297', title: 'Cellular Agriculture and Cultured Meat: Nutritional Equivalence and Scalability Economics', type: 'EXEMPTED', status: 'ONGOING REVIEW', date: 'DEC 5, 2023', researchers: ['Jose Rizal'] },
+        { id: '2026-1317', title: 'Quantifying Urban Heat Island Mitigation via Green Roofs and Permeable Pavements', type: 'EXEMPTED', status: 'CONSOLIDATION', date: 'DEC 10, 2023', researchers: ['Andres Bonifacio', 'Emilio Aguinaldo', 'Apolinario Mabini'] },
+        { id: '2026-1437', title: 'The Effectiveness of Virtual Lab Simulations in Chemistry Education for Remote Learners', type: 'EXEMPTED', status: 'AMENDING', date: 'DEC 9, 2023', researchers: ['Gabriela Silang'] },
+        { id: '2026-0065', title: 'Nurse Staffing Ratios and Their Direct Correlation with Postoperative Patient Mortality', type: 'EXPEDITED', status: 'DELIBERATION', date: 'DEC 3, 2023', researchers: ['Antonio Luna', 'Marcelo H. del Pilar'] },
+        { id: '2026-0777', title: 'Intellectual Property Rights and Fair Use Boundaries in Generative Model Training Datasets', type: 'EXPEDITED', status: 'CONSOLIDATION', date: 'DEC 5, 2023', researchers: ['Emilio Jacinto'] },
+        { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023', researchers: ['Melchora Aquino', 'Gregoria de Jesus', 'Teresa Magbanua'] },
+        { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023', researchers: ['Miguel Malvar'] },
 
-        { id: '2026-0751', title: 'Early Childhood Bilingualism and Its Long-Term Influence on Executive Function Development', type: 'FULL BOARD', status: 'AMENDING', date: 'DEC 4, 2023' },
-        { id: '2026-0297', title: 'Cellular Agriculture and Cultured Meat: Nutritional Equivalence and Scalability Economics', type: 'EXEMPTED', status: 'ONGOING REVIEW', date: 'DEC 5, 2023' },
-        { id: '2026-1317', title: 'Quantifying Urban Heat Island Mitigation via Green Roofs and Permeable Pavements', type: 'EXEMPTED', status: 'CONSOLIDATION', date: 'DEC 10, 2023' },
-        { id: '2026-1437', title: 'The Effectiveness of Virtual Lab Simulations in Chemistry Education for Remote Learners', type: 'EXEMPTED', status: 'AMENDING', date: 'DEC 9, 2023' },
-        { id: '2026-0065', title: 'Nurse Staffing Ratios and Their Direct Correlation with Postoperative Patient Mortality', type: 'EXPEDITED', status: 'DELIBERATION', date: 'DEC 3, 2023' },
-        { id: '2026-0777', title: 'Intellectual Property Rights and Fair Use Boundaries in Generative Model Training Datasets', type: 'EXPEDITED', status: 'CONSOLIDATION', date: 'DEC 5, 2023' },
-        { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023' },
-        { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023' },
+        { id: '2026-0751', title: 'Early Childhood Bilingualism and Its Long-Term Influence on Executive Function Development', type: 'FULL BOARD', status: 'AMENDING', date: 'DEC 4, 2023', researchers: ['Juan Dela Cruz', 'Maria Clara'] },
+        { id: '2026-0297', title: 'Cellular Agriculture and Cultured Meat: Nutritional Equivalence and Scalability Economics', type: 'EXEMPTED', status: 'ONGOING REVIEW', date: 'DEC 5, 2023', researchers: ['Jose Rizal'] },
+        { id: '2026-1317', title: 'Quantifying Urban Heat Island Mitigation via Green Roofs and Permeable Pavements', type: 'EXEMPTED', status: 'CONSOLIDATION', date: 'DEC 10, 2023', researchers: ['Andres Bonifacio', 'Emilio Aguinaldo', 'Apolinario Mabini'] },
+        { id: '2026-1437', title: 'The Effectiveness of Virtual Lab Simulations in Chemistry Education for Remote Learners', type: 'EXEMPTED', status: 'AMENDING', date: 'DEC 9, 2023', researchers: ['Gabriela Silang'] },
+        { id: '2026-0065', title: 'Nurse Staffing Ratios and Their Direct Correlation with Postoperative Patient Mortality', type: 'EXPEDITED', status: 'DELIBERATION', date: 'DEC 3, 2023', researchers: ['Antonio Luna', 'Marcelo H. del Pilar'] },
+        { id: '2026-0777', title: 'Intellectual Property Rights and Fair Use Boundaries in Generative Model Training Datasets', type: 'EXPEDITED', status: 'CONSOLIDATION', date: 'DEC 5, 2023', researchers: ['Emilio Jacinto'] },
+        { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023', researchers: ['Melchora Aquino', 'Gregoria de Jesus', 'Teresa Magbanua'] },
+        { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023', researchers: ['Miguel Malvar'] },
     ];
+    // For Protocol Detailed Pop-up Window Togge-able
     const [selectedProtocol, setSelectedProtocol] = useState(null);
 
-    // Ensures that Protocol Area Dashboard will always occupy 4x4 grid
-    const emptySLots = Array.from({ length: Math.max(0, 16 - protocolData.length) })
+    // For View Mode Togge-able; Grid Mode will be default
+    const [viewMode, setViewMode] = useState('grid')
+
+    // Colors for the badges
+    const typeBadgeColors = {
+        'FULL BOARD': 'bg-theme-primary',
+        'EXPEDITED': 'bg-warning text-dark',
+        'EXEMPTED': 'bg-success'
+    };
 
     return (
       <div className="min-vh-100 d-flex flex-column"> 
@@ -116,70 +124,158 @@ function AdminDashboard() {
                 </div>
 
                 {/* Main Dashboard Content */}
-                <div className='row mt-3 mb-3'>
+                <div className='row my-3'>
 
                     {/* Encompass the whole row */}
                     <div className='col-12'>
                         <div className='card shadow-sm border-0 rounded-4'>
                             <div className='card-body p-4 bg-white rounded-4'>
 
+                                {/* Togge-able Control for Card Mode to Table Mode */}
+                                <div className='d-flex justify-content-between align-items-center mb-4'>
+
+                                    {/* Left Side */}
+                                    <h5 className='card-title fw-bold mb-0'>Research Protocols</h5>
+
+                                    {/* Right Side */}
+                                    <div className='btn-group shadow-sm'>
+
+                                        <button 
+                                            className= {`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => setViewMode('grid')}    
+                                        >
+                                            <i className='bi bi-grid'></i>
+                                        </button>
+
+                                        <button 
+                                            className= {`btn ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => setViewMode('table')}
+                                        >
+                                            <i className='bi bi-list-ul'></i>
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
                                 {/* Set Height for Reesearch Protocol 4x4 Area w/ veritcal scrollbar */}
-                                <div className='pe-2' style={{ height: '700px', overflowY: 'auto', overflowX: 'hidden' }}>
+                                <div className='pe-2' style={{ height: '700px', overflowY: 'auto', overflowX: 'auto' }}>
 
-                                    {/* Research Porotocol Grid */}
-                                    <div className='row g-3'>
+                                    {viewMode === 'grid' ? (
+                                        <div className='row g-3'>
 
-                                        {/* 4x4 Protocol Grid Area */}
-                                        {/* Using map function for displaying the protocols */}
-                                        {protocolData.map((protocol, index) => (
-                                            <div key={index} className='col col-md-3'>
-                                                
-                                                {/* Individual protocol cards */}
-                                                <div 
-                                                    className='card h-100 border-0 shadow-sm rounded-4 overflow-hidden' 
-                                                    onClick={() => setSelectedProtocol(protocol)}
-                                                    style={{ 
-                                                        backgroundColor: '#f4f6f8', 
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
+                                            {/* Using map function for displaying the protocols */}
+                                            {protocolData.map((protocol, index) => (
+                                                <div key={index} className='col col-md-3'>
+                                                    
+                                                    {/* Individual protocol cards */}
+                                                    <div 
+                                                        className='card h-100 border-0 shadow-sm rounded-4 overflow-hidden' 
+                                                        onClick={() => setSelectedProtocol(protocol)}
+                                                        style={{ 
+                                                            backgroundColor: '#f4f6f8', 
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
 
-                                                    {/* Header Section of Research Protocol */}
-                                                    <div className='brand-header text-white p-2 d-flex align-items-center' style={{ fontSize: '0.65rem' }}>
-                                                        {/* Dark Blue Banner */}
-                                                        {/* Protocol ID */}
-                                                        <span className='fw-bold ps-1' style={{ flex: 1 }}>{protocol.id}</span>
+                                                        {/* Header Section of Research Protocol */}
+                                                        <div className='brand-header text-white p-2 d-flex align-items-center' style={{ fontSize: '0.65rem' }}>
+                                                            {/* Dark Blue Banner */}
+                                                            {/* Protocol ID */}
+                                                            <span className='fw-bold ps-1' style={{ flex: 1 }}>{protocol.id}</span>
 
-                                                        {/* Truncated Protocol Title */}
-                                                        <span
-                                                            className='border-start border-end px-2 text-truncate text-center'
-                                                            style={{ flex: 2, borderColor: 'rgba(255,255,255,0.3) !important' }}
-                                                        >
-                                                            {protocol.title}
-                                                        </span>
+                                                            {/* Truncated Protocol Title */}
+                                                            <span
+                                                                className='border-start border-end px-2 text-truncate text-center'
+                                                                style={{ flex: 2, borderColor: 'rgba(255,255,255,0.3) !important' }}
+                                                            >
+                                                                {protocol.title}
+                                                            </span>
 
-                                                        {/* Protocol Categorization */}
-                                                        <span className='fw-bold text-center ps-1' style={{ flex: 1 }}>{protocol.type}</span>
-                                                    </div>
+                                                            {/* Protocol Categorization */}
+                                                            <span className='fw-bold text-center ps-1' style={{ flex: 1 }}>{protocol.type}</span>
+                                                        </div>
 
-                                                    {/* Body Section of Research Protocol */}
-                                                    <div className='card-body d-flex justify-content-center align-items-center' style={{ minHeight: '100px' }}>
-                                                        <p className='mb-0 text-center fw-medium text-dark text-uppercase' style={{ fontSize: '1.4rem' }}>
-                                                            {protocol.status}
-                                                        </p>
-                                                    </div>
+                                                        {/* Body Section of Research Protocol */}
+                                                        <div className='card-body d-flex justify-content-center align-items-center' style={{ minHeight: '100px' }}>
+                                                            <p className='mb-0 text-center fw-medium text-dark text-uppercase' style={{ fontSize: '1.4rem' }}>
+                                                                {protocol.status}
+                                                            </p>
+                                                        </div>
 
-                                                    {/* Footer Section */}
-                                                    <div className='brand-header text-white p-2 text-center' style={{ fontSize: '0.75rem' }}>
-                                                        <span className='fw-bold'>{protocol.date}</span>
+                                                        {/* Footer Section */}
+                                                        <div className='brand-header text-white p-2 text-center' style={{ fontSize: '0.75rem' }}>
+                                                            <span className='fw-bold'>{protocol.date}</span>
+                                                        </div>
+
                                                     </div>
 
                                                 </div>
+                                            ))}
+                                            
+                                        </div>
+                                    ) : (
+                                      
+                                        <div className='mt-1 pe-2'>
+                                            <table className='table table-striped table-hover align-middle'>
 
-                                            </div>
-                                        ))}
-                                        
-                                    </div>
+                                                {/* Table Headers */}
+                                                <thead 
+                                                    className='table-light position-sticky top-0' 
+                                                    style={{ 
+                                                        zIndex: 1, 
+                                                        boxShadow: '0 1px 0 0 currentcolor' 
+                                                    }}
+                                                >
+                                                    <tr>
+                                                        <th scope='col'>ID</th>
+                                                        <th scope='col'>Protocol Title</th>
+                                                        <th className='text-center' scope='col'>Type</th>
+                                                        <th className='text-center' scope='col'>Status</th>
+                                                        <th scope='col'>Date</th>
+                                                    </tr>
+                                                </thead>
+
+                                                {/* Table Content */}
+                                                <tbody>
+                                                    {protocolData.map((protocol, index) => (
+                                                        <tr
+                                                            key={index}
+                                                            onClick={() => setSelectedProtocol(protocol)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            {/* ID */}
+                                                            <td className='fw-bold text-theme-primary'>
+                                                                {protocol.id}
+                                                            </td>
+
+                                                            {/* Research Protocol Title */}
+                                                            <td className='text-truncate' style={{ maxWidth: '400px' }}>
+                                                                {protocol.title}
+                                                            </td>
+
+                                                            {/* Type */}
+                                                            <td className='text-center'>
+                                                                <span className={`badge ${typeBadgeColors[protocol.type] || 'bg-secondary'}`} style={{minWidth: '100px' }}>{protocol.type}</span>
+                                                            </td>
+
+                                                            {/* Status */}
+                                                            <td className='fw-medium text-uppercase text-dark text-center'>
+                                                                {protocol.status}
+                                                            </td>
+
+                                                            {/* Date */}
+                                                            <td className='text-secondary small'>
+                                                                {protocol.date}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+
+                                            </table>
+                                        </div>
+
+                                    )}
 
                                 </div>  
 
