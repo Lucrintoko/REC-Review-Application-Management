@@ -6,12 +6,14 @@
 const API_BASE_URL = '/api';
 
 export const apiClient = {
-  async get(endpoint) {
+  async get(endpoint, options = {}) {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        ...(options.headers || {}),
       },
+      ...options,
     });
     return response.json();
   },
