@@ -1,7 +1,7 @@
 import React from "react";
 import SortableTh from "./SortableTh";
 import ApplicationRow from "./ApplicationRow";
-import { APPLICATION_COLUMNS } from "../constants/applicationTypes";
+import { APPLICATION_COLUMNS } from "../../constants/applicationTypes";
 
 /**
  * Renders the responsive applications table with sorting, loading state, and empty state.

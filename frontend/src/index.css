@@ -37,6 +37,73 @@ body {
     color: #ffffff;
 }
 
+@media (max-width: 575.98px) {
+    .applicant-header-title {
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+
+    .applicant-header-actions {
+        display: grid !important;
+        grid-template-columns: 44px 44px minmax(0, 1fr);
+        width: 100%;
+    }
+
+    .applicant-header-secondary-actions {
+        display: contents !important;
+    }
+
+    .applicant-header-actions > .btn,
+    .applicant-header-secondary-actions > .btn {
+        min-height: 44px;
+        justify-content: center;
+    }
+
+    .applicant-form-action-bar {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch !important;
+    }
+
+    .applicant-form-secondary-actions,
+    .applicant-form-primary-actions {
+        display: contents !important;
+    }
+
+    .applicant-form-secondary-actions > .btn {
+        grid-row: 2;
+        min-width: 0;
+        min-height: 44px;
+        justify-content: center;
+        padding-inline: 0.5rem;
+    }
+
+    .applicant-form-secondary-actions > .btn:first-child {
+        grid-column: 1;
+    }
+
+    .applicant-form-secondary-actions > .btn:last-child {
+        grid-column: 2;
+    }
+
+    .applicant-form-primary-actions > .btn {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        width: 100%;
+        min-height: 48px;
+        justify-content: center;
+        white-space: normal;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .application-form-sidebar {
+        position: sticky;
+        align-self: flex-start;
+        z-index: 1020;
+    }
+}
+
 .card-dashboard {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);

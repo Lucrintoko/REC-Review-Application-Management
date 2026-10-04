@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import adzuSeal from '../assets/AdZU Seal.png';
-import ResearchProtocolModal from '../components/ResearchProtocolModal';
+import ResearchProtocolModal from '../components/admin/ResearchProtocolModal';
 
 function AdminDashboard() {
     const adminName = "Sean Matthew Araneta";

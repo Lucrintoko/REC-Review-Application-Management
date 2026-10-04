@@ -1,5 +1,5 @@
 import React from "react";
-import adzuSeal from "../assets/AdZU Seal.png";
+import adzuSeal from "../../assets/AdZU Seal.png";
 
 /**
  * Reusable Header component for dashboards (Applicant, Admin, Secretariat).

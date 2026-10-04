@@ -1,10 +1,10 @@
 import React from "react";
-import DashboardHeader from "../components/DashboardHeader";
-import DashboardFooter from "../components/DashboardFooter";
-import SidebarFilter from "../components/SidebarFilter";
-import ApplicationSearchBar from "../components/ApplicationSearchBar";
-import ApplicationsTable from "../components/ApplicationsTable";
-import ApplicationNewButton from "../components/ApplicationNewButton";
+import DashboardHeader from "../components/applicant/DashboardHeader";
+import DashboardFooter from "../components/applicant/DashboardFooter";
+import SidebarFilter from "../components/applicant/SidebarFilter";
+import ApplicationSearchBar from "../components/applicant/ApplicationSearchBar";
+import ApplicationsTable from "../components/applicant/ApplicationsTable";
+import ApplicationNewButton from "../components/applicant/ApplicationNewButton";
 import { useApplications } from "../hooks/useApplications";
 import { useTableSortFilter } from "../hooks/useTableSortFilter";
 

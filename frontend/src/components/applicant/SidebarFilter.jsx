@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { APPLICATION_TYPES } from "../constants/applicationTypes";
+import { APPLICATION_TYPES } from "../../constants/applicationTypes";
 
 /**
  * Sidebar filter component for toggling application categories and viewing counts.

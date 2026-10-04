@@ -1,6 +1,6 @@
 import React from "react";
 import StatusBadge from "./StatusBadge";
-import { formatDate } from "../utils/formatters";
+import { formatDate } from "../../utils/formatters";
 
 /**
  * Renders an individual application row inside the applications table.
