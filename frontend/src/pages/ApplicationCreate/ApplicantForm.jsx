@@ -1,43 +1,20 @@
 /**
- * 1. Target Endpoint:
- *    - Route: POST /api/applications (or POST /api/applications/submit)
- *    - Handled in: backend/api/index.php
- * 
- * 2. Database Tables Targeted (see database/database_schema.sql):
- *    a) `research_applications`:
- *       - protocol_code (VARCHAR): e.g. "REC-2026-0001" or generated sequence
- *       - applicant_id (INT): Foreign key to `applicants` table
- *       - research_title (VARCHAR): formData.study_title
- *       - research_type (ENUM): 'Undergraduate', 'Graduate', 'Faculty', etc.
- *       - review_type (ENUM): 'Undetermined' (Triage by Chair later)
- *       - status (ENUM): 'Submitted' (Initial submission) or 'Draft'
- *       - submission_date (DATE): formData.declaration_date
- * 
- *    b) `research_documents`:
- *       - application_id (INT): ID generated from research_applications
- *       - document_type (ENUM):
- *         'Research Protocol', 'Informed Consent Form', 'Data Collection Instrument',
- *         'Curriculum Vitae', 'Endorsement Letter', 'Other'
- *       - file_name (VARCHAR): Original uploaded file name
- *       - file_path (VARCHAR): Stored relative path in backend/uploads/documents/
- *       - file_size_kb (INT): File size in kilobytes
- *       - version_number (INT): Default 1
- * 
- * 3. File Upload Handling:
- *    - In production, submit via `multipart/form-data`.
- *    - Target storage folder: `backend/uploads/documents/` (ensure write permissions).
- *    - Recommended allowed extensions: .pdf, .doc, .docx (Max 10MB).
- * 
- * 4. Expected API Response:
- *    Success (201 Created / 200 OK):
- *    {
- *       "status": "success",
- *       "message": "Protocol application submitted successfully",
- *       "application_id": 101,
- *       "protocol_code": "REC-2026-0001",
- *       "submission_date": "2026-10-04"
- *    }
- * =============================================================================
+ * Proposed backend integration contract. The POST /api/applications handler
+ * is not implemented in backend/api/index.php; only GET is currently supported.
+ *
+ * A future create/draft endpoint must persist the required research_applications
+ * fields, including applicant_id from the authenticated session. The schema
+ * accepts status "Draft" and review_type "Undetermined". Uploaded File objects
+ * cannot be sent in this JSON request; document uploads need multipart/form-data
+ * and separate research_documents records.
+ *
+ * Proposed success response:
+ * {
+ *   "status": "success",
+ *   "message": "Draft saved successfully",
+ *   "application_id": 101,
+ *   "protocol_code": "REC-2026-0001"
+ * }
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
@@ -724,7 +701,10 @@ function ApplicantForm({ onBack }) {
       setLastSavedTime(now.toLocaleTimeString());
       setHasUnsavedChanges(false);
 
-      await apiClient.post("/applications", submissionPayload);
+      const response = await apiClient.post("/applications", submissionPayload);
+      if (response?.status !== "success") {
+        throw new Error(response?.message || "The server did not save the draft.");
+      }
       setShowSubmitConfirmModal(false);
       showToast("Application saved as a draft.", "success");
     } catch (err) {
