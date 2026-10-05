@@ -33,3 +33,4 @@ backend/uploads/decisions/*
 !backend/uploads/decisions/.gitkeep
 
 Screenshots/
+frontend/vite.config.js
