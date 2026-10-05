@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from './services/api';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/Auth/AdminLogin';
 import ApplicantLogin from './pages/Auth/ApplicantLogin';
 import ApplicantDashboard from './pages/ApplicantDashboard';
-import ApplicantForm from './pages/ApplicationCreate/ApplicantForm';
+import AdminHome from './pages/AdminHome';
+import AdminAnalytics from './pages/AdminAnalytics';
+import AdminLayout from './components/AdminLayout';
 
 function App() {
   const [serverStatus, setServerStatus] = useState({ status: 'connecting', message: 'Checking API...' });
@@ -16,9 +19,47 @@ function App() {
   }, []);
 
   return (
-    <>
-      <ApplicantForm />
-    </>
+    <BrowserRouter>
+      <Routes>
+
+        {/* For Admin Login */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* For Admin Home Page */}
+        <Route 
+          path="/admin/home"
+          element={
+            <AdminLayout>
+              <AdminHome />
+            </AdminLayout>
+          }
+        />
+
+        {/* For Admin Dashboard */}
+        <Route 
+          path="/admin/dashboard" 
+          element={
+            <AdminLayout>
+              <AdminDashboard />
+            </AdminLayout>
+          }
+        />
+
+        {/* For Admin Analytics */}
+        <Route 
+          path="/admin/analytics"
+          element={
+            <AdminLayout>
+              <AdminAnalytics />
+            </AdminLayout>
+          }
+        />
+
+        {/* Default Route */}
+        <Route path="*" element={<Navigate to="/admin/login" replace />} />
+
+      </Routes>
+    </BrowserRouter>
   );
 }
 

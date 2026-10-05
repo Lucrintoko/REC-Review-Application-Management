@@ -155,3 +155,16 @@ body {
 
 .bg-theme-surfaceContainer { background-color: var(--surfaceContainer); }
 .bg-theme-onSurfaceContainer { background-color: var(--onSurfaceContainer); }
+
+.btn-theme-tertiary {
+    background-color: var(--tertiary);
+    color: var(--onTertiary, #ffffff);
+    border: none;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, filter 0.15s ease-in-out;
+}
+
+.btn-theme-tertiary:hover {
+    background-color: var(--tertiary);
+    color: var(--onTertiary, #ffffff);
+    filter: brightness(0.85);
+}
