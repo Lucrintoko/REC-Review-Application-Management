@@ -68,7 +68,7 @@ function AdminHome() {
             {/* Top Metric Containers */}
             <div className="row g-4 mb-4">
                 
-                {/* Container 1: Protocol Statuses */}
+                {/* Left Container: Protocol Statuses */}
                 <div className="col-12 col-xl-6">
 
                     <div className="card border-0 shadow-sm rounded-4 h-100">
@@ -95,7 +95,7 @@ function AdminHome() {
 
                 </div>
 
-                {/* Container 2: Protocol Categories */}
+                {/* Right Container: Protocol Categories */}
                 <div className="col-12 col-xl-6">
 
                     <div className="card border-0 shadow-sm rounded-4 h-100">
