@@ -33,4 +33,7 @@ backend/uploads/decisions/*
 !backend/uploads/decisions/.gitkeep
 
 Screenshots/
+check_schema.php
+check_tables.php
+dump_schema.php
 frontend/vite.config.js
