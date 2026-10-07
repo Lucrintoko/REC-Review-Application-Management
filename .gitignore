@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Environment and sensitive keys
+.env
+.env.local
+
+# Build output
+frontend/dist/
+frontend/build/
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Uploaded dynamic files (keep directory structure via .gitkeep)
+backend/uploads/payments/*
+!backend/uploads/payments/.gitkeep
+backend/uploads/documents/*
+!backend/uploads/documents/.gitkeep
+backend/uploads/decisions/*
+!backend/uploads/decisions/.gitkeep
+
+Screenshots/
+frontend/vite.config.js

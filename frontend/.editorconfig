@@ -1,0 +1,17 @@
+# Top most editor config file
+root = true
+
+# Match all files 
+[*]
+
+# Enforce usage of  space instead of tab characters
+indent_style = space
+
+# Enforce 4 spaces for code indentation
+indent_size = 4
+
+# Ensures files ends with a newline character
+insert_final_newline = true
+
+# Removes trailing whitespaces at the end of each code line
+trim_trailing_whitespace = true

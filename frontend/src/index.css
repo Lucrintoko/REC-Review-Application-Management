@@ -1,0 +1,170 @@
+:root {
+    --primary: #060297;
+    --onPrimary: #ffffff;
+
+    --primaryContainer: #dce1ff;
+    --onPrimaryContainer: #000062;
+
+    --secondary: #3c59a6;
+    --onSecondary: #ffffff;
+
+    --secondaryContainer: #7fa1e8;
+    --onSecondaryContainer: #001543;
+
+    --tertiary: #d26000;
+    --onTertiary: #ffffff;
+
+    --tertiaryContainer: #ffddb3;
+    --onTertiaryContainer: #2d1600;
+
+    --background: #faf9ff;
+    --onBackground: #1a1b20;
+
+    --surfaceContainer: #f3f3fa;
+    --onSurfaceContainer: #1a1b20;
+}
+
+body {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333333;
+}
+
+.brand-header {
+    background-color: var(--primary);
+    color: #ffffff;
+}
+
+@media (max-width: 575.98px) {
+    .applicant-header-title {
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+
+    .applicant-header-actions {
+        display: grid !important;
+        grid-template-columns: 44px 44px minmax(0, 1fr);
+        width: 100%;
+    }
+
+    .applicant-header-secondary-actions {
+        display: contents !important;
+    }
+
+    .applicant-header-actions > .btn,
+    .applicant-header-secondary-actions > .btn {
+        min-height: 44px;
+        justify-content: center;
+    }
+
+    .applicant-form-action-bar {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch !important;
+    }
+
+    .applicant-form-secondary-actions,
+    .applicant-form-primary-actions {
+        display: contents !important;
+    }
+
+    .applicant-form-secondary-actions > .btn {
+        grid-row: 2;
+        min-width: 0;
+        min-height: 44px;
+        justify-content: center;
+        padding-inline: 0.5rem;
+    }
+
+    .applicant-form-secondary-actions > .btn:first-child {
+        grid-column: 1;
+    }
+
+    .applicant-form-secondary-actions > .btn:last-child {
+        grid-column: 2;
+    }
+
+    .applicant-form-primary-actions > .btn {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        width: 100%;
+        min-height: 48px;
+        justify-content: center;
+        white-space: normal;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .application-form-sidebar {
+        position: sticky;
+        align-self: flex-start;
+        z-index: 1020;
+    }
+}
+
+.card-dashboard {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Custom Color Utility Classes --- */
+
+/* Text Colors */
+.text-theme-primary { color: var(--primary); }
+.text-theme-onPrimary { color: var(--onPrimary); }
+.text-theme-primaryContainer { color: var(--primaryContainer); }
+.text-theme-onPrimaryContainer { color: var(--onPrimaryContainer); }
+
+.text-theme-secondary { color: var(--secondary); }
+.text-theme-onSecondary { color: var(--onSecondary); }
+.text-theme-secondaryContainer { color: var(--secondaryContainer); }
+.text-theme-onSecondaryContainer { color: var(--onSecondaryContainer); }
+
+.text-theme-tertiary { color: var(--tertiary); }
+.text-theme-onTertiary { color: var(--onTertiary); }
+.text-theme-tertiaryContainer { color: var(--tertiaryContainer); }
+.text-theme-onTertiaryContainer { color: var(--onTertiaryContainer); }
+
+.text-theme-background { color: var(--background); }
+.text-theme-onBackground { color: var(--onBackground); }
+
+.text-theme-surfaceContainer { color: var(--surfaceContainer); }
+.text-theme-onSurfaceContainer { color: var(--onSurfaceContainer); }
+
+
+/* Background Colors */
+.bg-theme-primary { background-color: var(--primary); }
+.bg-theme-onPrimary { background-color: var(--onPrimary); }
+.bg-theme-primaryContainer { background-color: var(--primaryContainer); }
+.bg-theme-onPrimaryContainer { background-color: var(--onPrimaryContainer); }
+
+.bg-theme-secondary { background-color: var(--secondary); }
+.bg-theme-onSecondary { background-color: var(--onSecondary); }
+.bg-theme-secondaryContainer { background-color: var(--secondaryContainer); }
+.bg-theme-onSecondaryContainer { background-color: var(--onSecondaryContainer); }
+
+.bg-theme-tertiary { background-color: var(--tertiary); }
+.bg-theme-onTertiary { background-color: var(--onTertiary); }
+.bg-theme-tertiaryContainer { background-color: var(--tertiaryContainer); }
+.bg-theme-onTertiaryContainer { background-color: var(--onTertiaryContainer); }
+
+.bg-theme-background { background-color: var(--background); }
+.bg-theme-onBackground { background-color: var(--onBackground); }
+
+.bg-theme-surfaceContainer { background-color: var(--surfaceContainer); }
+.bg-theme-onSurfaceContainer { background-color: var(--onSurfaceContainer); }
+
+.btn-theme-tertiary {
+    background-color: var(--tertiary);
+    color: var(--onTertiary, #ffffff);
+    border: none;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, filter 0.15s ease-in-out;
+}
+
+.btn-theme-tertiary:hover {
+    background-color: var(--tertiary);
+    color: var(--onTertiary, #ffffff);
+    filter: brightness(0.85);
+}
