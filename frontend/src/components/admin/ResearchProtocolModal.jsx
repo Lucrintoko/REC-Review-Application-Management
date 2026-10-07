@@ -1,33 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import PaymentVerificationModal from "./PaymentVerificationModal";
 
-function ResearchProtocolModal ({ protocol, onClose }) {
+function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
     const [showTable, setShowTable] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [historyData, setHistoryData] = useState([]);
 
-const historyData = [                                        
-        { processPoint: 'Initial Submission', status: 'Completed', date: 'Dec 4, 2023 - 09:00 AM', reviewer: 'Juan Dela Cruz' },
-        { processPoint: 'Secretariat Screening', status: 'Completed', date: 'Dec 6, 2023 - 02:30 PM', reviewer: 'Maria Clara' },
-        { processPoint: 'Ethical Review', status: 'Completed', date: 'Dec 10, 2023 - 11:15 AM', reviewer: 'Jose Rizal' },
-        { processPoint: 'Full Board Decision', status: 'Completed', date: 'Dec 10, 2023 - 01:30 PM', reviewer: 'Andres Bonifacio' },
+    useEffect(() => {
+        if (protocol && protocol.application_id) {
+            fetch(`http://localhost/REC-Review-Application-Management/backend/api/protocol_history.php?application_id=${protocol.application_id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        setHistoryData(data.data);
+                    } else {
+                        console.error("Error fetching history:", data.message);
+                    }
+                })
+                .catch(err => console.error("Error fetching history:", err));
+        }
+    }, [protocol]);
 
-        { processPoint: 'Initial Submission', status: 'Completed', date: 'Dec 4, 2023 - 09:00 AM', reviewer: 'Juan Dela Cruz' },
-        { processPoint: 'Secretariat Screening', status: 'Completed', date: 'Dec 6, 2023 - 02:30 PM', reviewer: 'Maria Clara' },
-        { processPoint: 'Ethical Review', status: 'Completed', date: 'Dec 10, 2023 - 11:15 AM', reviewer: 'Jose Rizal' },
-        { processPoint: 'Full Board Decision', status: 'Completed', date: 'Dec 10, 2023 - 01:30 PM', reviewer: 'Andres Bonifacio' },
+    // Calculate Progress Percentage
+    let progressPercentage = 0;
+    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'ONGOING AMENDMENTS'];
 
-        { processPoint: 'Initial Submission', status: 'Completed', date: 'Dec 4, 2023 - 09:00 AM', reviewer: 'Juan Dela Cruz' },
-        { processPoint: 'Secretariat Screening', status: 'Completed', date: 'Dec 6, 2023 - 02:30 PM', reviewer: 'Maria Clara' },
-        { processPoint: 'Ethical Review', status: 'Completed', date: 'Dec 10, 2023 - 11:15 AM', reviewer: 'Jose Rizal' },
-        { processPoint: 'Full Board Decision', status: 'Pending', date: 'Dec 10, 2023 - 01:30 PM', reviewer: 'Andres Bonifacio' },
-        
-        { processPoint: 'Initial Submission', status: 'Pending', date: 'Dec 4, 2023 - 09:00 AM', reviewer: 'Juan Dela Cruz' },
-        { processPoint: 'Secretariat Screening', status: 'Pending', date: 'Dec 6, 2023 - 02:30 PM', reviewer: 'Maria Clara' },
-        { processPoint: 'Ethical Review', status: 'Pending', date: 'Dec 10, 2023 - 11:15 AM', reviewer: 'Jose Rizal' },
-        { processPoint: 'Full Board Decision', status: 'Pending', date: 'TBD', reviewer: 'Andres Bonifacio' }
-    ];
-
-    // Calculate progress percentage dynamically!
-    const completedSteps = historyData.filter(item => item.status === 'Completed').length;
-    const progressPercentage = Math.round((completedSteps / historyData.length) * 100);
+    if (protocol && terminalStatuses.includes(protocol.status)) {
+        progressPercentage = 100;
+    } else {
+        // Total steps of 9 according to consolidated flowchart
+        const totalExpectedSteps = 9; 
+        const completedSteps = historyData.filter(item => item.status === 'Completed').length;
+        // Cap at 99% if not terminal, to prevent showing 100% too early
+        progressPercentage = Math.min(99, Math.round((completedSteps / totalExpectedSteps) * 100));
+    }
 
     return (
         <>
@@ -80,9 +86,12 @@ const historyData = [
                                 <button 
                                     type="button" 
                                     className="btn btn-theme-tertiary text-light text-uppercase fw-bold"
-                                    style={{ 
-                                        letterSpacing: '1px', 
-                                        fontSize: '1.1rem'
+                                    style={{ letterSpacing: '1px', fontSize: '1.1rem' }}
+                                    onClick={() => {
+                                        // Checks if status is for Payment Verification, if yes open PaymentVerificationModal
+                                        if (protocol.status === 'PAYMENT VERIFICATION') {
+                                            setShowPaymentModal(true);
+                                        }
                                     }}
                                 >Update Status</button>
                             </div>
@@ -123,7 +132,7 @@ const historyData = [
                                                 <tr>
                                                     <th scope="col">Process Point</th> 
                                                     <th scope="col" className="text-center">Status Completion</th> 
-                                                    <th scope="col" className="text-center">Date & Time<br />Of Completion</th> 
+                                                    <th scope="col" className="text-center">Date Of Completion</th> 
                                                     <th scope="col" className="text-center">Proponent/s</th> 
                                                 </tr>
                                             </thead>
@@ -138,9 +147,9 @@ const historyData = [
                                                             {item.status}
                                                         </td>
 
-                                                        <td className="text-muted text-center">{item.date}</td>
+                                                        <td className="text-muted">{item.dateCompleted ? item.dateCompleted : 'TBD'}</td>
 
-                                                        <td>{item.reviewer}</td>
+                                                        <td>{item.proponentName}</td>
 
                                                     </tr>
                                                 ))}
@@ -180,6 +189,18 @@ const historyData = [
                     </div>
                 </div>
             </div>
+
+            {showPaymentModal && (
+                <PaymentVerificationModal 
+                    protocol={protocol}
+                    onClose={(isSuccess) => {
+                        setShowPaymentModal(false);
+                        if (isSuccess && onRefresh) {
+                            onRefresh();
+                        }
+                    }}
+                />
+            )}
         </>
     );
 }
