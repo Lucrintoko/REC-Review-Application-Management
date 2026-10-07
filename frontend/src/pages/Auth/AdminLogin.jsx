@@ -27,9 +27,10 @@ function AdminLogin() {
     .then(response => response.json())
     .then(data => {
       if (data.status === 'success') {
-        // Save their name and role to browser memory
+        // Save their name, role, and id to browser memory
         localStorage.setItem('adminName', data.user.first_name + ' ' + data.user.last_name);
         localStorage.setItem('adminRole', data.user.role);
+        localStorage.setItem('adminId', data.user.admin_id);
 
         // Teleporting to the Admin Dashboard
         navigate('/admin/home');
@@ -94,10 +95,6 @@ function AdminLogin() {
                     Sign In
                   </button>
                 </form>
-
-                <div className="text-center mt-4">
-                  <a href="#" className="text-decoration-none small text-danger">Forgot password?</a>
-                </div>
 
               </div>
             </div>
