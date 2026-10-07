@@ -8,12 +8,12 @@ function AdminHome() {
     // Takes the admin's name from localStorage
     const adminName = localStorage.getItem('adminName') || "Admin";
 
-    // Prevention of people going  for /admin/home
+    // Prevention of people going for /admin/home
     useEffect(() => {
         // If browser doesn't have any session data
         if (!localStorage.getItem('adminName')) {
             // Redirect to login page
-            navigate('/admin/home')
+            navigate('/admin/login')
         }
     }, [navigate]);
 
@@ -156,14 +156,23 @@ function AdminHome() {
                                     <tbody>
                                         {/* Generate Table Rows dynamically based on the math we did earlier */}
                                         {[
+                                            { label: 'Draft', value: protocolData.filter(p => p.status === 'DRAFT').length, color: 'text-muted' },
                                             { label: 'Submitted (New)', value: protocolData.filter(p => p.status === 'SUBMITTED').length, color: 'text-dark' },
                                             { label: 'Payment Pending', value: protocolData.filter(p => p.status === 'PAYMENT PENDING').length, color: 'text-danger' },
+                                            { label: 'Payment Verified', value: protocolData.filter(p => p.status === 'PAYMENT VERIFIED').length, color: 'text-success' },
+                                            { label: 'Determining Review Type', value: protocolData.filter(p => p.status === 'DETERMINING REVIEW TYPE').length, color: 'text-warning' },
                                             { label: 'Under Review', value: underReview, color: 'text-warning' },
                                             { label: 'Recommendations Requested', value: protocolData.filter(p => p.status === 'RECOMMENDATIONS REQUESTED').length, color: 'text-primary' },
                                             { label: 'Revising', value: revising, color: 'text-secondary' },
-                                            { label: 'Ongoing Amendments', value: ongoingAmendments, color: 'text-info' },
-                                            { label: 'Clearance Granted', value: clearanceGranted, color: 'text-success' }
-                                        ].map((stat, idx) => (
+                                            { label: 'Revisions Submitted', value: protocolData.filter(p => p.status === 'REVISIONS SUBMITTED').length, color: 'text-info' },
+                                            { label: 'Clearance Granted', value: clearanceGranted, color: 'text-success' },
+                                            { label: 'Rejected', value: protocolData.filter(p => p.status === 'REJECTED').length, color: 'text-danger' },
+                                            { label: 'Withdrawn', value: protocolData.filter(p => p.status === 'WITHDRAWN').length, color: 'text-muted' },
+                                            { label: 'Ongoing Amendments', value: ongoingAmendments, color: 'text-info' }
+                                        ]
+                                        // Only show rows that actually have a count > 0 to keep the table clean!
+                                        .filter(stat => stat.value > 0)
+                                        .map((stat, idx) => (
                                             <tr key={idx}>
                                                 <td className="fw-medium py-3">{stat.label}</td>
                                                 <td className={`fw-bold fs-5 text-end ${stat.color}`}>{stat.value}</td>
