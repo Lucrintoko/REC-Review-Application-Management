@@ -52,14 +52,14 @@ function AdminDashboard() {
     // For containing all of the Protocols
     const [protocolData, setProtocolData] = useState([]);
 
-    // Fetching the data from  the database
-    useEffect(() => {
+    // Fetching the data from the database
+    const fetchProtocols = () => {
         fetch('http://localhost/REC-Review-Application-Management/backend/api/applications')
             .then(response => response.json())
             .then(databaseJSON => {
-                
                 // Formatting the database data to easier names to call for calling them in the Dashboard
                 const formattedData = databaseJSON.data.map(row => ({
+                    application_id: row.application_id,
                     id: row.protocol_code,
                     title: row.research_title,
                     type: row.review_type.toUpperCase(),
@@ -75,6 +75,10 @@ function AdminDashboard() {
                 setProtocolData(formattedData);
             })
             .catch(error => console.error("Error Fetching Data:", error));
+    };
+
+    useEffect(() => {
+        fetchProtocols();
     }, [])
 
     // For Protocol Detailed Pop-up Window Togge-able
@@ -113,6 +117,20 @@ function AdminDashboard() {
 
     // Filter logic
     const filteredProtocols = protocolData.filter(protocol => {
+        // Role-Based Access Control Logic for Admins: Secretariat, Chair, & Primary/Non-Primary Reviewer
+        let hasAccess = true;
+        if (role === 'Secretariat') {
+            const allowedStatuses = ['PAYMENT PENDING', 'PAYMENT VERIFICATION'];
+            hasAccess = allowedStatuses.includes(protocol.status);
+        } else if (role === 'Primary Reviewer' || role === 'Non-Primary Reviewer') {
+            hasAccess = protocol.status === 'UNDER REVIEW';
+        } else if (role === 'Ethics Chair') {
+            const hiddenStatuses = ['DRAFT', 'SUBMITTED'];
+            hasAccess = !hiddenStatuses.includes(protocol.status);
+        }
+
+        if (!hasAccess) return false;
+
         // Dropdown Logic
         const matchesStatus = filterStatus === 'All' || protocol.status === filterStatus;
 
@@ -120,12 +138,26 @@ function AdminDashboard() {
         const matchesSearch = protocol.title.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
                               protocol.id.toLowerCase().includes(activeSearchQuery.toLowerCase());
 
-        // Protocol Passes if it matches both Logics
+        // Protocol Passes if it matches all Logics
         return matchesStatus && matchesSearch;
     });
 
     // Sorting of Protocols
+    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'ONGOING AMENDMENTS'];
+
+    // Add new terminalStatus to push the item down if the admin just needs to see it but not access (Role Based )
+    if (role === 'Secretariat') {
+        terminalStatuses.push('PAYMENT PENDING');
+    }
+
     const sortedProtocols = [...filteredProtocols].sort((a, b) =>  {
+        const aIsTerminal = terminalStatuses.includes(a.status);
+        const bIsTerminal = terminalStatuses.includes(b.status);
+
+        // Push terminal statuses to the bottom regardless of current sort configuration
+        if (aIsTerminal && !bIsTerminal) return 1;
+        if (!aIsTerminal && bIsTerminal) return -1;
+
         if (a[sortConfig.key] < b[sortConfig.key]) {
             return sortConfig.direction === 'ascending' ? -1 : 1;
         }
@@ -135,6 +167,36 @@ function AdminDashboard() {
 
         return 0;
     });
+
+    // Dropdown Options for Each Admin Role
+    const dropdownOptionsByRole = {
+        'Secretariat' : [
+            { value: 'All', label: 'All Statuses' },
+            { value: 'PAYMENT PENDING', label: 'Payment Pending' },
+            { value: 'PAYMENT VERIFICATION', label: 'Payment Verification' }
+        ],
+        'Primary Reviewer' : [
+            { value: 'All', label: 'All Statuses' },
+            { value: 'UNDER REVIEW', label: 'Under Review' },
+        ],
+        'Non-Primary Reviewer' : [
+            { value: 'All', label: 'All Statuses' },
+            { value: 'UNDER REVIEW', label: 'Under Review' },
+        ],
+        'Ethics Chair' : [
+            { value: 'All', label: 'All Statuses' },
+            { value: 'DETERMINING REVIEW TYPE', label: 'Determining Review Type' },
+            { value: 'UNDER REVIEW', label: 'Under Review' },
+            { value: 'RECOMMENDATIONS REQUESTED', label: 'Recommendations Requested' },
+            { value: 'REVISING', label: 'Revising' },
+            { value: 'CLEARANCE GRANTED', label: 'Clearance Granted' },
+            { value: 'REJECTED', label: 'Rejected' },
+            { value: 'WITHDRAWN', label: 'Withdrawn' },
+            { value: 'ONGOING AMENDMENTS', label: 'Ongoing Amendments' }
+        ]
+    };
+
+    const currentDropdownOptions = dropdownOptionsByRole[role] || [{ value: 'All', label: 'All Statuses' }];
 
     return (
       <div className="min-vh-100 d-flex flex-column bg-body-tertiary"> 
@@ -178,14 +240,12 @@ function AdminDashboard() {
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
                         >
-                            <option value="All">All Statuses</option>
-                            <option value="SUBMITTED">Submitted</option>
-                            <option value="PAYMENT PENDING">Payment Pending</option>
-                            <option value="UNDER REVIEW">Under Review</option>
-                            <option value="RECOMMENDATIONS REQUESTED">Recommendations Requested</option>
-                            <option value="REVISING">Revising</option>
-                            <option value="CLEARANCE GRANTED">Clearance Granted</option>
-                            <option value="ONGOING AMENDMENTS">Ongoing Amendments</option>
+                            {/* Dynamic Rendering of filter options based on role */}
+                            {currentDropdownOptions.map((option, index) => (
+                                <option key={index} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
                         </select>
 
                         {/* Search Bar */}
@@ -267,7 +327,7 @@ function AdminDashboard() {
                                                     
                                                     {/* Individual protocol cards */}
                                                     <div 
-                                                        className='card h-100 border-0 shadow-sm rounded-4 overflow-hidden' 
+                                                        className={`card h-100 border-0 shadow-sm rounded-4 overflow-hidden ${terminalStatuses.includes(protocol.status) ? 'opacity-50' : ''}`} 
                                                         onClick={() => setSelectedProtocol(protocol)}
                                                         style={{ 
                                                             backgroundColor: '#f4f6f8', 
@@ -366,6 +426,7 @@ function AdminDashboard() {
                                                         <tr
                                                             key={index}
                                                             onClick={() => setSelectedProtocol(protocol)}
+                                                            className={terminalStatuses.includes(protocol.status) ? 'opacity-50 text-muted bg-light' : ''}
                                                             style={{ cursor: 'pointer' }}
                                                         >
                                                             {/* ID */}
@@ -420,6 +481,10 @@ function AdminDashboard() {
             <ResearchProtocolModal
                 protocol={selectedProtocol}
                 onClose={() => setSelectedProtocol(null)}
+                onRefresh={() => {
+                    fetchProtocols();
+                    setSelectedProtocol(null);
+                }}
             />
         )}
 
