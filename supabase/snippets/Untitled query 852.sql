@@ -1,0 +1,2 @@
+UPDATE admins SET password_hash = '$2y$10$vUBQpHqA4LH4uAe1fzbBy.tEoWGzJUrbH6pmllwM0TfBz1j.8g6HS';                                                                                                         
+    UPDATE applicants SET password_hash = '$2y$10$vUBQpHqA4LH4uAe1fzbBy.tEoWGzJUrbH6pmllwM0TfBz1j.8g6HS'; 
