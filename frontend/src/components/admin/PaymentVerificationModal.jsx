@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Swal from 'sweetalert2';
 
 function PaymentVerificationModal({ protocol, onClose }) {
     const [paymentData, setPaymentData] = useState(null);
@@ -47,18 +48,49 @@ function PaymentVerificationModal({ protocol, onClose }) {
         })
         .then(res => res.json())
         .then(data => {
+            // Utilizing Sweet Alert for better Alert Messages and Customizable
             if (data.success) {
-                alert(data.message);
-                onClose(true); // Close modal upon success and signal refresh
-            } else {
-                alert(data.message || "An error occurred");
                 setIsLoading(false);
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#198754', 
+                    confirmButtonText: 'OK',
+                    didOpen: () => {
+                        const container = Swal.getContainer();
+                        if (container) container.style.zIndex = '1100';
+                    }
+                }).then(() => {
+                    onClose(true); // Close modal upon success and signal refresh
+                });
+            } else {
+                setIsLoading(false);
+                Swal.fire({
+                    title: 'Verification Failed',
+                    text: data.message || "An error occurred",
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545',
+                    didOpen: () => {
+                        const container = Swal.getContainer();
+                        if (container) container.style.zIndex = '1100';
+                    }
+                });
             }
         })
         .catch(err => {
             console.error(err);
-            alert("Error connecting to server");
             setIsLoading(false);
+            Swal.fire({
+                title: 'Connection Error',
+                text: "Error connecting to server",
+                icon: 'error',
+                confirmButtonColor: '#dc3545',
+                didOpen: () => {
+                    const container = Swal.getContainer();
+                    if (container) container.style.zIndex = '1100';
+                }
+            });
         });
     };
 

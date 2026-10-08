@@ -69,6 +69,13 @@ try {
         ':application_id' => $application_id
     ]);
 
+    // Get the Admin Name for proponent_name
+    $getAdmin = "SELECT first_name, last_name FROM admins WHERE admin_id = :admin_id LIMIT 1";
+    $stmtAdmin = $db->prepare($getAdmin);
+    $stmtAdmin->execute([':admin_id' => $admin_id]);
+    $adminRow = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
+    $proponent_name = $adminRow ? $adminRow['first_name'] . ' ' . $adminRow['last_name'] : 'Unknown Admin';
+
     // Update Application History (Mark 'Payment Verification' as Completed)
     if ($newPaymentStatus === 'Verified') {
         $updateHistory = "UPDATE application_history 
@@ -76,6 +83,15 @@ try {
                           WHERE application_id = :application_id AND process_point = 'Payment Verification'";
         $stmt3 = $db->prepare($updateHistory);
         $stmt3->execute([':application_id' => $application_id]);
+
+        // Insert new history step for Review Type Assessment
+        $insertHistory = "INSERT INTO application_history (application_id, process_point, status, proponent_name, created_at)
+                          VALUES (:application_id, 'Review Type Assessment', 'Pending', :proponent_name, CURRENT_TIMESTAMP)";
+        $stmt4 = $db->prepare($insertHistory);
+        $stmt4->execute([
+            ':application_id' => $application_id,
+            ':proponent_name' => $proponent_name
+        ]);
     }
 
     // Commit all changes to the database safely
