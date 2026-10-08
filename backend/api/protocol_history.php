@@ -13,10 +13,11 @@ if (isset($_GET['application_id'])) {
     $application_id = $_GET['application_id'];
 
     $query = "SELECT process_point as \"processPoint\", status, proponent_name as \"proponentName\", 
-                     TO_CHAR(date_completed, 'FMMonth DD, YYYY') as \"dateCompleted\" 
+                     TO_CHAR(date_completed, 'FMMonth DD, YYYY') as \"dateCompleted\",
+                     notes
               FROM application_history 
               WHERE application_id = :application_id 
-              ORDER BY created_at ASC";
+              ORDER BY history_id ASC";
 
     $stmt = $db->prepare($query);
     $stmt->bindParam(':application_id', $application_id);
