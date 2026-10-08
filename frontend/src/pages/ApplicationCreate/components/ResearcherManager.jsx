@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Reusable Researcher Entry Manager (Used in Sections 3 & 4)
  */
@@ -152,3 +153,4 @@ function ResearcherManager({
 }
 
 export default ResearcherManager;
+

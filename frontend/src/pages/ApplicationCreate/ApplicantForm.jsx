@@ -17,7 +17,7 @@
  * }
  */
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import adzuSeal from "../../assets/AdZU Seal.png";
 import { apiClient } from "../../services/api";
@@ -448,11 +448,15 @@ function ApplicantForm({ onBack }) {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.data) {
-          return { ...INITIAL_FORM_DATA, ...parsed.data };
+          const merged = { ...INITIAL_FORM_DATA, ...parsed.data };
+          // Validate the merged data to ensure no deeply nested keys are missing from older drafts
+          evaluateFormStatusAndErrors(merged); 
+          return merged;
         }
       }
     } catch (e) {
-      console.error("Failed to parse saved draft:", e);
+      console.warn("Saved draft is outdated or corrupted. Discarding to prevent errors.", e);
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
     }
     return INITIAL_FORM_DATA;
   });
@@ -681,32 +685,60 @@ function ApplicantForm({ onBack }) {
     const generatedCode = formData.rec_code || `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const now = new Date();
 
+    // Deep clone formData to avoid mutating state
+    const cleanFormData = JSON.parse(JSON.stringify(formData, (key, value) => {
+      // JSON.stringify drops the File object automatically anyway,
+      // but we strip rawFile to be perfectly clean in the JSON.
+      if (key === 'rawFile') return undefined;
+      return value;
+    }));
+
     const submissionPayload = {
       protocol_code: generatedCode,
       research_title: formData.study_title,
       research_type: "Undergraduate",
       review_type: "Undetermined",
-      status: "Draft",
+      status: "Payment Pending",
       submission_date: formData.declaration_date || new Date().toISOString().split("T")[0],
-      formDataSnapshot: formData,
+      formDataSnapshot: cleanFormData,
     };
 
     let savedLocally = false;
     try {
       localStorage.setItem(
         DRAFT_STORAGE_KEY,
-        JSON.stringify({ data: formData, savedAt: now.toISOString() })
+        JSON.stringify({ data: cleanFormData, savedAt: now.toISOString() })
       );
       savedLocally = true;
       setLastSavedTime(now.toLocaleTimeString());
       setHasUnsavedChanges(false);
 
-      const response = await apiClient.post("/applications", submissionPayload);
+      // Create FormData payload
+      const multipartData = new FormData();
+      multipartData.append("payload", JSON.stringify(submissionPayload));
+
+      // Extract all raw files and append to FormData
+      let fileCount = 0;
+      const appendFiles = (obj, path = "") => {
+        if (!obj || typeof obj !== "object") return;
+        if (obj.rawFile && obj.rawFile instanceof File) {
+          multipartData.append(`files${path}`, obj.rawFile);
+          fileCount++;
+        } else {
+          for (const key in obj) {
+            appendFiles(obj[key], path ? `${path}[${key}]` : `[${key}]`);
+          }
+        }
+      };
+      appendFiles(formData);
+
+      const response = await apiClient.post("/applications", multipartData, true); // true = isFormData
+
       if (response?.status !== "success") {
         throw new Error(response?.message || "The server did not save the draft.");
       }
       setShowSubmitConfirmModal(false);
-      showToast("Application saved as a draft.", "success");
+      showToast("Application submitted successfully.", "success");
     } catch (err) {
       console.error("Draft save failed:", err);
       showToast(
@@ -1217,7 +1249,7 @@ function ApplicantForm({ onBack }) {
                       REC Code:
                       <InfoTooltip
                         title="REC Tracking Code"
-                        text="Initial default tracking counter assigned for this application (e.g. REC-2026-0001)."
+                        text="Your unique official tracking code will be automatically assigned to your application once you submit this form."
                       />
                     </label>
                     <div className="input-group">
@@ -1226,8 +1258,8 @@ function ApplicantForm({ onBack }) {
                       </span>
                       <input
                         type="text"
-                        className="form-control bg-light"
-                        value={formData.rec_code}
+                        className="form-control bg-light fst-italic text-secondary"
+                        value="Assigned after submission"
                         readOnly
                       />
                     </div>

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import React, { useRef } from "react";
 
 /**
  * Reusable File Upload Preview & Selector Component
@@ -28,6 +28,7 @@ function FileUploadWidget({
         formattedSize,
         type: selected.type,
         lastModified: selected.lastModified,
+        rawFile: selected, // Store the raw file object for actual uploading
       });
     }
   };
@@ -95,3 +96,4 @@ function FileUploadWidget({
 }
 
 export default FileUploadWidget;
+

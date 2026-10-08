@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 /**
  * Accessible Info Tooltip with click/hover popover
@@ -57,3 +57,4 @@ function InfoTooltip({ text, title }) {
 }
 
 export default InfoTooltip;
+

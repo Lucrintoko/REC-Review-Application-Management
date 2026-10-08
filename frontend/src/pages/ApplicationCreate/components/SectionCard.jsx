@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Standard Card Wrapper for Form Sections (DRY Layout)
  */
@@ -31,3 +32,4 @@ function SectionCard({ id, number, title, isRequired, isComplete, icon, children
 }
 
 export default SectionCard;
+

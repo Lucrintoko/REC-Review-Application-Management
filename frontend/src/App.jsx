@@ -3,11 +3,12 @@ import { apiClient } from './services/api';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/Auth/AdminLogin';
-import ApplicantLogin from './pages/Auth/ApplicantLogin';
-import ApplicantDashboard from './pages/ApplicantDashboard';
 import AdminHome from './pages/AdminHome';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AdminLayout from './components/AdminLayout';
+import ApplicantLogin from './pages/Auth/ApplicantLogin';
+import ApplicantDashboard from './pages/ApplicantDashboard';
+import ApplicantForm from './pages/ApplicationCreate/ApplicantForm';
 
 function App() {
   const [serverStatus, setServerStatus] = useState({ status: 'connecting', message: 'Checking API...' });
@@ -56,6 +57,10 @@ function App() {
 
         {/* Default Route */}
         <Route path="*" element={<Navigate to="/admin/login" replace />} />
+
+        {/* Testing .jsx files and checking formats */}
+        {/* For Applicant Form */}
+        <Route path="/applicantform" element={<ApplicantForm />} />
 
       </Routes>
   );
