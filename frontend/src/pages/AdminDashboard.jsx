@@ -63,13 +63,17 @@ function AdminDashboard() {
                     id: row.protocol_code,
                     title: row.research_title,
                     type: row.review_type.toUpperCase(),
+                    research_type: row.research_type,
                     status: row.status.toUpperCase(),
                     // Conversion of SQL Date to MMM DD, YYYY
                     date: new Date(row.submission_date).toLocaleDateString('en-US', {
                         month: 'short', day: 'numeric', year: 'numeric'
                     }).toUpperCase(),
-
-                    researchers: ['Researcher Name Pending']
+                    
+                    form_data: row.form_data, // Ensure form_data is passed down
+                    researchers: row.form_data?.primary_researchers 
+                        ? row.form_data.primary_researchers.map(r => `${r.firstName} ${r.lastName}`) 
+                        : (row.form_data?.contact_name ? [row.form_data.contact_name] : ['N/A'])
                 }))
 
                 setProtocolData(formattedData);

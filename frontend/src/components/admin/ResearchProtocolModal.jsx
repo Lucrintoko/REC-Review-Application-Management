@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import PaymentVerificationModal from "./PaymentVerificationModal";
+import ReviewTypeModal from "./ReviewTypeModal";
 
 function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
     const [showTable, setShowTable] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showReviewTypeModal, setShowReviewTypeModal] = useState(false);
     const [historyData, setHistoryData] = useState([]);
 
     useEffect(() => {
@@ -91,6 +93,8 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                                         // Checks if status is for Payment Verification, if yes open PaymentVerificationModal
                                         if (protocol.status === 'PAYMENT VERIFICATION') {
                                             setShowPaymentModal(true);
+                                        } else if (protocol.status === 'DETERMINING REVIEW TYPE') {
+                                            setShowReviewTypeModal(true);
                                         }
                                     }}
                                 >Update Status</button>
@@ -195,6 +199,18 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                     protocol={protocol}
                     onClose={(isSuccess) => {
                         setShowPaymentModal(false);
+                        if (isSuccess && onRefresh) {
+                            onRefresh();
+                        }
+                    }}
+                />
+            )}
+
+            {showReviewTypeModal && (
+                <ReviewTypeModal 
+                    protocol={protocol}
+                    onClose={(isSuccess) => {
+                        setShowReviewTypeModal(false);
                         if (isSuccess && onRefresh) {
                             onRefresh();
                         }
