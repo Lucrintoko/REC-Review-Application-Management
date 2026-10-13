@@ -739,6 +739,14 @@ function ApplicantForm({ onBack }) {
       }
       setShowSubmitConfirmModal(false);
       showToast("Application submitted successfully.", "success");
+
+      // Clear draft since it was submitted
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      
+      // Redirect to dashboard after a short delay so user sees the success toast
+      setTimeout(() => {
+        navigate('/applicant/dashboard');
+      }, 1500);
     } catch (err) {
       console.error("Draft save failed:", err);
       showToast(

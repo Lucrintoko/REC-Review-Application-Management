@@ -15,6 +15,7 @@ function ApplicationsTable({
   onClearFilters,
   hasActiveFilters = false,
   onSelectApplication,
+  onOpenOrModal,
 }) {
   return (
     <div
@@ -51,6 +52,7 @@ function ApplicationsTable({
                 key={app.application_id || app.protocol_code || app.id}
                 application={app}
                 onSelect={onSelectApplication}
+                onOpenOrModal={onOpenOrModal}
               />
             ))
           ) : (

@@ -12,20 +12,22 @@ function AdminLogin() {
   // Tracking of Errors
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault(); // Stops page from instant refreshing
     setErrorMessage('');
 
     // Packing e-mail and password into JSON Format
     const loginData = { email: email, password: password };
 
-    fetch('http://localhost/REC-Review-Application-Management/backend/api/login_admin.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(loginData)
-    })
-    .then(response => response.json())
-    .then(data => {
+    try {
+      const response = await fetch('http://localhost/REC-Review-Application-Management/backend/api/login_admin.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginData)
+      });
+      
+      const data = await response.json();
+
       if (data.status === 'success') {
         // Save their name, role, and id to browser memory
         localStorage.setItem('adminName', data.user.first_name + ' ' + data.user.last_name);
@@ -38,8 +40,9 @@ function AdminLogin() {
         // Wrong password
         setErrorMessage(data.message);
       }
-    })
-    .catch(err => setErrorMessage("Could not connect to server."))
+    } catch (err) {
+      setErrorMessage("Could not connect to server.");
+    }
   }
 
   return (

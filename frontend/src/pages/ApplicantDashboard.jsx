@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import DashboardHeader from "../components/applicant/DashboardHeader";
 import DashboardFooter from "../components/applicant/DashboardFooter";
 import SidebarFilter from "../components/applicant/SidebarFilter";
 import ApplicationSearchBar from "../components/applicant/ApplicationSearchBar";
 import ApplicationsTable from "../components/applicant/ApplicationsTable";
 import ApplicationNewButton from "../components/applicant/ApplicationNewButton";
+import SubmitORModal from "../components/applicant/SubmitORModal";
 import { useApplications } from "../hooks/useApplications";
 import { useTableSortFilter } from "../hooks/useTableSortFilter";
 
@@ -20,13 +21,15 @@ const SORT_LABELS = {
  * Primary dashboard view for applicants to view, filter, sort, and manage ethics review applications.
  */
 function ApplicantDashboard({
-  applicantName = "Juan Dela Cruz",
   onNavigateHome,
   onNewApplication,
   onSelectApplication,
 }) {
+  const applicantName = localStorage.getItem('applicantName') || "Juan Dela Cruz";
+  const [selectedOrApp, setSelectedOrApp] = useState(null);
+
   // 1. Fetch applications data via custom hook (handles API, abort controller, loading, error, and fallback data)
-  const { applications, isLoading } = useApplications();
+  const { applications, isLoading, refetch } = useApplications();
 
   // 2. Manage client-side filtering and sorting via custom hook
   const {
@@ -42,6 +45,11 @@ function ApplicantDashboard({
   } = useTableSortFilter(applications);
 
   const hasActiveFilters = selectedType !== "ALL" || searchQuery.trim().length > 0;
+
+  const handleOrSuccess = () => {
+    setSelectedOrApp(null);
+    refetch(); // Refresh table data to reflect new status
+  };
 
   return (
     <div className="min-vh-100 d-flex flex-column">
@@ -112,6 +120,7 @@ function ApplicantDashboard({
                     onClearFilters={clearFilters}
                     hasActiveFilters={hasActiveFilters}
                     onSelectApplication={onSelectApplication}
+                    onOpenOrModal={setSelectedOrApp}
                   />
                 </div>
               </div>
@@ -122,6 +131,14 @@ function ApplicantDashboard({
 
       {/* Footer */}
       <DashboardFooter />
+
+      {/* Submit OR Modal */}
+      <SubmitORModal
+        show={!!selectedOrApp}
+        application={selectedOrApp}
+        onClose={() => setSelectedOrApp(null)}
+        onSuccess={handleOrSuccess}
+      />
     </div>
   );
 }

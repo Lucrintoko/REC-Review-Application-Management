@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 function ApplicationNewButton({ onNewApplication }) {
   return (
     <Link
-        to="/applications/new"
+        to="/applicant/form"
         className="btn btn-primary w-100 d-flex align-items-center justify-content-center"
         onClick={onNewApplication}
     >

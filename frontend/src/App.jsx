@@ -60,7 +60,11 @@ function App() {
 
         {/* Testing .jsx files and checking formats */}
         {/* For Applicant Form */}
-        <Route path="/applicantform" element={<ApplicantForm />} />
+        <Route path="/applicant/login" element={<ApplicantLogin />} /> 
+
+        <Route path="/applicant/form" element={<ApplicantForm />} />
+
+        <Route path="/applicant/dashboard" element={<ApplicantDashboard />} />
 
       </Routes>
   );

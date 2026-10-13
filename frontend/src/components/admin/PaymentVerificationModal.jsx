@@ -131,10 +131,16 @@ function PaymentVerificationModal({ protocol, onClose }) {
                                         <div className="col-5 text-muted fw-bold">Amount Paid:</div>
                                         <div className="col-7 text-dark fw-semibold">₱ {paymentData.amount}</div>
                                     </div>
-                                    <div className="row">
+                                    <div className="row mb-2">
                                         <div className="col-5 text-muted fw-bold">Payment Date:</div>
                                         <div className="col-7 text-dark fw-semibold">{paymentData.paymentDate}</div>
                                     </div>
+                                    {paymentData.applicantNotes && (
+                                        <div className="row mt-3 pt-2 border-top">
+                                            <div className="col-12 text-muted fw-bold mb-1">Applicant Notes:</div>
+                                            <div className="col-12 text-dark fst-italic">"{paymentData.applicantNotes}"</div>
+                                        </div>
+                                    )}
                                 </div>
                             ) : null}
 

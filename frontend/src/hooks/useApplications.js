@@ -15,8 +15,11 @@ export function useApplications() {
     setIsLoading(true);
     setError(null);
 
+    const applicantId = localStorage.getItem('applicantId');
+    const endpoint = applicantId ? `/applications?applicant_id=${applicantId}` : "/applications";
+
     try {
-      const response = await apiClient.get("/applications", { signal });
+      const response = await apiClient.get(endpoint, { signal });
       if (response && response.status === "success" && Array.isArray(response.data)) {
         setApplications(response.data);
       } else if (Array.isArray(response)) {

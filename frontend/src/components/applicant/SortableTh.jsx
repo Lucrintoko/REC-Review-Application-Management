@@ -14,6 +14,18 @@ function SortableTh({ column, sortConfig, onSort }) {
     }
   };
 
+  if (column.key === "actions") {
+    return (
+      <th
+        scope="col"
+        style={{ width: column.width }}
+        className="text-center user-select-none"
+      >
+        <span>{column.label}</span>
+      </th>
+    );
+  }
+
   return (
     <th
       scope="col"
