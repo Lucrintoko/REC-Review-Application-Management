@@ -3,13 +3,15 @@ import Swal from 'sweetalert2';
 
 function PaymentVerificationModal({ protocol, onClose }) {
     const [paymentData, setPaymentData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isFetching, setIsFetching] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [notes, setNotes] = useState('');
 
     // Fetch the payment details according to Research Protocol on ResearchProtocolModal
     useEffect(() => {
         if (protocol && protocol.application_id) {
+            setIsFetching(true);
             fetch(`http://localhost/REC-Review-Application-Management/backend/api/get_payment.php?application_id=${protocol.application_id}`)
                 .then(res => res.json())
                 .then(data => {
@@ -18,40 +20,42 @@ function PaymentVerificationModal({ protocol, onClose }) {
                     } else {
                         setError(data.message);
                     }
-                    setIsLoading(false);
                 })
                 .catch(err => {
                     console.error("Error fetching payment:", err);
                     setError("Failed to load payment details.");
-                    setIsLoading(false);
+                })
+                .finally(() => {
+                    setIsFetching(false);
                 });
         }
     }, [protocol]);
 
     // For Secretariat Payment Verification
-    const handleVerification = (action) => {
-        setIsLoading(true);
+    const handleVerification = async (action) => {
+        setIsSubmitting(true);
         const admin_id = localStorage.getItem('adminId') ? parseInt(localStorage.getItem('adminId')) : 1; // Fallback to 1 if not re-logged in
 
-        // Sending it to verify payment logic
-        fetch('http://localhost/REC-Review-Application-Management/backend/api/verify_payment.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                application_id: protocol.application_id,
-                status: action,
-                notes: notes,
-                admin_id: admin_id
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
+        try {
+            // Sending it to verify payment logic
+            const response = await fetch('http://localhost/REC-Review-Application-Management/backend/api/verify_payment.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    application_id: protocol.application_id,
+                    status: action,
+                    notes: notes,
+                    admin_id: admin_id
+                })
+            });
+
+            const data = await response.json();
+
             // Utilizing Sweet Alert for better Alert Messages and Customizable
             if (data.success) {
-                setIsLoading(false);
-                Swal.fire({
+                await Swal.fire({
                     title: 'Success!',
                     text: data.message,
                     icon: 'success',
@@ -61,11 +65,9 @@ function PaymentVerificationModal({ protocol, onClose }) {
                         const container = Swal.getContainer();
                         if (container) container.style.zIndex = '1100';
                     }
-                }).then(() => {
-                    onClose(true); // Close modal upon success and signal refresh
                 });
+                onClose(true); // Close modal upon success and signal refresh
             } else {
-                setIsLoading(false);
                 Swal.fire({
                     title: 'Verification Failed',
                     text: data.message || "An error occurred",
@@ -77,10 +79,8 @@ function PaymentVerificationModal({ protocol, onClose }) {
                     }
                 });
             }
-        })
-        .catch(err => {
+        } catch (err) {
             console.error(err);
-            setIsLoading(false);
             Swal.fire({
                 title: 'Connection Error',
                 text: "Error connecting to server",
@@ -91,7 +91,9 @@ function PaymentVerificationModal({ protocol, onClose }) {
                     if (container) container.style.zIndex = '1100';
                 }
             });
-        });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -99,7 +101,7 @@ function PaymentVerificationModal({ protocol, onClose }) {
             {/* Higher Z-Index to guarantee showing up above the ResearchProtocolModal */}
             <div className="modal-backdrop show" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1060 }}></div>
 
-            <div className="modal d-block" tabIndex="-1" onClick={() => onClose(false)} style={{ zIndex: 1065 }}>
+            <div className="modal d-block" tabIndex="-1" onClick={() => !isSubmitting && onClose(false)} style={{ zIndex: 1065 }}>
                 <div className="modal-dialog modal-lg modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
                     <div className="modal-content border-0 shadow-lg rounded-4">
                         
@@ -108,14 +110,14 @@ function PaymentVerificationModal({ protocol, onClose }) {
                             <h5 className="modal-title fw-bold text-theme-primary" style={{ letterSpacing: '1px' }}>
                                 Verify OR Payment
                             </h5>
-                            <button type="button" className="btn-close" onClick={() => onClose(false)}></button>
+                            <button type="button" className="btn-close" disabled={isSubmitting} onClick={() => onClose(false)}></button>
                         </div>
 
                         {/* Body */}
                         <div className="modal-body p-4">
                             <h6 className="text-secondary fw-bold mb-3">Protocol: {protocol.id}</h6>
                             
-                            {isLoading ? (
+                            {isFetching ? (
                                 <div className="text-center py-4">
                                     <div className="spinner-border text-primary" role="status"></div>
                                 </div>
@@ -152,6 +154,7 @@ function PaymentVerificationModal({ protocol, onClose }) {
                                     placeholder="e.g., Verified against physical cashier logbook"
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
+                                    disabled={isSubmitting}
                                 ></textarea>
                             </div>
                         </div>
@@ -162,7 +165,7 @@ function PaymentVerificationModal({ protocol, onClose }) {
                                 type="button" 
                                 className="btn btn-outline-danger px-4 fw-bold" 
                                 onClick={() => handleVerification('Rejected')}
-                                disabled={isLoading || error}
+                                disabled={isFetching || isSubmitting || Boolean(error)}
                             >
                                 Reject
                             </button>
@@ -170,9 +173,16 @@ function PaymentVerificationModal({ protocol, onClose }) {
                                 type="button" 
                                 className="btn btn-success px-4 fw-bold" 
                                 onClick={() => handleVerification('Verified')}
-                                disabled={isLoading || error}
+                                disabled={isFetching || isSubmitting || Boolean(error)}
                             >
-                                Confirm Payment
+                                {isSubmitting ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Processing...
+                                    </>
+                                ) : (
+                                    "Confirm Payment"
+                                )}
                             </button>
                         </div>
 
