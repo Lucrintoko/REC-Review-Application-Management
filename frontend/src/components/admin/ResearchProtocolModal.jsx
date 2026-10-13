@@ -25,7 +25,7 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
 
     // Calculate Progress Percentage
     let progressPercentage = 0;
-    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'ONGOING AMENDMENTS'];
+    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'AMENDMENTS'];
 
     if (protocol && terminalStatuses.includes(protocol.status)) {
         progressPercentage = 100;
@@ -91,9 +91,9 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                                     style={{ letterSpacing: '1px', fontSize: '1.1rem' }}
                                     onClick={() => {
                                         // Checks if status is for Payment Verification, if yes open PaymentVerificationModal
-                                        if (protocol.status === 'PAYMENT VERIFICATION') {
+                                        if (protocol.status === 'PAYMENT VERIFIED' || protocol.status === 'PAYMENT VERIFICATION') {
                                             setShowPaymentModal(true);
-                                        } else if (protocol.status === 'DETERMINING REVIEW TYPE') {
+                                        } else if (protocol.status === 'TYPE OF REVIEW' || protocol.status === 'DETERMINING REVIEW TYPE') {
                                             setShowReviewTypeModal(true);
                                         }
                                     }}

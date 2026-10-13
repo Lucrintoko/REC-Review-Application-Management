@@ -123,14 +123,11 @@ function AdminDashboard() {
     const filteredProtocols = protocolData.filter(protocol => {
         // Role-Based Access Control Logic for Admins: Secretariat, Chair, & Primary/Non-Primary Reviewer
         let hasAccess = true;
-        if (role === 'Secretariat') {
-            const allowedStatuses = ['PAYMENT PENDING', 'PAYMENT VERIFICATION'];
-            hasAccess = allowedStatuses.includes(protocol.status);
-        } else if (role === 'Primary Reviewer' || role === 'Non-Primary Reviewer') {
-            hasAccess = protocol.status === 'UNDER REVIEW';
-        } else if (role === 'Ethics Chair') {
-            const hiddenStatuses = ['DRAFT', 'SUBMITTED'];
+        if (role === 'Secretariat' || role === 'Ethics Chair') {
+            const hiddenStatuses = ['DRAFT', 'SUBMITTED', 'PROTOCOLS SUBMITTED'];
             hasAccess = !hiddenStatuses.includes(protocol.status);
+        } else if (role === 'Primary Reviewer' || role === 'Non-Primary Reviewer') {
+            hasAccess = protocol.status === 'ONGOING REVIEW';
         }
 
         if (!hasAccess) return false;
@@ -147,7 +144,7 @@ function AdminDashboard() {
     });
 
     // Sorting of Protocols
-    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'ONGOING AMENDMENTS'];
+    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'AMENDMENTS'];
 
     // Add new terminalStatus to push the item down if the admin just needs to see it but not access (Role Based )
     if (role === 'Secretariat') {
@@ -177,26 +174,38 @@ function AdminDashboard() {
         'Secretariat' : [
             { value: 'All', label: 'All Statuses' },
             { value: 'PAYMENT PENDING', label: 'Payment Pending' },
-            { value: 'PAYMENT VERIFICATION', label: 'Payment Verification' }
-        ],
-        'Primary Reviewer' : [
-            { value: 'All', label: 'All Statuses' },
-            { value: 'UNDER REVIEW', label: 'Under Review' },
-        ],
-        'Non-Primary Reviewer' : [
-            { value: 'All', label: 'All Statuses' },
-            { value: 'UNDER REVIEW', label: 'Under Review' },
-        ],
-        'Ethics Chair' : [
-            { value: 'All', label: 'All Statuses' },
-            { value: 'DETERMINING REVIEW TYPE', label: 'Determining Review Type' },
-            { value: 'UNDER REVIEW', label: 'Under Review' },
-            { value: 'RECOMMENDATIONS REQUESTED', label: 'Recommendations Requested' },
-            { value: 'REVISING', label: 'Revising' },
+            { value: 'PAYMENT VERIFIED', label: 'Payment Verified' },
+            { value: 'TYPE OF REVIEW', label: 'Type of Review' },
+            { value: 'ONGOING REVIEW', label: 'Ongoing Review' },
+            { value: 'CONSOLIDATION OF EVALUATION', label: 'Consolidation of Evaluation' },
+            { value: 'DECISION LETTER ISSUED', label: 'Decision Letter Issued' },
+            { value: 'REVISIONS SUBMITTED', label: 'Revisions Submitted' },
             { value: 'CLEARANCE GRANTED', label: 'Clearance Granted' },
             { value: 'REJECTED', label: 'Rejected' },
             { value: 'WITHDRAWN', label: 'Withdrawn' },
-            { value: 'ONGOING AMENDMENTS', label: 'Ongoing Amendments' }
+            { value: 'AMENDMENTS', label: 'Amendments' }
+        ],
+        'Primary Reviewer' : [
+            { value: 'All', label: 'All Statuses' },
+            { value: 'ONGOING REVIEW', label: 'Ongoing Review' },
+        ],
+        'Non-Primary Reviewer' : [
+            { value: 'All', label: 'All Statuses' },
+            { value: 'ONGOING REVIEW', label: 'Ongoing Review' },
+        ],
+        'Ethics Chair' : [
+            { value: 'All', label: 'All Statuses' },
+            { value: 'PAYMENT PENDING', label: 'Payment Pending' },
+            { value: 'PAYMENT VERIFIED', label: 'Payment Verified' },
+            { value: 'TYPE OF REVIEW', label: 'Type of Review' },
+            { value: 'ONGOING REVIEW', label: 'Ongoing Review' },
+            { value: 'CONSOLIDATION OF EVALUATION', label: 'Consolidation of Evaluation' },
+            { value: 'DECISION LETTER ISSUED', label: 'Decision Letter Issued' },
+            { value: 'REVISIONS SUBMITTED', label: 'Revisions Submitted' },
+            { value: 'CLEARANCE GRANTED', label: 'Clearance Granted' },
+            { value: 'REJECTED', label: 'Rejected' },
+            { value: 'WITHDRAWN', label: 'Withdrawn' },
+            { value: 'AMENDMENTS', label: 'Amendments' }
         ]
     };
 

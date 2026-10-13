@@ -55,10 +55,10 @@ try {
     $adminRow = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
     $proponent_name = $adminRow ? $adminRow['first_name'] . ' ' . $adminRow['last_name'] : 'Unknown Admin';
 
-    // Update Research Applications: Set review_type and change status to 'Under Review'
+    // Update Research Applications: Set review_type and change status to 'Ongoing Review'
     $updateApp = "UPDATE research_applications 
                   SET review_type = :review_type, 
-                      status = 'Under Review',
+                      status = 'Ongoing Review',
                       updated_at = CURRENT_TIMESTAMP
                   WHERE application_id = :application_id";
     $stmt1 = $db->prepare($updateApp);

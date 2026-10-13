@@ -6,19 +6,24 @@ export const APPLICATION_TYPES = [
     aliases: ["Draft", "Drafts"],
   },
   {
+    id: "Payment Pending",
+    label: "Payment Pending",
+    aliases: ["Payment Pending", "Payment Required"],
+  },
+  {
     id: "Ongoing Verification",
     label: "Ongoing Verification",
-    aliases: ["Ongoing Verification", "Payment Pending", "Payment Verified", "Submitted"],
+    aliases: ["Ongoing Verification", "Payment Verified", "Submitted", "Protocols Submitted", "Payment Verification"],
   },
   {
     id: "Under Review",
     label: "Under Review",
-    aliases: ["Under Review"],
+    aliases: ["Under Review", "Ongoing Review"],
   },
   {
     id: "Needs Revisions",
     label: "Needs Revisions",
-    aliases: ["Needs Revisions", "Revisions Required", "Revisions Submitted"],
+    aliases: ["Needs Revisions", "Revisions Required", "Revisions Submitted", "Decision Letter Issued"],
   },
   {
     id: "Needs Progress Report",
@@ -125,6 +130,7 @@ export const FALLBACK_APPLICATIONS = [
 export const APPLICATION_COLUMNS = [
   { key: "research_title", label: "Application Title", width: "45%" },
   { key: "protocol_code", label: "Protocol No.", width: "20%" },
-  { key: "submission_date", label: "Date Submitted", width: "18%" },
-  { key: "status", label: "Status", width: "17%" },
+  { key: "submission_date", label: "Date Submitted", width: "15%" },
+  { key: "status", label: "Status", width: "10%" },
+  { key: "actions", label: "Actions", width: "10%" },
 ];

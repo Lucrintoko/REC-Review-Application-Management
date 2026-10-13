@@ -80,8 +80,8 @@ function AdminAnalytics () {
     }));
 
     const activePipeline = [
-        { name: 'Under Review', count: protocolData.filter(p => p.status === 'UNDER REVIEW').length, fill: '#ffc107' },
-        { name: 'Revising', count: protocolData.filter(p => p.status === 'REVISING').length, fill: '#0dcaf0' },
+        { name: 'Ongoing Review', count: protocolData.filter(p => p.status === 'ONGOING REVIEW').length, fill: '#ffc107' },
+        { name: 'Decision Letter Issued', count: protocolData.filter(p => p.status === 'DECISION LETTER ISSUED').length, fill: '#0dcaf0' },
         { name: 'Payment Pending', count: protocolData.filter(p => p.status === 'PAYMENT PENDING').length, fill: '#dc3545' },
         { name: 'Drafts', count: protocolData.filter(p => p.status === 'DRAFT').length, fill: '#6c757d' }
     ].filter(stat => stat.count > 0); // Hide Empty Slices

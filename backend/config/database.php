@@ -1,6 +1,6 @@
 <?php
 /**
- * Database Connection Configuration (MariaDB / MySQL via PDO)
+ * Database Connection Configuration (PostgreSQL via PDO)
  * Project: Research Ethics Review Application and Management System
  */
 

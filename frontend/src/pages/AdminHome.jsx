@@ -37,9 +37,9 @@ function AdminHome() {
     // Metric Calculations
     const totalProtocols = protocolData.length;
     const clearanceGranted = protocolData.filter(p => p.status === 'CLEARANCE GRANTED').length;
-    const underReview = protocolData.filter(p => p.status === 'UNDER REVIEW').length;
-    const revising = protocolData.filter(p => p.status === 'REVISING').length;
-    const ongoingAmendments = protocolData.filter(p => p.status === 'ONGOING AMENDMENTS').length;
+    const ongoingReview = protocolData.filter(p => p.status === 'ONGOING REVIEW').length;
+    const decisionLetterIssued = protocolData.filter(p => p.status === 'DECISION LETTER ISSUED').length;
+    const amendments = protocolData.filter(p => p.status === 'AMENDMENTS').length;
 
     const exempted = protocolData.filter(p => p.type === 'EXEMPTED').length;
     const expedited = protocolData.filter(p => p.type === 'EXPEDITED').length;
@@ -75,11 +75,11 @@ function AdminHome() {
                         <div className="card-body p-4">
                             <h4 className="fw-bold text-center mb-4">Research Protocol Statuses</h4>
                             <div className="row g-3">
-                                {/* Under Review Box */}
+                                {/* Ongoing Review Box */}
                                 <div className="col-6">
                                     <div className="bg-light rounded-3 p-3 text-center border">
-                                        <p className="mb-2 fw-bold text-secondary" style={{ fontSize: '0.85rem' }}>Under Review</p>
-                                        <h2 className="fw-bold mb-0 text-warning">{underReview}</h2>
+                                        <p className="mb-2 fw-bold text-secondary" style={{ fontSize: '0.85rem' }}>Ongoing Review</p>
+                                        <h2 className="fw-bold mb-0 text-warning">{ongoingReview}</h2>
                                     </div>
                                 </div>
                                 {/* Clearance Granted Box */}
@@ -156,19 +156,18 @@ function AdminHome() {
                                     <tbody>
                                         {/* Generate Table Rows dynamically based on the math we did earlier */}
                                         {[
-                                            { label: 'Draft', value: protocolData.filter(p => p.status === 'DRAFT').length, color: 'text-muted' },
-                                            { label: 'Submitted (New)', value: protocolData.filter(p => p.status === 'SUBMITTED').length, color: 'text-dark' },
+                                            { label: 'Protocols Submitted', value: protocolData.filter(p => p.status === 'PROTOCOLS SUBMITTED').length, color: 'text-dark' },
                                             { label: 'Payment Pending', value: protocolData.filter(p => p.status === 'PAYMENT PENDING').length, color: 'text-danger' },
                                             { label: 'Payment Verified', value: protocolData.filter(p => p.status === 'PAYMENT VERIFIED').length, color: 'text-success' },
-                                            { label: 'Determining Review Type', value: protocolData.filter(p => p.status === 'DETERMINING REVIEW TYPE').length, color: 'text-warning' },
-                                            { label: 'Under Review', value: underReview, color: 'text-warning' },
-                                            { label: 'Recommendations Requested', value: protocolData.filter(p => p.status === 'RECOMMENDATIONS REQUESTED').length, color: 'text-primary' },
-                                            { label: 'Revising', value: revising, color: 'text-secondary' },
+                                            { label: 'Type of Review', value: protocolData.filter(p => p.status === 'TYPE OF REVIEW').length, color: 'text-warning' },
+                                            { label: 'Ongoing Review', value: ongoingReview, color: 'text-warning' },
+                                            { label: 'Consolidation of Evaluation', value: protocolData.filter(p => p.status === 'CONSOLIDATION OF EVALUATION').length, color: 'text-primary' },
+                                            { label: 'Decision Letter Issued', value: decisionLetterIssued, color: 'text-secondary' },
                                             { label: 'Revisions Submitted', value: protocolData.filter(p => p.status === 'REVISIONS SUBMITTED').length, color: 'text-info' },
                                             { label: 'Clearance Granted', value: clearanceGranted, color: 'text-success' },
                                             { label: 'Rejected', value: protocolData.filter(p => p.status === 'REJECTED').length, color: 'text-danger' },
                                             { label: 'Withdrawn', value: protocolData.filter(p => p.status === 'WITHDRAWN').length, color: 'text-muted' },
-                                            { label: 'Ongoing Amendments', value: ongoingAmendments, color: 'text-info' }
+                                            { label: 'Amendments', value: amendments, color: 'text-info' }
                                         ]
                                         // Only show rows that actually have a count > 0 to keep the table clean!
                                         .filter(stat => stat.value > 0)

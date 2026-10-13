@@ -57,8 +57,8 @@ try {
     ]);
 
     // Update Research Applications Status
-    // If verified proceeds to Determining Review Type. If rejected proceed to Payment Pending.
-    $newAppStatus = ($newPaymentStatus === 'Verified') ? 'Determining Review Type' : 'Payment Pending';
+    // If verified proceeds to Type of Review. If rejected proceed to Payment Pending.
+    $newAppStatus = ($newPaymentStatus === 'Verified') ? 'Type of Review' : 'Payment Pending';
     
     $updateApp = "UPDATE research_applications 
                   SET status = :app_status 

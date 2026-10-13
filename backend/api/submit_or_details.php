@@ -24,7 +24,7 @@ try {
     $db->beginTransaction();
     
     // Update research_applications status
-    $stmt1 = $db->prepare("UPDATE research_applications SET status = 'Payment Verification', updated_at = CURRENT_TIMESTAMP WHERE application_id = :app_id");
+    $stmt1 = $db->prepare("UPDATE research_applications SET status = 'Payment Verified', updated_at = CURRENT_TIMESTAMP WHERE application_id = :app_id");
     $stmt1->bindParam(':app_id', $data->application_id);
     $stmt1->execute();
     
