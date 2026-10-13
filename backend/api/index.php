@@ -170,10 +170,25 @@ if ($request_method === 'POST' && $isApplicationsEndpoint) {
         $result = $stmt->fetch();
         $application_id = $result['application_id'];
 
+        // Fetch applicant name
+        $applicantStmt = $db->prepare("SELECT first_name, last_name FROM applicants WHERE applicant_id = :applicant_id LIMIT 1");
+        $applicantStmt->execute([':applicant_id' => $applicant_id]);
+        $applicantRow = $applicantStmt->fetch();
+        $applicantName = $applicantRow ? ($applicantRow['first_name'] . ' ' . $applicantRow['last_name']) : 'Applicant';
+
         $historyStmt = $db->prepare("INSERT INTO application_history 
-            (application_id, process_point, status, proponent_name)
-            VALUES (:app_id, 'Initial Submission', 'Completed', 'Applicant')");
+            (application_id, process_point, status, proponent_name, date_completed)
+            VALUES (:app_id, 'Initial Submission', 'Completed', :proponent_name, CURRENT_TIMESTAMP)");
         $historyStmt->execute([
+            ':app_id' => $application_id,
+            ':proponent_name' => $applicantName
+        ]);
+        
+        // Insert Payment Required as Pending
+        $paymentReqStmt = $db->prepare("INSERT INTO application_history 
+            (application_id, process_point, status, proponent_name)
+            VALUES (:app_id, 'Payment Required', 'Pending', '')");
+        $paymentReqStmt->execute([
             ':app_id' => $application_id
         ]);
 

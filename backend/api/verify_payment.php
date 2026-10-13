@@ -76,21 +76,25 @@ try {
     $adminRow = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
     $proponent_name = $adminRow ? $adminRow['first_name'] . ' ' . $adminRow['last_name'] : 'Unknown Admin';
 
-    // Update Application History (Mark 'Payment Verification' as Completed)
+    // Update Application History (Mark 'Payment Verification' as Completed and set admin name)
     if ($newPaymentStatus === 'Verified') {
         $updateHistory = "UPDATE application_history 
-                          SET status = 'Completed', date_completed = CURRENT_TIMESTAMP 
-                          WHERE application_id = :application_id AND process_point = 'Payment Verification'";
+                          SET status = 'Completed', date_completed = CURRENT_TIMESTAMP, proponent_name = :proponent_name
+                          WHERE application_id = :application_id AND process_point = 'Payment Verification' AND status = 'Pending'";
         $stmt3 = $db->prepare($updateHistory);
-        $stmt3->execute([':application_id' => $application_id]);
+        $stmt3->execute([
+            ':application_id' => $application_id,
+            ':proponent_name' => $proponent_name
+        ]);
 
         // Insert new history step for Review Type Assessment
+        $chairPlaceholder = '';
         $insertHistory = "INSERT INTO application_history (application_id, process_point, status, proponent_name, created_at)
-                          VALUES (:application_id, 'Review Type Assessment', 'Pending', :proponent_name, CURRENT_TIMESTAMP)";
+                          VALUES (:application_id, 'Review Type Assessment', 'Pending', :chair_placeholder, CURRENT_TIMESTAMP)";
         $stmt4 = $db->prepare($insertHistory);
         $stmt4->execute([
             ':application_id' => $application_id,
-            ':proponent_name' => $proponent_name
+            ':chair_placeholder' => $chairPlaceholder
         ]);
     }
 

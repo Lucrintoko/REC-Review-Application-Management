@@ -15,11 +15,12 @@ if (isset($_GET['application_id'])) {
     // Forces data to be integer due to PHP defaulting data to String
     $application_id = intval($_GET['application_id']);
 
-    // Turning the whole query to alises for easier calling
+    // Turning the whole query to aliases for easier calling
     $query = "SELECT or_number as \"orNumber\", 
                      amount, 
                      TO_CHAR(payment_date, 'FMMonth DD, YYYY') as \"paymentDate\",
-                     payment_status as \"paymentStatus\"
+                     payment_status as \"paymentStatus\",
+                     verification_notes as \"applicantNotes\"
               FROM payments 
               WHERE application_id = :application_id 
               LIMIT 1";

@@ -22,7 +22,7 @@ if (!isset($data->email) || !isset($data->password)) {
 }
 
 try {
-    // Connection to MariaDB
+    // Connection to PostgreSQL
     $database = new Database();
     $db = $database->getConnection();
 

@@ -67,23 +67,25 @@ try {
         ':application_id' => $application_id
     ]);
 
-    // Update Application History (Mark 'Review Type Assessment' as Completed and attach notes)
+    // Update Application History (Mark 'Review Type Assessment' as Completed, attach notes, and set chair name)
     $updateHistory = "UPDATE application_history 
-                      SET status = 'Completed', date_completed = CURRENT_TIMESTAMP, notes = :notes 
+                      SET status = 'Completed', date_completed = CURRENT_TIMESTAMP, notes = :notes, proponent_name = :proponent_name
                       WHERE application_id = :application_id AND process_point = 'Review Type Assessment'";
     $stmt2 = $db->prepare($updateHistory);
     $stmt2->execute([
         ':notes' => $notes,
+        ':proponent_name' => $proponent_name,
         ':application_id' => $application_id
     ]);
 
     // Insert new history step for 'Ethical Review'
+    $emptyProponent = '';
     $insertHistory = "INSERT INTO application_history (application_id, process_point, status, proponent_name, created_at)
-                      VALUES (:application_id, 'Ethical Review', 'Pending', :proponent_name, CURRENT_TIMESTAMP)";
+                      VALUES (:application_id, 'Ethical Review', 'Pending', :empty_proponent, CURRENT_TIMESTAMP)";
     $stmt3 = $db->prepare($insertHistory);
     $stmt3->execute([
         ':application_id' => $application_id,
-        ':proponent_name' => $proponent_name
+        ':empty_proponent' => $emptyProponent
     ]);
 
     // Commit all changes to the database safely
