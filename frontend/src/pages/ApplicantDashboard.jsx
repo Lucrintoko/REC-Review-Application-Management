@@ -6,6 +6,7 @@ import ApplicationSearchBar from "../components/applicant/ApplicationSearchBar";
 import ApplicationsTable from "../components/applicant/ApplicationsTable";
 import ApplicationNewButton from "../components/applicant/ApplicationNewButton";
 import SubmitORModal from "../components/applicant/SubmitORModal";
+import PaymentRejectionNoticeModal from "../components/applicant/PaymentRejectionNoticeModal";
 import { useApplications } from "../hooks/useApplications";
 import { useTableSortFilter } from "../hooks/useTableSortFilter";
 
@@ -27,6 +28,7 @@ function ApplicantDashboard({
 }) {
   const applicantName = localStorage.getItem('applicantName') || "Juan Dela Cruz";
   const [selectedOrApp, setSelectedOrApp] = useState(null);
+  const [rejectionNoticeApp, setRejectionNoticeApp] = useState(null);
 
   // 1. Fetch applications data via custom hook (handles API, abort controller, loading, error, and fallback data)
   const { applications, isLoading, refetch } = useApplications();
@@ -121,6 +123,7 @@ function ApplicantDashboard({
                     hasActiveFilters={hasActiveFilters}
                     onSelectApplication={onSelectApplication}
                     onOpenOrModal={setSelectedOrApp}
+                    onOpenRejectionNotice={setRejectionNoticeApp}
                   />
                 </div>
               </div>
@@ -138,6 +141,17 @@ function ApplicantDashboard({
         application={selectedOrApp}
         onClose={() => setSelectedOrApp(null)}
         onSuccess={handleOrSuccess}
+      />
+
+      {/* Payment Rejection Feedback Notice Modal */}
+      <PaymentRejectionNoticeModal
+        show={!!rejectionNoticeApp}
+        application={rejectionNoticeApp}
+        onClose={() => setRejectionNoticeApp(null)}
+        onProceedToResubmit={(app) => {
+          setRejectionNoticeApp(null);
+          setSelectedOrApp(app);
+        }}
       />
     </div>
   );

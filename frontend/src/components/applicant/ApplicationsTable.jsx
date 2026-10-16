@@ -16,6 +16,7 @@ function ApplicationsTable({
   hasActiveFilters = false,
   onSelectApplication,
   onOpenOrModal,
+  onOpenRejectionNotice,
 }) {
   return (
     <div
@@ -53,6 +54,7 @@ function ApplicationsTable({
                 application={app}
                 onSelect={onSelectApplication}
                 onOpenOrModal={onOpenOrModal}
+                onOpenRejectionNotice={onOpenRejectionNotice}
               />
             ))
           ) : (

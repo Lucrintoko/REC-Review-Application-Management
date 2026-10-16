@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 /**
  * Modal component for applicants to submit OR (Official Receipt) details
  * for their application when status is "Payment Pending".
+ * Supports both initial submissions and resubmissions after rejection.
  */
 function SubmitORModal({ application, show, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -13,6 +14,21 @@ function SubmitORModal({ application, show, onClose, onSuccess }) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  const isRejected = (application?.payment_status || "").trim().toLowerCase() === "rejected";
+  const attemptNo = application?.payment_attempts || 1;
+
+  useEffect(() => {
+    if (application) {
+      setFormData({
+        or_number: application.or_number || "",
+        or_date: application.payment_date ? application.payment_date.split(" ")[0] : "",
+        amount: application.payment_amount || "",
+        notes: "",
+      });
+      setError(null);
+    }
+  }, [application]);
 
   if (!show || !application) return null;
 
@@ -57,8 +73,13 @@ function SubmitORModal({ application, show, onClose, onSuccess }) {
     <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1055 }}>
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content shadow-lg border-0">
-          <div className="modal-header bg-primary text-white border-bottom-0">
-            <h5 className="modal-title fw-bold">Submit OR Details</h5>
+          <div className={`modal-header ${isRejected ? "bg-danger" : "bg-primary"} text-white border-bottom-0`}>
+            <div className="d-flex align-items-center gap-2">
+              <i className={`bi ${isRejected ? "bi-arrow-repeat" : "bi-receipt"} fs-5`}></i>
+              <h5 className="modal-title fw-bold mb-0">
+                {isRejected ? "Resubmit Official Receipt" : "Submit OR Details"}
+              </h5>
+            </div>
             <button
               type="button"
               className="btn-close btn-close-white"
@@ -76,6 +97,24 @@ function SubmitORModal({ application, show, onClose, onSuccess }) {
                 {application.research_title || application.title || "Untitled Application"}
               </p>
             </div>
+
+            {isRejected && (
+              <div className="card border-0 bg-danger-subtle bg-opacity-25 border-start border-4 border-danger p-3 mb-4 rounded-3">
+                <div className="d-flex align-items-center justify-content-between mb-1">
+                  <span className="fw-bold text-danger d-inline-flex align-items-center gap-1 small text-uppercase">
+                    <i className="bi bi-exclamation-triangle-fill"></i> Previous Submission Rejected (Attempt #{attemptNo})
+                  </span>
+                </div>
+                <div className="p-2 bg-white rounded border border-danger-subtle mt-1 shadow-xs">
+                  <p className="mb-0 text-dark small fw-medium fst-italic">
+                    "{application.payment_notes || "Official receipt image was unclear or amount did not match the fee schedule. Please provide updated details."}"
+                  </p>
+                </div>
+                <small className="text-muted mt-2 d-block">
+                  Please verify your receipt details and submit the corrected payment information below.
+                </small>
+              </div>
+            )}
 
             {error && (
               <div className="alert alert-danger py-2 px-3 small" role="alert">
@@ -156,16 +195,19 @@ function SubmitORModal({ application, show, onClose, onSuccess }) {
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary px-4"
+                  className={`btn ${isRejected ? "btn-danger" : "btn-primary"} px-4 d-inline-flex align-items-center gap-2`}
                   disabled={isSubmitting || !formData.or_number || !formData.or_date || !formData.amount}
                 >
                   {isSubmitting ? (
                     <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Submitting...
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <span>Submitting...</span>
                     </>
                   ) : (
-                    "Submit Details"
+                    <>
+                      <i className={`bi ${isRejected ? "bi-arrow-repeat" : "bi-check2-circle"}`}></i>
+                      <span>{isRejected ? "Submit Corrected OR" : "Submit Details"}</span>
+                    </>
                   )}
                 </button>
               </div>
