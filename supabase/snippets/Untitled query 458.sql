@@ -1,0 +1,1 @@
+alter table application_history add column if not exists is_rejected boolean not null default false

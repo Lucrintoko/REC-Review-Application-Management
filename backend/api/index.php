@@ -37,20 +37,42 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
 
         $applicantId = isset($_GET['applicant_id']) ? intval($_GET['applicant_id']) : null;
 
+        $baseQuery = "SELECT 
+                        r.application_id, 
+                        r.protocol_code, 
+                        r.applicant_id, 
+                        r.research_title, 
+                        r.research_type, 
+                        r.review_type, 
+                        r.status, 
+                        r.submission_date, 
+                        r.decision_date, 
+                        r.clearance_date, 
+                        r.created_at, 
+                        r.updated_at, 
+                        r.form_data,
+                        p.payment_id,
+                        p.payment_status,
+                        p.verification_notes AS payment_notes,
+                        p.or_number,
+                        p.amount AS payment_amount,
+                        p.payment_date,
+                        p.verified_at AS payment_verified_at,
+                        COALESCE(
+                            (SELECT MAX(ah.attempt_no) 
+                             FROM application_history ah 
+                             WHERE ah.application_id = r.application_id 
+                               AND ah.process_point = 'Payment Required'),
+                            1
+                        ) AS payment_attempts
+                      FROM research_applications r
+                      LEFT JOIN payments p ON p.application_id = r.application_id";
+
         if ($applicantId) {
-            $stmt = $db->prepare("SELECT application_id, protocol_code, applicant_id, research_title, 
-                                         research_type, review_type, status, submission_date, 
-                                         decision_date, clearance_date, created_at, updated_at, form_data
-                                  FROM research_applications 
-                                  WHERE applicant_id = :applicant_id 
-                                  ORDER BY submission_date DESC, application_id DESC");
+            $stmt = $db->prepare($baseQuery . " WHERE r.applicant_id = :applicant_id ORDER BY r.submission_date DESC, r.application_id DESC");
             $stmt->bindParam(':applicant_id', $applicantId, PDO::PARAM_INT);
         } else {
-            $stmt = $db->prepare("SELECT application_id, protocol_code, applicant_id, research_title, 
-                                         research_type, review_type, status, submission_date, 
-                                         decision_date, clearance_date, created_at, updated_at, form_data
-                                  FROM research_applications 
-                                  ORDER BY submission_date DESC, application_id DESC");
+            $stmt = $db->prepare($baseQuery . " ORDER BY r.submission_date DESC, r.application_id DESC");
         }
 
         $stmt->execute();

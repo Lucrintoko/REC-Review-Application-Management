@@ -7,6 +7,7 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showReviewTypeModal, setShowReviewTypeModal] = useState(false);
     const [historyData, setHistoryData] = useState([]);
+    const [milestone, setMilestone] = useState(null);
 
     useEffect(() => {
         if (protocol && protocol.application_id) {
@@ -14,7 +15,10 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        setHistoryData(data.data);
+                        setHistoryData(data.data || []);
+                        if (data.milestone) {
+                            setMilestone(data.milestone);
+                        }
                     } else {
                         console.error("Error fetching history:", data.message);
                     }
@@ -23,19 +27,13 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
         }
     }, [protocol]);
 
-    // Calculate Progress Percentage
-    let progressPercentage = 0;
+    // Calculate Progress Percentage using backend milestone engine with terminal fallback
     const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'AMENDMENTS'];
+    const isTerminal = protocol && terminalStatuses.includes((protocol.status || '').toUpperCase());
 
-    if (protocol && terminalStatuses.includes(protocol.status)) {
-        progressPercentage = 100;
-    } else {
-        // Total steps of 9 according to consolidated flowchart
-        const totalExpectedSteps = 9; 
-        const completedSteps = historyData.filter(item => item.status === 'Completed').length;
-        // Cap at 99% if not terminal, to prevent showing 100% too early
-        progressPercentage = Math.min(99, Math.round((completedSteps / totalExpectedSteps) * 100));
-    }
+    const progressPercentage = isTerminal
+        ? 100
+        : (milestone?.progressPercentage ?? Math.min(99, Math.round((historyData.filter(item => item.status === 'Completed' && !item.isRejected).length / 9) * 100)));
 
     return (
         <>
@@ -145,15 +143,27 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                                                 {historyData.map((item, index) => (
                                                     <tr key={index}>
                                                         
-                                                        <td className="fw-bold">{item.processPoint}</td>
+                                                        <td className="fw-bold">{item.processPointFormatted || item.processPoint}</td>
 
-                                                        <td className={`fw-bold text-center ${item.status === 'Completed' ? 'text-success' : 'text-warning'}`}>
-                                                            {item.status}
+                                                        <td className="fw-bold text-center">
+                                                            {item.isRejected ? (
+                                                                <span className="text-danger">
+                                                                    Rejected
+                                                                </span>
+                                                            ) : item.status === 'Completed' ? (
+                                                                <span className="text-success">
+                                                                    Completed
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-warning">
+                                                                    {item.status}
+                                                                </span>
+                                                            )}
                                                         </td>
 
-                                                        <td className="text-muted">{item.dateCompleted ? item.dateCompleted : 'TBD'}</td>
+                                                        <td className="text-muted text-center">{item.dateCompleted ? item.dateCompleted : 'TBD'}</td>
 
-                                                        <td>{item.proponentName}</td>
+                                                        <td className="text-center">{item.proponentName}</td>
 
                                                     </tr>
                                                 ))}

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../controllers/history_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -60,12 +61,8 @@ try {
     $stmtUpdateHist->bindParam(':proponent_name', $proponent_name);
     $stmtUpdateHist->execute();
     
-    // Insert new process point (Payment Verification) with a pending secretariat placeholder
-    $secretariat = '';
-    $stmt4 = $db->prepare("INSERT INTO application_history (application_id, process_point, status, proponent_name, created_at) VALUES (:app_id, 'Payment Verification', 'Pending', :secretariat, CURRENT_TIMESTAMP)");
-    $stmt4->bindParam(':app_id', $data->application_id);
-    $stmt4->bindParam(':secretariat', $secretariat);
-    $stmt4->execute();
+    // Insert new process point (Payment Verification) with a pending secretariat placeholder using history_helper
+    recordHistory($db, $data->application_id, 'Payment Verification', 'Pending', '', null, false);
     
     $db->commit();
     
