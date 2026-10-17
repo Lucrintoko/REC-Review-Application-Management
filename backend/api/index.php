@@ -234,6 +234,26 @@ if ($request_method === 'POST' && $isApplicationsEndpoint) {
             };
 
             $processFiles($_FILES['files']['name'], $_FILES['files']['tmp_name'], $_FILES['files']['error'], $formDataSnapshot);
+
+            // Synchronize single 'file' property from 'files[0]' for any item with multi-files
+            $syncSingleFile = function(&$target) use (&$syncSingleFile) {
+                if (!is_array($target)) return;
+                if (isset($target['files']) && is_array($target['files']) && count($target['files']) > 0) {
+                    if (isset($target['files'][0]['savedPath'])) {
+                        if (!isset($target['file']) || !is_array($target['file'])) {
+                            $target['file'] = $target['files'][0];
+                        } else {
+                            $target['file']['savedPath'] = $target['files'][0]['savedPath'];
+                        }
+                    }
+                }
+                foreach ($target as &$child) {
+                    if (is_array($child)) {
+                        $syncSingleFile($child);
+                    }
+                }
+            };
+            $syncSingleFile($formDataSnapshot);
         }
         
         $form_data = $formDataSnapshot ? json_encode($formDataSnapshot) : null;
@@ -298,6 +318,52 @@ if ($request_method === 'POST' && $isApplicationsEndpoint) {
         $paymentReqStmt->execute([
             ':app_id' => $application_id
         ]);
+
+        // Insert uploaded files into research_documents table
+        if ($formDataSnapshot) {
+            $insertDocStmt = $db->prepare("INSERT INTO research_documents 
+                (application_id, document_type, file_name, file_path, file_size_kb, version_number)
+                VALUES (:app_id, :doc_type, :file_name, :file_path, :file_size_kb, 1)");
+
+            $mapCategory = function($key) {
+                switch ($key) {
+                    case 'fullProtocol': return 'Research Protocol';
+                    case 'informedConsent':
+                    case 'assentForm': return 'Informed Consent Form';
+                    case 'cvResearchers': return 'Curriculum Vitae';
+                    case 'endorsementLetter': return 'Endorsement Letter';
+                    case 'questionnaire':
+                    case 'dataCollectionForms': return 'Data Collection Instrument';
+                    default: return 'Other';
+                }
+            };
+
+            $insertedPaths = [];
+            $collectAndInsertDocs = function($obj, $currentKey = '') use (&$collectAndInsertDocs, $insertDocStmt, $application_id, $mapCategory, &$insertedPaths) {
+                if (!is_array($obj)) return;
+                if (isset($obj['savedPath']) && isset($obj['name'])) {
+                    if (!isset($insertedPaths[$obj['savedPath']])) {
+                        $insertedPaths[$obj['savedPath']] = true;
+                        $docType = $mapCategory($currentKey);
+                        $sizeKb = isset($obj['size']) ? round($obj['size'] / 1024) : null;
+                        $insertDocStmt->execute([
+                            ':app_id' => $application_id,
+                            ':doc_type' => $docType,
+                            ':file_name' => $obj['name'],
+                            ':file_path' => $obj['savedPath'],
+                            ':file_size_kb' => $sizeKb
+                        ]);
+                    }
+                    return;
+                }
+                foreach ($obj as $k => $v) {
+                    $nextKey = is_string($k) && !is_numeric($k) && $k !== 'files' && $k !== 'file' ? $k : $currentKey;
+                    $collectAndInsertDocs($v, $nextKey);
+                }
+            };
+
+            $collectAndInsertDocs($formDataSnapshot);
+        }
 
         $db->commit();
 

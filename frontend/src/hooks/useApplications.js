@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "../services/api";
-import { FALLBACK_APPLICATIONS } from "../constants/applicationTypes";
 
 /**
  * Custom React hook for fetching and managing applications data.
@@ -24,9 +23,6 @@ export function useApplications() {
         setApplications(response.data);
       } else if (Array.isArray(response)) {
         setApplications(response);
-      } else {
-        // Fallback to sample data if backend table is empty
-        setApplications(FALLBACK_APPLICATIONS);
       }
     } catch (err) {
       if (err.name === "AbortError") {
