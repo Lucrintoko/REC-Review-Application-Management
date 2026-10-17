@@ -17,6 +17,8 @@ function ApplicationsTable({
   onSelectApplication,
   onOpenOrModal,
   onOpenRejectionNotice,
+  onOpenRevisionNotice,
+  onOpenReviseModal,
 }) {
   return (
     <div
@@ -55,6 +57,8 @@ function ApplicationsTable({
                 onSelect={onSelectApplication}
                 onOpenOrModal={onOpenOrModal}
                 onOpenRejectionNotice={onOpenRejectionNotice}
+                onOpenRevisionNotice={onOpenRevisionNotice}
+                onOpenReviseModal={onOpenReviseModal}
               />
             ))
           ) : (

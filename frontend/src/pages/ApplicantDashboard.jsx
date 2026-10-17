@@ -7,6 +7,9 @@ import ApplicationsTable from "../components/applicant/ApplicationsTable";
 import ApplicationNewButton from "../components/applicant/ApplicationNewButton";
 import SubmitORModal from "../components/applicant/SubmitORModal";
 import PaymentRejectionNoticeModal from "../components/applicant/PaymentRejectionNoticeModal";
+import ProtocolRevisionNoticeModal from "../components/applicant/ProtocolRevisionNoticeModal";
+import ReviseProtocolModal from "../components/applicant/ReviseProtocolModal";
+import ErrorBoundary from "../components/ErrorBoundary";
 import { useApplications } from "../hooks/useApplications";
 import { useTableSortFilter } from "../hooks/useTableSortFilter";
 
@@ -29,6 +32,8 @@ function ApplicantDashboard({
   const applicantName = localStorage.getItem('applicantName') || "Juan Dela Cruz";
   const [selectedOrApp, setSelectedOrApp] = useState(null);
   const [rejectionNoticeApp, setRejectionNoticeApp] = useState(null);
+  const [revisionNoticeApp, setRevisionNoticeApp] = useState(null);
+  const [reviseProtocolApp, setReviseProtocolApp] = useState(null);
 
   // 1. Fetch applications data via custom hook (handles API, abort controller, loading, error, and fallback data)
   const { applications, isLoading, refetch } = useApplications();
@@ -124,6 +129,8 @@ function ApplicantDashboard({
                     onSelectApplication={onSelectApplication}
                     onOpenOrModal={setSelectedOrApp}
                     onOpenRejectionNotice={setRejectionNoticeApp}
+                    onOpenRevisionNotice={setRevisionNoticeApp}
+                    onOpenReviseModal={setReviseProtocolApp}
                   />
                 </div>
               </div>
@@ -135,24 +142,49 @@ function ApplicantDashboard({
       {/* Footer */}
       <DashboardFooter />
 
-      {/* Submit OR Modal */}
-      <SubmitORModal
-        show={!!selectedOrApp}
-        application={selectedOrApp}
-        onClose={() => setSelectedOrApp(null)}
-        onSuccess={handleOrSuccess}
-      />
+      {/* Modal Subsystem Wrapped in ErrorBoundary */}
+      <ErrorBoundary>
+        {/* Submit OR Modal */}
+        <SubmitORModal
+          show={!!selectedOrApp}
+          application={selectedOrApp}
+          onClose={() => setSelectedOrApp(null)}
+          onSuccess={handleOrSuccess}
+        />
 
-      {/* Payment Rejection Feedback Notice Modal */}
-      <PaymentRejectionNoticeModal
-        show={!!rejectionNoticeApp}
-        application={rejectionNoticeApp}
-        onClose={() => setRejectionNoticeApp(null)}
-        onProceedToResubmit={(app) => {
-          setRejectionNoticeApp(null);
-          setSelectedOrApp(app);
-        }}
-      />
+        {/* Payment Rejection Feedback Notice Modal */}
+        <PaymentRejectionNoticeModal
+          show={!!rejectionNoticeApp}
+          application={rejectionNoticeApp}
+          onClose={() => setRejectionNoticeApp(null)}
+          onProceedToResubmit={(app) => {
+            setRejectionNoticeApp(null);
+            setSelectedOrApp(app);
+          }}
+        />
+
+        {/* Protocol Revision Directives Notice Modal */}
+        <ProtocolRevisionNoticeModal
+          show={!!revisionNoticeApp}
+          application={revisionNoticeApp}
+          onClose={() => setRevisionNoticeApp(null)}
+          onProceedToRevise={(app) => {
+            setRevisionNoticeApp(null);
+            setReviseProtocolApp(app);
+          }}
+        />
+
+        {/* Revise Protocol Modal */}
+        <ReviseProtocolModal
+          show={!!reviseProtocolApp}
+          application={reviseProtocolApp}
+          onClose={() => setReviseProtocolApp(null)}
+          onSuccess={() => {
+            setReviseProtocolApp(null);
+            refetch();
+          }}
+        />
+      </ErrorBoundary>
     </div>
   );
 }

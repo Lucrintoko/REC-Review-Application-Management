@@ -24,8 +24,16 @@ function DashboardHeader({ userName = "Applicant", subtitle = "Applicant for Res
             <small className="text-light opacity-50 d-none d-md-block">{subtitle}</small>
           </div>
         </div>
-        {/* Profile Pic Icon */}
-        <div className="d-flex align-items-center h-100">
+        {/* Actions & Profile */}
+        <div className="d-flex align-items-center h-100 gap-3">
+          <a
+            href="/admin/dashboard"
+            className="btn btn-sm btn-outline-light d-none d-sm-inline-flex align-items-center gap-1 rounded-pill px-3"
+            title="Switch to Reviewer / Admin Portal"
+          >
+            <i className="bi bi-shield-lock"></i>
+            <span>Admin Portal</span>
+          </a>
           <i
             className="bi bi-person-circle text-emphasis"
             style={{

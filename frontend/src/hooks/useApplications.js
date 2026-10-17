@@ -36,7 +36,9 @@ export function useApplications() {
       setError(err);
       setApplications(FALLBACK_APPLICATIONS);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
     }
   }, []);
 

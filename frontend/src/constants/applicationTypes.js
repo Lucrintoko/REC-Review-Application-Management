@@ -13,7 +13,16 @@ export const APPLICATION_TYPES = [
   {
     id: "Ongoing Verification",
     label: "Ongoing Verification",
-    aliases: ["Ongoing Verification", "Payment Verified", "Submitted", "Protocols Submitted", "Payment Verification"],
+    aliases: [
+      "Ongoing Verification",
+      "Payment Verified",
+      "Submitted",
+      "Protocols Submitted",
+      "Payment Verification",
+      "Type of Review",
+      "Determining Review Type",
+      "Review Type Assessment"
+    ],
   },
   {
     id: "Under Review",
@@ -23,7 +32,14 @@ export const APPLICATION_TYPES = [
   {
     id: "Needs Revisions",
     label: "Needs Revisions",
-    aliases: ["Needs Revisions", "Revisions Required", "Revisions Submitted", "Decision Letter Issued"],
+    aliases: [
+      "Needs Revisions",
+      "Revisions Required",
+      "Revisions Submitted",
+      "Decision Letter Issued",
+      "Protocol Revision Required",
+      "Revision Required"
+    ],
   },
   {
     id: "Needs Progress Report",
@@ -50,9 +66,15 @@ export const FALLBACK_APPLICATIONS = [
     applicant_id: 1,
     research_title: "Ethical Implications of AI-Assisted Clinical Diagnostics in Zamboanga City Health Centers",
     research_type: "Undergraduate",
-    review_type: "Expedited",
-    status: "Under Review",
-    submission_date: "2026-09-15",
+    review_type: "Undetermined",
+    status: "Type of Review",
+    submission_date: "2026-10-15",
+    has_active_revision: true,
+    revision_notes: "The Ethics Review Committee Chair has returned this application for protocol modifications or clarification of review type requirements. Please review directives and resubmit.",
+    chair_proponent_name: "Ethics Review Committee Chair",
+    revision_attempt_no: 1,
+    revision_requested_at: "2026-10-15",
+    or_number: "OR-2026-001",
   },
   {
     application_id: 2,

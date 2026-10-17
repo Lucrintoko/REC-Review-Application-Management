@@ -55,9 +55,6 @@ function App() {
           }
         />
 
-        {/* Default Route */}
-        <Route path="*" element={<Navigate to="/admin/login" replace />} />
-
         {/* Testing .jsx files and checking formats */}
         {/* For Applicant Form */}
         <Route path="/applicant/login" element={<ApplicantLogin />} /> 
@@ -66,6 +63,8 @@ function App() {
 
         <Route path="/applicant/dashboard" element={<ApplicantDashboard />} />
 
+        {/* Default Route */}
+        <Route path="*" element={<Navigate to="/admin/login" replace />} />
       </Routes>
   );
 }

@@ -5,7 +5,14 @@ import { formatDate } from "../../utils/formatters";
 /**
  * Renders an individual application row inside the applications table.
  */
-function ApplicationRow({ application, onSelect, onOpenOrModal, onOpenRejectionNotice }) {
+function ApplicationRow({
+  application,
+  onSelect,
+  onOpenOrModal,
+  onOpenRejectionNotice,
+  onOpenRevisionNotice,
+  onOpenReviseModal,
+}) {
   const title = application.research_title || application.title || "Untitled Application";
   const protocolCode = application.protocol_code || application.protocol_no || "N/A";
   const date = application.submission_date || application.date_submitted;
@@ -16,13 +23,43 @@ function ApplicationRow({ application, onSelect, onOpenOrModal, onOpenRejectionN
 
   const isPaymentPending = statusStr === "payment pending";
   const isPaymentRejected = isPaymentPending && paymentStatus === "rejected";
+  const hasActiveRevision = Boolean(
+    application.has_active_revision === true ||
+    application.has_active_revision === 1 ||
+    application.has_active_revision === "true" ||
+    application.has_active_revision === "1" ||
+    (statusStr === "type of review" && application.revision_notes)
+  );
+
+  const rowClass = isPaymentRejected
+    ? "table-danger table-opacity-10"
+    : hasActiveRevision
+    ? "table-warning table-opacity-10"
+    : "";
+
+  const handleRowClick = () => {
+    if (onSelect) {
+      onSelect(application);
+    } else if (hasActiveRevision) {
+      if (onOpenReviseModal) {
+        onOpenReviseModal(application);
+      } else if (onOpenRevisionNotice) {
+        onOpenRevisionNotice(application);
+      }
+    } else if ((isPaymentRejected || isPaymentPending) && onOpenOrModal) {
+      onOpenOrModal(application);
+    }
+  };
+
+  const isClickable = Boolean(onSelect || hasActiveRevision || isPaymentRejected || isPaymentPending);
 
   return (
-    <tr className={isPaymentRejected ? "table-danger table-opacity-10" : ""}>
-      <td
-        onClick={() => onSelect && onSelect(application)}
-        style={onSelect ? { cursor: "pointer" } : undefined}
-      >
+    <tr
+      className={rowClass}
+      onClick={handleRowClick}
+      style={{ cursor: isClickable ? "pointer" : "default" }}
+    >
+      <td>
         <div className="fw-semibold text-dark">{title}</div>
         {application.research_type && (
           <small className="text-muted">
@@ -31,28 +68,19 @@ function ApplicationRow({ application, onSelect, onOpenOrModal, onOpenRejectionN
           </small>
         )}
       </td>
-      <td
-        onClick={() => onSelect && onSelect(application)}
-        style={onSelect ? { cursor: "pointer" } : undefined}
-      >
+      <td>
         <span className="badge bg-light text-dark border font-monospace px-2 py-1">
           {protocolCode}
         </span>
       </td>
-      <td
-        onClick={() => onSelect && onSelect(application)}
-        style={onSelect ? { cursor: "pointer" } : undefined}
-      >
+      <td>
         <span className="text-secondary small">{formatDate(date)}</span>
       </td>
-      <td
-        onClick={() => onSelect && onSelect(application)}
-        style={onSelect ? { cursor: "pointer" } : undefined}
-      >
+      <td>
         <div className="d-flex flex-column align-items-start gap-1">
           <StatusBadge status={application.status} />
 
-          {/* Rejection Alert Sub-Badge */}
+          {/* Payment Rejection Alert Sub-Badge */}
           {isPaymentRejected && (
             <button
               type="button"
@@ -67,9 +95,25 @@ function ApplicationRow({ application, onSelect, onOpenOrModal, onOpenRejectionN
               <span>Payment Rejected {application.payment_attempts > 1 ? `(#${application.payment_attempts})` : ""}</span>
             </button>
           )}
+
+          {/* Protocol Revision Alert Sub-Badge */}
+          {hasActiveRevision && (
+            <button
+              type="button"
+              className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1 text-decoration-none btn-sm p-1 px-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenRevisionNotice && onOpenRevisionNotice(application);
+              }}
+              title="Click to view Ethics Chair revision directives"
+            >
+              <i className="bi bi-exclamation-circle-fill text-warning"></i>
+              <span>Revision Required {application.revision_attempt_no ? `(#${application.revision_attempt_no})` : ""}</span>
+            </button>
+          )}
         </div>
       </td>
-      <td className="text-center align-middle">
+      <td className="text-center align-middle" onClick={(e) => e.stopPropagation()}>
         {isPaymentRejected ? (
           <button
             type="button"
@@ -97,6 +141,24 @@ function ApplicationRow({ application, onSelect, onOpenOrModal, onOpenRejectionN
           >
             <i className="bi bi-receipt"></i>
             <span>Submit OR</span>
+          </button>
+        ) : hasActiveRevision ? (
+          <button
+            type="button"
+            className="btn btn-sm btn-warning text-dark fw-semibold px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-1"
+            style={{ minHeight: "36px" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onOpenReviseModal) {
+                onOpenReviseModal(application);
+              } else if (onOpenRevisionNotice) {
+                onOpenRevisionNotice(application);
+              }
+            }}
+            title="Review Ethics Chair directives and revise protocol"
+          >
+            <i className="bi bi-pencil-square"></i>
+            <span>Revise Protocol</span>
           </button>
         ) : (
           <span 

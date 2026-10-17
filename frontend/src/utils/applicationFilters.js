@@ -1,4 +1,4 @@
-import { APPLICATION_TYPES } from "../constants/applicationTypes";
+import { APPLICATION_TYPES } from "../constants/applicationTypes.js";
 
 /**
  * Checks if an application matches a category/type filter key.
@@ -10,6 +10,18 @@ export function matchesTypeFilter(app, typeKey) {
   const status = (app.status || "").trim().toLowerCase();
   const type = (app.application_type || app.research_type || "").trim().toLowerCase();
   const key = typeKey.trim().toLowerCase();
+
+  // Active protocol revision matching for 'Needs Revisions'
+  if (key === "needs revisions") {
+    const hasActiveRevision = Boolean(
+      app.has_active_revision === true ||
+      app.has_active_revision === 1 ||
+      app.has_active_revision === "true" ||
+      app.has_active_revision === "1" ||
+      (status === "type of review" && app.revision_notes)
+    );
+    if (hasActiveRevision) return true;
+  }
 
   // Check direct status or type matching
   if (status === key || type === key) return true;
