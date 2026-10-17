@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from "react";
+import Swal from 'sweetalert2';
 import PaymentVerificationModal from "./PaymentVerificationModal";
 import ReviewTypeModal from "./ReviewTypeModal";
+import OngoingReviewModal from "./OngoingReviewModal";
 
 function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
+    const role = localStorage.getItem('adminRole') || "Staff";
+    const isReviewerRole = role === 'Primary Reviewer' || role === 'Non-Primary Reviewer';
     const [showTable, setShowTable] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showReviewTypeModal, setShowReviewTypeModal] = useState(false);
+    const [showOngoingReviewModal, setShowOngoingReviewModal] = useState(false);
     const [historyData, setHistoryData] = useState([]);
     const [milestone, setMilestone] = useState(null);
 
@@ -86,16 +91,22 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                                 <button 
                                     type="button" 
                                     className="btn btn-theme-tertiary text-light text-uppercase fw-bold"
-                                    style={{ letterSpacing: '1px', fontSize: '1.1rem' }}
+                                    style={{ letterSpacing: '1px', fontSize: '1rem' }}
                                     onClick={() => {
                                         // Checks if status is for Payment Verification, if yes open PaymentVerificationModal
                                         if (protocol.status === 'PAYMENT VERIFIED' || protocol.status === 'PAYMENT VERIFICATION') {
                                             setShowPaymentModal(true);
                                         } else if (protocol.status === 'TYPE OF REVIEW' || protocol.status === 'DETERMINING REVIEW TYPE') {
                                             setShowReviewTypeModal(true);
+                                        } else if (protocol.status === 'ONGOING REVIEW') {
+                                            setShowOngoingReviewModal(true);
                                         }
                                     }}
-                                >Update Status</button>
+                                >
+                                    {protocol.status === 'ONGOING REVIEW'
+                                        ? (isReviewerRole ? 'Evaluate Protocol' : `Monitor Reviews (${protocol.reviews_completed || 0}/${protocol.reviews_total || 0})`)
+                                        : 'Update Status'}
+                                </button>
                             </div>
 
                             {/* Process Point History */}
@@ -222,6 +233,19 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                     onClose={(isSuccess) => {
                         setShowReviewTypeModal(false);
                         if (isSuccess && onRefresh) {
+                            onRefresh();
+                        }
+                    }}
+                />
+            )}
+
+            {showOngoingReviewModal && (
+                <OngoingReviewModal 
+                    protocol={protocol}
+                    onClose={() => setShowOngoingReviewModal(false)}
+                    onRefresh={() => {
+                        setShowOngoingReviewModal(false);
+                        if (onRefresh) {
                             onRefresh();
                         }
                     }}

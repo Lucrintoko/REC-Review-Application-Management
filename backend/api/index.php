@@ -64,7 +64,77 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
                              WHERE ah.application_id = r.application_id 
                                AND ah.process_point = 'Payment Required'),
                             1
-                        ) AS payment_attempts
+                        ) AS payment_attempts,
+                        CASE 
+                            WHEN EXISTS (
+                                SELECT 1 FROM application_history ah 
+                                WHERE ah.application_id = r.application_id 
+                                  AND ah.process_point::text IN ('Protocol Revision', 'Proponent Revisions') 
+                                  AND ah.status = 'Pending'
+                            ) THEN TRUE 
+                            ELSE FALSE 
+                        END AS has_active_revision,
+                        (
+                            SELECT ah.attempt_no 
+                            FROM application_history ah 
+                            WHERE ah.application_id = r.application_id 
+                              AND ah.process_point::text IN ('Protocol Revision', 'Proponent Revisions') 
+                              AND ah.status = 'Pending' 
+                            ORDER BY ah.history_id DESC LIMIT 1
+                        ) AS revision_attempt_no,
+                        (
+                            SELECT ah.notes 
+                            FROM application_history ah 
+                            WHERE ah.application_id = r.application_id 
+                              AND ah.process_point = 'Review Type Assessment' 
+                              AND ah.is_rejected = TRUE 
+                            ORDER BY ah.history_id DESC LIMIT 1
+                        ) AS revision_notes,
+                        (
+                            SELECT ah.date_completed 
+                            FROM application_history ah 
+                            WHERE ah.application_id = r.application_id 
+                              AND ah.process_point = 'Review Type Assessment' 
+                              AND ah.is_rejected = TRUE 
+                            ORDER BY ah.history_id DESC LIMIT 1
+                        ) AS revision_requested_at,
+                        (
+                            SELECT ah.proponent_name 
+                            FROM application_history ah 
+                            WHERE ah.application_id = r.application_id 
+                              AND ah.process_point = 'Review Type Assessment' 
+                              AND ah.is_rejected = TRUE 
+                            ORDER BY ah.history_id DESC LIMIT 1
+                        ) AS chair_proponent_name,
+                        COALESCE(
+                            (SELECT json_agg(json_build_object(
+                                'review_id', pr.review_id,
+                                'reviewer_id', pr.reviewer_id,
+                                'reviewer_name', a.first_name || ' ' || a.last_name,
+                                'reviewer_role', pr.reviewer_role,
+                                'review_status', pr.review_status,
+                                'recommendation', pr.recommendation,
+                                'comments', pr.comments,
+                                'assigned_date', pr.assigned_date,
+                                'completed_date', pr.completed_date,
+                                'form_data', pr.form_data
+                            ) ORDER BY pr.reviewer_role, pr.reviewer_id)
+                            FROM protocol_reviews pr
+                            JOIN admins a ON a.admin_id = pr.reviewer_id
+                            WHERE pr.application_id = r.application_id),
+                            '[]'::json
+                        ) AS assigned_reviewers,
+                        (
+                            SELECT COUNT(*)::int 
+                            FROM protocol_reviews pr 
+                            WHERE pr.application_id = r.application_id
+                        ) AS reviews_total,
+                        (
+                            SELECT COUNT(*)::int 
+                            FROM protocol_reviews pr 
+                            WHERE pr.application_id = r.application_id 
+                              AND pr.review_status = 'Completed'
+                        ) AS reviews_completed
                       FROM research_applications r
                       LEFT JOIN payments p ON p.application_id = r.application_id";
 
@@ -78,11 +148,26 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
         $stmt->execute();
         $applications = $stmt->fetchAll();
         
-        // Decode form_data for easier client-side parsing
+        // Decode form_data for easier client-side parsing and format booleans
         foreach ($applications as &$app) {
             if (isset($app['form_data']) && $app['form_data']) {
                 $app['form_data'] = json_decode($app['form_data'], true);
             }
+            if (isset($app['has_active_revision'])) {
+                $app['has_active_revision'] = filter_var($app['has_active_revision'], FILTER_VALIDATE_BOOLEAN);
+            }
+            if (isset($app['revision_attempt_no']) && $app['revision_attempt_no'] !== null) {
+                $app['revision_attempt_no'] = intval($app['revision_attempt_no']);
+            }
+            if (isset($app['assigned_reviewers'])) {
+                if (is_string($app['assigned_reviewers'])) {
+                    $app['assigned_reviewers'] = json_decode($app['assigned_reviewers'], true);
+                }
+            } else {
+                $app['assigned_reviewers'] = [];
+            }
+            $app['reviews_total'] = isset($app['reviews_total']) ? intval($app['reviews_total']) : 0;
+            $app['reviews_completed'] = isset($app['reviews_completed']) ? intval($app['reviews_completed']) : 0;
         }
 
         echo json_encode([

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adzuSeal from '../assets/AdZU Seal.png';
 import ResearchProtocolModal from '../components/admin/ResearchProtocolModal';
+import OngoingReviewModal from '../components/admin/OngoingReviewModal';
 
 function AdminDashboard() {
     const navigate = useNavigate();
@@ -9,48 +10,22 @@ function AdminDashboard() {
     // Taking the data from Admin login Page
     const adminName = localStorage.getItem('adminName') || "Unknown Admin";
     const role = localStorage.getItem('adminRole') || "Staff";
+    const adminId = localStorage.getItem('adminId');
+
+    const isReviewerRole = role === 'Primary Reviewer' || role === 'Non-Primary Reviewer';
 
     // Prevention of people just typing in /admin/dashboard
     useEffect(() => {
         // If browser doesn't have any session data
         if (!localStorage.getItem('adminName')) {
             // Redirect them to the login page
-            navigate('admin/login')
+            navigate('/admin/login');
         }
     }, [navigate]);
 
-    // For storing Research Protocol Data from the Database Table Research Applications
-    // const protocolData = [                                      
-    //     { id: '2026-0751', title: 'Early Childhood Bilingualism and Its Long-Term Influence on Executive Function Development', type: 'FULL BOARD', status: 'AMENDING', date: 'DEC 4, 2023', researchers: ['Juan Dela Cruz', 'Maria Clara'] },
-    //     { id: '2026-0297', title: 'Cellular Agriculture and Cultured Meat: Nutritional Equivalence and Scalability Economics', type: 'EXEMPTED', status: 'ONGOING REVIEW', date: 'DEC 5, 2023', researchers: ['Jose Rizal'] },
-    //     { id: '2026-1317', title: 'Quantifying Urban Heat Island Mitigation via Green Roofs and Permeable Pavements', type: 'EXEMPTED', status: 'CONSOLIDATION', date: 'DEC 10, 2023', researchers: ['Andres Bonifacio', 'Emilio Aguinaldo', 'Apolinario Mabini'] },
-    //     { id: '2026-1437', title: 'The Effectiveness of Virtual Lab Simulations in Chemistry Education for Remote Learners', type: 'EXEMPTED', status: 'AMENDING', date: 'DEC 9, 2023', researchers: ['Gabriela Silang'] },
-    //     { id: '2026-0065', title: 'Nurse Staffing Ratios and Their Direct Correlation with Postoperative Patient Mortality', type: 'EXPEDITED', status: 'DELIBERATION', date: 'DEC 3, 2023', researchers: ['Antonio Luna', 'Marcelo H. del Pilar'] },
-    //     { id: '2026-0777', title: 'Intellectual Property Rights and Fair Use Boundaries in Generative Model Training Datasets', type: 'EXPEDITED', status: 'CONSOLIDATION', date: 'DEC 5, 2023', researchers: ['Emilio Jacinto'] },
-    //     { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023', researchers: ['Melchora Aquino', 'Gregoria de Jesus', 'Teresa Magbanua'] },
-    //     { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023', researchers: ['Miguel Malvar'] },
-
-    //     { id: '2026-0751', title: 'Early Childhood Bilingualism and Its Long-Term Influence on Executive Function Development', type: 'FULL BOARD', status: 'AMENDING', date: 'DEC 4, 2023', researchers: ['Juan Dela Cruz', 'Maria Clara'] },
-    //     { id: '2026-0297', title: 'Cellular Agriculture and Cultured Meat: Nutritional Equivalence and Scalability Economics', type: 'EXEMPTED', status: 'ONGOING REVIEW', date: 'DEC 5, 2023', researchers: ['Jose Rizal'] },
-    //     { id: '2026-1317', title: 'Quantifying Urban Heat Island Mitigation via Green Roofs and Permeable Pavements', type: 'EXEMPTED', status: 'CONSOLIDATION', date: 'DEC 10, 2023', researchers: ['Andres Bonifacio', 'Emilio Aguinaldo', 'Apolinario Mabini'] },
-    //     { id: '2026-1437', title: 'The Effectiveness of Virtual Lab Simulations in Chemistry Education for Remote Learners', type: 'EXEMPTED', status: 'AMENDING', date: 'DEC 9, 2023', researchers: ['Gabriela Silang'] },
-    //     { id: '2026-0065', title: 'Nurse Staffing Ratios and Their Direct Correlation with Postoperative Patient Mortality', type: 'EXPEDITED', status: 'DELIBERATION', date: 'DEC 3, 2023', researchers: ['Antonio Luna', 'Marcelo H. del Pilar'] },
-    //     { id: '2026-0777', title: 'Intellectual Property Rights and Fair Use Boundaries in Generative Model Training Datasets', type: 'EXPEDITED', status: 'CONSOLIDATION', date: 'DEC 5, 2023', researchers: ['Emilio Jacinto'] },
-    //     { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023', researchers: ['Melchora Aquino', 'Gregoria de Jesus', 'Teresa Magbanua'] },
-    //     { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023', researchers: ['Miguel Malvar'] },
-
-    //     { id: '2026-0751', title: 'Early Childhood Bilingualism and Its Long-Term Influence on Executive Function Development', type: 'FULL BOARD', status: 'AMENDING', date: 'DEC 4, 2023', researchers: ['Juan Dela Cruz', 'Maria Clara'] },
-    //     { id: '2026-0297', title: 'Cellular Agriculture and Cultured Meat: Nutritional Equivalence and Scalability Economics', type: 'EXEMPTED', status: 'ONGOING REVIEW', date: 'DEC 5, 2023', researchers: ['Jose Rizal'] },
-    //     { id: '2026-1317', title: 'Quantifying Urban Heat Island Mitigation via Green Roofs and Permeable Pavements', type: 'EXEMPTED', status: 'CONSOLIDATION', date: 'DEC 10, 2023', researchers: ['Andres Bonifacio', 'Emilio Aguinaldo', 'Apolinario Mabini'] },
-    //     { id: '2026-1437', title: 'The Effectiveness of Virtual Lab Simulations in Chemistry Education for Remote Learners', type: 'EXEMPTED', status: 'AMENDING', date: 'DEC 9, 2023', researchers: ['Gabriela Silang'] },
-    //     { id: '2026-0065', title: 'Nurse Staffing Ratios and Their Direct Correlation with Postoperative Patient Mortality', type: 'EXPEDITED', status: 'DELIBERATION', date: 'DEC 3, 2023', researchers: ['Antonio Luna', 'Marcelo H. del Pilar'] },
-    //     { id: '2026-0777', title: 'Intellectual Property Rights and Fair Use Boundaries in Generative Model Training Datasets', type: 'EXPEDITED', status: 'CONSOLIDATION', date: 'DEC 5, 2023', researchers: ['Emilio Jacinto'] },
-    //     { id: '2026-0894', title: 'Gender Representation and Stereotyping in High-Grossing Video Games (2015–2025)', type: 'FULL BOARD', status: 'CONSOLIDATION', date: 'DEC 1, 2023', researchers: ['Melchora Aquino', 'Gregoria de Jesus', 'Teresa Magbanua'] },
-    //     { id: '2026-0102', title: 'The Role of Culturally Responsive Teaching in Improving First-Generation Student Retention', type: 'EXEMPTED', status: 'AWAITING PROGRESS REPORT', date: 'DEC 8, 2023', researchers: ['Miguel Malvar'] },
-    // ];
-
     // For containing all of the Protocols
     const [protocolData, setProtocolData] = useState([]);
+    const [ongoingReviewProtocol, setOngoingReviewProtocol] = useState(null);
 
     // Fetching the data from the database
     const fetchProtocols = () => {
@@ -59,22 +34,28 @@ function AdminDashboard() {
             .then(databaseJSON => {
                 // Formatting the database data to easier names to call for calling them in the Dashboard
                 const formattedData = databaseJSON.data.map(row => ({
+                    ...row,
                     application_id: row.application_id,
                     id: row.protocol_code,
                     title: row.research_title,
-                    type: row.review_type.toUpperCase(),
+                    type: (row.review_type || 'Undetermined').toUpperCase(),
                     research_type: row.research_type,
-                    status: row.status.toUpperCase(),
+                    status: (row.status || '').toUpperCase(),
                     // Conversion of SQL Date to MMM DD, YYYY
-                    date: new Date(row.submission_date).toLocaleDateString('en-US', {
-                        month: 'short', day: 'numeric', year: 'numeric'
-                    }).toUpperCase(),
+                    date: row.submission_date 
+                        ? new Date(row.submission_date).toLocaleDateString('en-US', {
+                            month: 'short', day: 'numeric', year: 'numeric'
+                        }).toUpperCase()
+                        : 'N/A',
                     
                     form_data: row.form_data, // Ensure form_data is passed down
+                    assigned_reviewers: row.assigned_reviewers || [],
+                    reviews_total: row.reviews_total || 0,
+                    reviews_completed: row.reviews_completed || 0,
                     researchers: row.form_data?.primary_researchers 
                         ? row.form_data.primary_researchers.map(r => `${r.firstName} ${r.lastName}`) 
                         : (row.form_data?.contact_name ? [row.form_data.contact_name] : ['N/A'])
-                }))
+                }));
 
                 setProtocolData(formattedData);
             })
@@ -83,12 +64,12 @@ function AdminDashboard() {
 
     useEffect(() => {
         fetchProtocols();
-    }, [])
+    }, []);
 
     // For Protocol Detailed Pop-up Window Togge-able
     const [selectedProtocol, setSelectedProtocol] = useState(null);
 
-    // For View Mode Togge-able; Grid Mode will be default
+    // For View Mode Togge-able; Table Mode will be default
     const [viewMode, setViewMode] = useState('table');
     
     // For Status Filtering
@@ -104,11 +85,12 @@ function AdminDashboard() {
     const typeBadgeColors = {
         'FULL BOARD': 'bg-theme-primary',
         'EXPEDITED': 'bg-warning text-dark',
-        'EXEMPTED': 'bg-success'
+        'EXEMPTED': 'bg-success',
+        'UNDETERMINED': 'bg-secondary'
     };
 
     // Sorting Memory for Protocols
-    const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'ascending' })
+    const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'ascending' });
 
     // For when user clicks header switch the sorting
     const handleSort = (key) => {
@@ -116,8 +98,14 @@ function AdminDashboard() {
         if (sortConfig.key === key && sortConfig.direction === 'ascending') {
             direction = 'descending';
         }
-        setSortConfig({ key, direction })
-    }
+        setSortConfig({ key, direction });
+    };
+
+    // Helper to find the current reviewer's assignment for this protocol
+    const getMyReview = (protocol) => {
+        if (!Array.isArray(protocol.assigned_reviewers)) return null;
+        return protocol.assigned_reviewers.find(r => String(r.reviewer_id) === String(adminId)) || null;
+    };
 
     // Filter logic
     const filteredProtocols = protocolData.filter(protocol => {
@@ -126,25 +114,39 @@ function AdminDashboard() {
         if (role === 'Secretariat' || role === 'Ethics Chair') {
             const hiddenStatuses = ['DRAFT', 'SUBMITTED', 'PROTOCOLS SUBMITTED'];
             hasAccess = !hiddenStatuses.includes(protocol.status);
-        } else if (role === 'Primary Reviewer' || role === 'Non-Primary Reviewer') {
-            hasAccess = protocol.status === 'ONGOING REVIEW';
+        } else if (isReviewerRole) {
+            // Reviewers ONLY see protocols assigned to them under Ongoing Review
+            const isAssigned = Array.isArray(protocol.assigned_reviewers) &&
+                protocol.assigned_reviewers.some(rev => String(rev.reviewer_id) === String(adminId));
+            hasAccess = protocol.status === 'ONGOING REVIEW' && isAssigned;
         }
 
         if (!hasAccess) return false;
 
         // Dropdown Logic
-        const matchesStatus = filterStatus === 'All' || protocol.status === filterStatus;
+        let matchesStatus = true;
+        if (filterStatus !== 'All') {
+            if (filterStatus === 'PENDING_EVALUATION') {
+                const myRev = getMyReview(protocol);
+                matchesStatus = myRev ? myRev.review_status === 'In Progress' : false;
+            } else if (filterStatus === 'SUBMITTED_EVALUATION') {
+                const myRev = getMyReview(protocol);
+                matchesStatus = myRev ? myRev.review_status === 'Completed' : false;
+            } else {
+                matchesStatus = protocol.status === filterStatus;
+            }
+        }
 
         // ID & Protocol Title Logic
-        const matchesSearch = protocol.title.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
-                              protocol.id.toLowerCase().includes(activeSearchQuery.toLowerCase());
+        const matchesSearch = (protocol.title || '').toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
+                              (protocol.id || '').toLowerCase().includes(activeSearchQuery.toLowerCase());
 
         // Protocol Passes if it matches all Logics
         return matchesStatus && matchesSearch;
     });
 
     // Sorting of Protocols
-    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'AMENDMENTS'];
+    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'AMENDMENTS', 'PAYMENT PENDING'];
 
     // Add new terminalStatus to push the item down if the admin just needs to see it but not access (Role Based )
     if (role === 'Secretariat') {
@@ -186,12 +188,14 @@ function AdminDashboard() {
             { value: 'AMENDMENTS', label: 'Amendments' }
         ],
         'Primary Reviewer' : [
-            { value: 'All', label: 'All Statuses' },
-            { value: 'ONGOING REVIEW', label: 'Ongoing Review' },
+            { value: 'All', label: 'All Assigned (Ongoing Review)' },
+            { value: 'PENDING_EVALUATION', label: 'Evaluation Pending' },
+            { value: 'SUBMITTED_EVALUATION', label: 'Evaluation Submitted' },
         ],
         'Non-Primary Reviewer' : [
-            { value: 'All', label: 'All Statuses' },
-            { value: 'ONGOING REVIEW', label: 'Ongoing Review' },
+            { value: 'All', label: 'All Assigned (Ongoing Review)' },
+            { value: 'PENDING_EVALUATION', label: 'Evaluation Pending' },
+            { value: 'SUBMITTED_EVALUATION', label: 'Evaluation Submitted' },
         ],
         'Ethics Chair' : [
             { value: 'All', label: 'All Statuses' },
@@ -328,60 +332,96 @@ function AdminDashboard() {
 
                                 </div>
 
-                                {/* Set Height for Reesearch Protocol 4x4 Area w/ veritcal scrollbar */}
+                                {/* Set Height for Research Protocol Area w/ vertical scrollbar */}
                                 <div className='pe-2' style={{ height: '700px', overflowY: 'auto', overflowX: 'auto' }}>
 
-                                    {viewMode === 'grid' ? (
+                                    {sortedProtocols.length === 0 ? (
+                                        <div className="text-center py-5 bg-light rounded-4 border my-4">
+                                            <i className="bi bi-journal-check text-muted" style={{ fontSize: '3rem' }}></i>
+                                            <h5 className="fw-bold text-dark mt-3">No Protocols Found</h5>
+                                            <p className="text-muted small mb-0">
+                                                {isReviewerRole 
+                                                    ? "You currently have no research protocols assigned for ongoing review."
+                                                    : "No research protocols match the selected criteria."}
+                                            </p>
+                                        </div>
+                                    ) : viewMode === 'grid' ? (
                                         <div className='row g-3'>
 
                                             {/* Using map function for displaying the protocols */}
-                                            {sortedProtocols.map((protocol, index) => (
-                                                <div key={index} className='col col-md-3'>
-                                                    
-                                                    {/* Individual protocol cards */}
-                                                    <div 
-                                                        className={`card h-100 border-0 shadow-sm rounded-4 overflow-hidden ${terminalStatuses.includes(protocol.status) ? 'opacity-50' : ''}`} 
-                                                        onClick={() => setSelectedProtocol(protocol)}
-                                                        style={{ 
-                                                            backgroundColor: '#f4f6f8', 
-                                                            cursor: 'pointer'
-                                                        }}
-                                                    >
+                                            {sortedProtocols.map((protocol, index) => {
+                                                const myRev = getMyReview(protocol);
+                                                return (
+                                                    <div key={index} className='col-12 col-md-6 col-lg-3'>
+                                                        
+                                                        {/* Individual protocol cards */}
+                                                        <div 
+                                                            className={`card h-100 border-0 shadow-sm rounded-4 overflow-hidden ${terminalStatuses.includes(protocol.status) ? 'opacity-50' : ''}`} 
+                                                            onClick={() => {
+                                                                if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
+                                                                    setOngoingReviewProtocol(protocol);
+                                                                } else {
+                                                                    setSelectedProtocol(protocol);
+                                                                }
+                                                            }}
+                                                            style={{ 
+                                                                backgroundColor: '#f4f6f8', 
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
 
-                                                        {/* Header Section of Research Protocol */}
-                                                        <div className='brand-header text-white p-2 d-flex align-items-center' style={{ fontSize: '0.65rem' }}>
-                                                            {/* Dark Blue Banner */}
-                                                            {/* Protocol ID */}
-                                                            <span className='fw-bold ps-1' style={{ flex: 1 }}>{protocol.id}</span>
+                                                            {/* Header Section of Research Protocol */}
+                                                            <div className='brand-header text-white p-2 d-flex align-items-center' style={{ fontSize: '0.65rem' }}>
+                                                                <span className='fw-bold ps-1' style={{ flex: 1 }}>{protocol.id}</span>
 
-                                                            {/* Truncated Protocol Title */}
-                                                            <span
-                                                                className='border-start border-end px-2 text-truncate text-center'
-                                                                style={{ flex: 2, borderColor: 'rgba(255,255,255,0.3) !important' }}
-                                                            >
-                                                                {protocol.title}
-                                                            </span>
+                                                                <span
+                                                                    className='border-start border-end px-2 text-truncate text-center'
+                                                                    style={{ flex: 2, borderColor: 'rgba(255,255,255,0.3) !important' }}
+                                                                    title={protocol.title}
+                                                                >
+                                                                    {protocol.title}
+                                                                </span>
 
-                                                            {/* Protocol Categorization */}
-                                                            <span className='fw-bold text-center ps-1' style={{ flex: 1 }}>{protocol.type}</span>
-                                                        </div>
+                                                                <span className='fw-bold text-center ps-1' style={{ flex: 1 }}>{protocol.type}</span>
+                                                            </div>
 
-                                                        {/* Body Section of Research Protocol */}
-                                                        <div className='card-body d-flex justify-content-center align-items-center' style={{ minHeight: '100px' }}>
-                                                            <p className='mb-0 text-center fw-medium text-dark text-uppercase' style={{ fontSize: '1.4rem' }}>
-                                                                {protocol.status}
-                                                            </p>
-                                                        </div>
+                                                            {/* Body Section of Research Protocol */}
+                                                            <div className='card-body d-flex flex-column justify-content-center align-items-center text-center p-3' style={{ minHeight: '110px' }}>
+                                                                <p className='mb-1 fw-bold text-dark text-uppercase' style={{ fontSize: '1.2rem' }}>
+                                                                    {protocol.status}
+                                                                </p>
+                                                                {isReviewerRole ? (
+                                                                    myRev?.review_status === 'Completed' ? (
+                                                                        <span className="badge bg-success-subtle text-success border border-success mt-1 small">
+                                                                            <i className="bi bi-check-circle-fill me-1"></i>Evaluation Submitted
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="badge bg-warning-subtle text-warning-emphasis border border-warning mt-1 small">
+                                                                            <i className="bi bi-hourglass-split me-1"></i>Evaluation Pending
+                                                                        </span>
+                                                                    )
+                                                                ) : (
+                                                                    protocol.status === 'ONGOING REVIEW' && (
+                                                                        <span className={`badge ${protocol.reviews_completed === protocol.reviews_total && protocol.reviews_total > 0 ? 'bg-success-subtle text-success border border-success' : 'bg-primary-subtle text-theme-primary border border-primary'} mt-1 small`}>
+                                                                            <i className="bi bi-people-fill me-1"></i>{protocol.reviews_completed}/{protocol.reviews_total} Completed
+                                                                        </span>
+                                                                    )
+                                                                )}
+                                                            </div>
 
-                                                        {/* Footer Section */}
-                                                        <div className='brand-header text-white p-2 text-center' style={{ fontSize: '0.75rem' }}>
-                                                            <span className='fw-bold'>{protocol.date}</span>
+                                                            {/* Footer Section */}
+                                                            <div className='brand-header text-white p-2 d-flex justify-content-between align-items-center' style={{ fontSize: '0.75rem' }}>
+                                                                <span className='fw-bold ps-2'>{protocol.date}</span>
+                                                                <span className='pe-2 text-white opacity-75'>
+                                                                    {isReviewerRole ? <><i className="bi bi-pencil-square me-1"></i>Evaluate</> : <><i className="bi bi-eye me-1"></i>Details</>}
+                                                                </span>
+                                                            </div>
+
                                                         </div>
 
                                                     </div>
-
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                             
                                         </div>
                                     ) : (
@@ -420,6 +460,7 @@ function AdminDashboard() {
                                                         </th>
                                                         <th className='text-center' scope='col'>Type</th>
                                                         <th className='text-center' scope='col'>Status</th>
+                                                        <th className='text-center' scope='col'>{isReviewerRole ? 'Your Evaluation' : 'Review Progress'}</th>
                                                         <th 
                                                             scope='col'
                                                             style={{ cursor: 'pointer', userSelect: 'none' }}
@@ -430,44 +471,122 @@ function AdminDashboard() {
                                                                 {sortConfig.key === 'date' && sortConfig.direction === 'descending' ? '▼' : '▲'}
                                                             </span>
                                                         </th>
+                                                        <th className='text-center' scope='col'>Action</th>
                                                     </tr>
                                                 </thead>
 
                                                 {/* Table Content */}
                                                 <tbody>
-                                                    {sortedProtocols.map((protocol, index) => (
-                                                        <tr
-                                                            key={index}
-                                                            onClick={() => setSelectedProtocol(protocol)}
-                                                            className={terminalStatuses.includes(protocol.status) ? 'opacity-50 text-muted bg-light' : ''}
-                                                            style={{ cursor: 'pointer' }}
-                                                        >
-                                                            {/* ID */}
-                                                            <td className='fw-bold text-theme-primary'>
-                                                                {protocol.id}
-                                                            </td>
+                                                    {sortedProtocols.map((protocol, index) => {
+                                                        const myRev = getMyReview(protocol);
+                                                        return (
+                                                            <tr
+                                                                key={index}
+                                                                onClick={() => {
+                                                                    if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
+                                                                        setOngoingReviewProtocol(protocol);
+                                                                    } else {
+                                                                        setSelectedProtocol(protocol);
+                                                                    }
+                                                                }}
+                                                                className={terminalStatuses.includes(protocol.status) ? 'opacity-50 text-muted bg-light' : ''}
+                                                                style={{ cursor: 'pointer' }}
+                                                            >
+                                                                {/* ID */}
+                                                                <td className='fw-bold text-theme-primary'>
+                                                                    {protocol.id}
+                                                                </td>
 
-                                                            {/* Research Protocol Title */}
-                                                            <td className='text-truncate' style={{ maxWidth: '400px' }}>
-                                                                {protocol.title}
-                                                            </td>
+                                                                {/* Research Protocol Title */}
+                                                                <td className='text-truncate' style={{ maxWidth: '360px' }}>
+                                                                    <span className="fw-medium text-dark d-block text-truncate" title={protocol.title}>
+                                                                        {protocol.title}
+                                                                    </span>
+                                                                    <small className="text-muted d-block text-truncate" style={{ fontSize: '0.75rem' }}>
+                                                                        {protocol.researchers?.join(', ')}
+                                                                    </small>
+                                                                </td>
 
-                                                            {/* Type */}
-                                                            <td className='text-center'>
-                                                                <span className={`badge ${typeBadgeColors[protocol.type] || 'bg-secondary'}`} style={{minWidth: '100px' }}>{protocol.type}</span>
-                                                            </td>
+                                                                {/* Type */}
+                                                                <td className='text-center'>
+                                                                    <span className={`badge ${typeBadgeColors[protocol.type] || 'bg-secondary'}`} style={{ minWidth: '90px' }}>
+                                                                        {protocol.type}
+                                                                    </span>
+                                                                </td>
 
-                                                            {/* Status */}
-                                                            <td className='fw-medium text-uppercase text-dark text-center'>
-                                                                {protocol.status}
-                                                            </td>
+                                                                {/* Status */}
+                                                                <td className='fw-medium text-uppercase text-dark text-center small'>
+                                                                    {protocol.status}
+                                                                </td>
 
-                                                            {/* Date */}
-                                                            <td className='text-secondary small'>
-                                                                {protocol.date}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
+                                                                {/* Your Evaluation / Review Progress */}
+                                                                <td className='text-center'>
+                                                                    {isReviewerRole ? (
+                                                                        myRev ? (
+                                                                            myRev.review_status === 'Completed' ? (
+                                                                                <span className="badge bg-success-subtle text-success border border-success px-2 py-1 small">
+                                                                                    <i className="bi bi-check-circle-fill me-1"></i>Evaluation Submitted
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="badge bg-warning-subtle text-warning-emphasis border border-warning px-2 py-1 small">
+                                                                                    <i className="bi bi-hourglass-split me-1"></i>Evaluation Pending
+                                                                                </span>
+                                                                            )
+                                                                        ) : (
+                                                                            <span className="badge bg-secondary-subtle text-muted small">Not Assigned</span>
+                                                                        )
+                                                                    ) : (
+                                                                        protocol.status === 'ONGOING REVIEW' ? (
+                                                                            <span 
+                                                                                className={`badge ${protocol.reviews_completed === protocol.reviews_total && protocol.reviews_total > 0 ? 'bg-success-subtle text-success border border-success' : 'bg-primary-subtle text-theme-primary border border-primary'} px-2 py-1 small`}
+                                                                                title={`${protocol.reviews_completed} of ${protocol.reviews_total} committee reviews completed`}
+                                                                            >
+                                                                                <i className="bi bi-people-fill me-1"></i>{protocol.reviews_completed}/{protocol.reviews_total} Completed
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="text-muted small">—</span>
+                                                                        )
+                                                                    )}
+                                                                </td>
+
+                                                                {/* Date */}
+                                                                <td className='text-secondary small'>
+                                                                    {protocol.date}
+                                                                </td>
+
+                                                                {/* Action */}
+                                                                <td className='text-center'>
+                                                                    {isReviewerRole ? (
+                                                                        <button 
+                                                                            type="button" 
+                                                                            className="btn btn-sm btn-primary fw-bold text-nowrap px-3 shadow-xs"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (protocol.status === 'ONGOING REVIEW') {
+                                                                                    setOngoingReviewProtocol(protocol);
+                                                                                } else {
+                                                                                    setSelectedProtocol(protocol);
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <i className="bi bi-pencil-square me-1"></i>Evaluate
+                                                                        </button>
+                                                                    ) : (
+                                                                        <button 
+                                                                            type="button" 
+                                                                            className="btn btn-sm btn-outline-secondary fw-semibold text-nowrap px-2"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setSelectedProtocol(protocol);
+                                                                            }}
+                                                                        >
+                                                                            <i className="bi bi-eye me-1"></i>Details
+                                                                        </button>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
                                                 </tbody>
 
                                             </table>
@@ -497,6 +616,17 @@ function AdminDashboard() {
                 onRefresh={() => {
                     fetchProtocols();
                     setSelectedProtocol(null);
+                }}
+            />
+        )}
+
+        {ongoingReviewProtocol && (
+            <OngoingReviewModal
+                protocol={ongoingReviewProtocol}
+                onClose={() => setOngoingReviewProtocol(null)}
+                onRefresh={() => {
+                    fetchProtocols();
+                    setOngoingReviewProtocol(null);
                 }}
             />
         )}
