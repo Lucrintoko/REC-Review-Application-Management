@@ -1,6 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import StatusBadge from "./StatusBadge";
 import { formatDate } from "../../utils/formatters";
+
+const DRAFT_STORAGE_KEY = "adzu_rec_application_draft_v1";
 
 /**
  * Renders an individual application row inside the applications table.
@@ -13,6 +16,7 @@ function ApplicationRow({
   onOpenRevisionNotice,
   onOpenReviseModal,
 }) {
+  const navigate = useNavigate();
   const title = application.research_title || application.title || "Untitled Application";
   const protocolCode = application.protocol_code || application.protocol_no || "N/A";
   const date = application.submission_date || application.date_submitted;
@@ -21,6 +25,7 @@ function ApplicationRow({
   const statusStr = (application.status || "").trim().toLowerCase();
   const paymentStatus = (application.payment_status || "").trim().toLowerCase();
 
+  const isDraft = statusStr === "draft";
   const isPaymentPending = statusStr === "payment pending";
   const isPaymentRejected = isPaymentPending && paymentStatus === "rejected";
   const hasActiveRevision = Boolean(
@@ -52,6 +57,22 @@ function ApplicationRow({
   };
 
   const isClickable = Boolean(onSelect || hasActiveRevision || isPaymentRejected || isPaymentPending);
+
+  const handleEditDraft = (event) => {
+    event.stopPropagation();
+
+    if (application.form_data) {
+      localStorage.setItem(
+        DRAFT_STORAGE_KEY,
+        JSON.stringify({
+          data: application.form_data,
+          savedAt: application.updated_at || application.submission_date || new Date().toISOString(),
+        })
+      );
+    }
+
+    navigate("/applicant/form");
+  };
 
   return (
     <tr
@@ -141,6 +162,17 @@ function ApplicationRow({
           >
             <i className="bi bi-receipt"></i>
             <span>Submit OR</span>
+          </button>
+        ) : isDraft ? (
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-primary fw-semibold px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-1"
+            style={{ minHeight: "36px" }}
+            onClick={handleEditDraft}
+            title="Open this draft for editing"
+          >
+            <i className="bi bi-pencil-square"></i>
+            <span>Edit Draft</span>
           </button>
         ) : hasActiveRevision ? (
           <button

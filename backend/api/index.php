@@ -258,7 +258,15 @@ if ($request_method === 'POST' && $isApplicationsEndpoint) {
         
         $form_data = $formDataSnapshot ? json_encode($formDataSnapshot) : null;
         
-        $applicant_id = 1;
+        $applicant_id = intval($input['applicant_id'] ?? 0);
+        if ($applicant_id <= 0) {
+            http_response_code(400);
+            echo json_encode([
+                "status" => "error",
+                "message" => "A valid applicant ID is required."
+            ]);
+            exit;
+        }
 
         $db->beginTransaction();
 

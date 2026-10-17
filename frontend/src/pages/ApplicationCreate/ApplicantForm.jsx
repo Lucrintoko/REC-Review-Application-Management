@@ -759,6 +759,7 @@ function ApplicantForm({ onBack }) {
     }));
 
     const submissionPayload = {
+      applicant_id: Number(localStorage.getItem("applicantId")) || 0,
       protocol_code: generatedCode,
       research_title: formData.study_title,
       research_type: "Undergraduate",
@@ -836,10 +837,11 @@ function ApplicantForm({ onBack }) {
       }, 1500);
     } catch (err) {
       console.error("Draft save failed:", err);
+      const syncError = err instanceof Error ? err.message : "Unknown server error.";
       showToast(
         savedLocally
-          ? "Draft saved in this browser, but could not be synced with the server."
-          : "Draft could not be saved. Your form data is still available on this page.",
+          ? `Draft saved in this browser, but could not be synced with the server: ${syncError}`
+          : `Draft could not be saved: ${syncError}`,
         "warning"
       );
     } finally {
@@ -849,7 +851,7 @@ function ApplicantForm({ onBack }) {
 
   const handleNavigateHome = () => {
     if (onBack) onBack();
-    else navigate("/");
+    else navigate("/applicant/dashboard");
   };
 
   // =========================================================================
