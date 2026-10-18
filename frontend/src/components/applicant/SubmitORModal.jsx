@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 
-/**
- * Modal component for applicants to submit OR (Official Receipt) details
- * for their application when status is "Payment Pending".
- * Supports both initial submissions and resubmissions after rejection.
- */
+// Modal component for applicants to submit OR (Official Receipt) details
+// for their application when status is "Payment Pending".
+// Supports both initial submissions and resubmissions after rejection.
 function SubmitORModal({ application, show, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     or_number: "",

@@ -26,6 +26,10 @@ function ApplicationRow({
   const isPaymentPending = statusStr === "payment pending";
   const isPaymentRejected = isPaymentPending && paymentStatus === "rejected";
   
+  // Stage 6 & Stage 7 Workflow Invariants
+  const isClearanceGranted = statusStr === "clearance granted" || statusStr === "certification finished";
+  const isRevisionsSubmitted = statusStr === "revisions submitted";
+
   // Stage 3 Review Type revision return
   const hasActiveRevision = Boolean(
     application.has_active_revision === true ||
@@ -44,9 +48,9 @@ function ApplicationRow({
   );
 
   const recommendation = application.latest_consolidation?.consolidated_recommendation || "";
-  const isApproved = recommendation === "Approved";
-  const isRevisionsRequired = recommendation.includes("Revision");
-  const isDisapproved = recommendation === "Disapproved";
+  const isApproved = isClearanceGranted || recommendation === "Approved";
+  const isRevisionsRequired = statusStr === "decision letter issued" && recommendation.includes("Revision");
+  const isDisapproved = recommendation === "Disapproved" && !isClearanceGranted;
   const isAppealed = Boolean(
     application.is_appealed === true ||
     application.is_appealed === 1 ||
@@ -57,8 +61,10 @@ function ApplicationRow({
 
   const rowClass = isPaymentRejected
     ? "table-danger table-opacity-10"
-    : isApproved
+    : isClearanceGranted || isApproved
     ? "table-success table-opacity-10"
+    : isRevisionsSubmitted
+    ? "table-info table-opacity-10"
     : (hasDecisionLetter && isRevisionsRequired) || hasActiveRevision
     ? "table-warning table-opacity-10"
     : isDisapproved && !isAppealed
@@ -70,7 +76,7 @@ function ApplicationRow({
   const handleRowClick = () => {
     if (onSelect) {
       onSelect(application);
-    } else if (hasDecisionLetter && onOpenDecisionLetter) {
+    } else if ((hasDecisionLetter || isClearanceGranted || isRevisionsSubmitted) && onOpenDecisionLetter) {
       onOpenDecisionLetter(application);
     } else if (hasActiveRevision) {
       if (onOpenReviseModal) {
@@ -84,20 +90,28 @@ function ApplicationRow({
   };
 
   const isClickable = Boolean(
-    onSelect || hasDecisionLetter || hasActiveRevision || isPaymentRejected || isPaymentPending
+    onSelect || hasDecisionLetter || isClearanceGranted || isRevisionsSubmitted || hasActiveRevision || isPaymentRejected || isPaymentPending
   );
 
   // Decision Sub-Badge configuration
   const getDecisionBadge = () => {
-    if (!hasDecisionLetter) return null;
-
-    if (isApproved) {
+    if (isClearanceGranted || isApproved) {
       return {
         label: "Ethical Clearance Granted",
         icon: "bi-patch-check-fill",
         className: "bg-success-subtle text-success border-success-subtle",
       };
     }
+
+    if (isRevisionsSubmitted) {
+      return {
+        label: "Revisions Under Verification",
+        icon: "bi-hourglass-split",
+        className: "bg-info-subtle text-info border-info-subtle fw-semibold",
+      };
+    }
+
+    if (!hasDecisionLetter) return null;
     if (recommendation.includes("Minor")) {
       return {
         label: "Decision: Minor Revisions",
@@ -212,7 +226,41 @@ function ApplicationRow({
         </div>
       </td>
       <td className="text-center align-middle" onClick={(e) => e.stopPropagation()}>
-        {hasDecisionLetter ? (
+        {/* Stage 7: Ethical Clearance Granted Action */}
+        {isClearanceGranted ? (
+          <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
+            <button
+              type="button"
+              className="btn btn-sm btn-success fw-semibold px-3 rounded-pill shadow-xs d-inline-flex align-items-center gap-1"
+              style={{ minHeight: "36px" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenDecisionLetter && onOpenDecisionLetter(application);
+              }}
+              title="View Official Certificate of Ethical Clearance"
+            >
+              <i className="bi bi-patch-check-fill"></i>
+              <span>View Clearance</span>
+            </button>
+          </div>
+        ) : isRevisionsSubmitted ? (
+          /* Stage 6: Revisions Submitted Under Verification Action */
+          <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-info text-dark fw-medium px-3 rounded-pill shadow-xs d-inline-flex align-items-center gap-1"
+              style={{ minHeight: "36px" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenDecisionLetter && onOpenDecisionLetter(application);
+              }}
+              title="View Form 13 Decision Notice & Directives Matrix under verification"
+            >
+              <i className="bi bi-file-earmark-text"></i>
+              <span>View Decision</span>
+            </button>
+          </div>
+        ) : hasDecisionLetter ? (
           <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
             {/* Decision Letter Modal Trigger */}
             <button

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import adzuSeal from "../../assets/AdZU Seal.png";
 import { formatDate } from "../../utils/formatters";
+import { printIsolatedElement } from "../../utils/printHelper";
 
 /**
  * ApplicantDecisionLetterModal.jsx
@@ -28,6 +29,17 @@ export default function ApplicantDecisionLetterModal({
   const [isPrinting, setIsPrinting] = useState(false);
   const [consolidationDetails, setConsolidationDetails] = useState(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  // Clearance details extraction from form_data (Hook declared unconditionally before early returns)
+  const parsedFormData = useMemo(() => {
+    if (!application?.form_data) return {};
+    if (typeof application.form_data === "object") return application.form_data;
+    try {
+      return JSON.parse(application.form_data);
+    } catch {
+      return {};
+    }
+  }, [application?.form_data]);
 
   // Fetch complete criteria matrix if not fully populated in payload
   useEffect(() => {
@@ -57,33 +69,69 @@ export default function ApplicantDecisionLetterModal({
     };
   }, [show, application?.application_id]);
 
+  // Early return strictly AFTER all top-level React hooks are registered
   if (!show || !application) return null;
 
-  // Metadata Extraction
-  const protocolCode = application.protocol_code || application.protocol_no || application.id || "REC-2026-XXXX";
-  const researchTitle = application.research_title || application.title || "Untitled Research Study";
-  const reviewType = application.review_type || application.type || "Expedited Review";
+  // Metadata Extraction with safe string coercion
+  const rawProtocolCode = application.protocol_code || application.protocol_no || application.id || "REC-2026-XXXX";
+  const protocolCode = typeof rawProtocolCode === "string" ? rawProtocolCode : String(rawProtocolCode || "REC-2026-XXXX");
+  const rawTitle = application.research_title || application.title || "Untitled Research Study";
+  const researchTitle = typeof rawTitle === "string" ? rawTitle : String(rawTitle || "Untitled Research Study");
+  const reviewType = typeof application.review_type === "string" ? application.review_type : (application.type || "Expedited Review");
   const orNumber = application.or_number || "Verified on File";
 
-  const consolidation = application.latest_consolidation || consolidationDetails?.consolidation_meta || {};
-  const recommendation = consolidation.consolidated_recommendation || "Minor Revisions";
+  const consolidation = (typeof application.latest_consolidation === "object" && application.latest_consolidation !== null)
+    ? application.latest_consolidation
+    : (consolidationDetails?.consolidation_meta || {});
+
+  const recommendation = typeof consolidation.consolidated_recommendation === "string"
+    ? consolidation.consolidated_recommendation
+    : "Minor Revisions";
+
   const meetingDate = consolidation.meeting_date ? formatDate(consolidation.meeting_date) : formatDate(new Date().toISOString());
-  const chairName = consolidation.chair_name || consolidationDetails?.consolidation_meta?.chair_name || "Ethics Committee Chair";
-  const cycleNumber = consolidation.cycle_number || consolidationDetails?.consolidation_meta?.cycle_number || 1;
-  const directivesForRevisions = consolidation.directives_for_revisions || "";
-  const summaryNotes = consolidation.summary_notes || "";
+  const chairName = typeof consolidation.chair_name === "string"
+    ? consolidation.chair_name
+    : (typeof consolidationDetails?.consolidation_meta?.chair_name === "string"
+        ? consolidationDetails.consolidation_meta.chair_name
+        : "Ethics Committee Chair");
+
+  const cycleNumber = Number(consolidation.cycle_number || consolidationDetails?.consolidation_meta?.cycle_number) || 1;
+
+  const rawDirectives = consolidation.directives_for_revisions;
+  const directivesForRevisions = typeof rawDirectives === "string"
+    ? rawDirectives
+    : (Array.isArray(rawDirectives)
+        ? rawDirectives.map((d) => (typeof d === "string" ? d : (d?.directive || d?.issue || JSON.stringify(d)))).join("\n")
+        : (rawDirectives ? JSON.stringify(rawDirectives) : ""));
+
+  const rawSummaryNotes = consolidation.summary_notes;
+  const summaryNotes = typeof rawSummaryNotes === "string"
+    ? rawSummaryNotes
+    : (rawSummaryNotes ? JSON.stringify(rawSummaryNotes) : "");
 
   // Criteria matrix fallback extraction
-  const form11Criteria = consolidationDetails?.criteria_matrix?.form11 || [];
-  const form12Criteria = consolidationDetails?.criteria_matrix?.form12 || [];
-  const perQuestionFindings = consolidation.per_question_findings || {};
+  const form11Criteria = Array.isArray(consolidationDetails?.criteria_matrix?.form11) ? consolidationDetails.criteria_matrix.form11 : [];
+  const form12Criteria = Array.isArray(consolidationDetails?.criteria_matrix?.form12) ? consolidationDetails.criteria_matrix.form12 : [];
+
+  // Parse per_question_findings safely whether object or JSON string
+  const rawFindings = consolidation.per_question_findings;
+  const perQuestionFindings = (typeof rawFindings === "object" && rawFindings !== null && !Array.isArray(rawFindings))
+    ? rawFindings
+    : (typeof rawFindings === "string"
+        ? (() => { try { const p = JSON.parse(rawFindings); return (typeof p === "object" && p !== null && !Array.isArray(p)) ? p : {}; } catch { return {}; } })()
+        : {});
 
   const getItemState = (item) => {
+    if (!item) return { finding: "Satisfactory", remarks: "", isActionRequired: false };
     const live = perQuestionFindings[item.question_id];
-    const finding = live?.finding || item.chair_state?.finding || item.smart_default_finding || "Satisfactory";
-    const remarks = (live?.remarks !== undefined)
+    const finding = (typeof live?.finding === "string" && live.finding) ||
+                    (typeof item.chair_state?.finding === "string" && item.chair_state.finding) ||
+                    (typeof item.smart_default_finding === "string" && item.smart_default_finding) ||
+                    "Satisfactory";
+    const rawRemarks = (live?.remarks !== undefined)
       ? live.remarks
-      : (item.chair_state?.remarks || item.smart_default_remarks || "");
+      : (item.chair_state?.remarks !== undefined ? item.chair_state.remarks : (item.smart_default_remarks || ""));
+    const remarks = typeof rawRemarks === "string" ? rawRemarks : (rawRemarks ? JSON.stringify(rawRemarks) : "");
     const isActionRequired = (finding === "Requires Modification" || finding === "Unable to Assess");
     return { finding, remarks, isActionRequired };
   };
@@ -97,11 +145,15 @@ export default function ApplicantDecisionLetterModal({
   const displayForm12 = filterItems(form12Criteria);
   const totalActionItems = [...form11Criteria, ...form12Criteria].filter((i) => getItemState(i).isActionRequired).length;
 
-  const isApproved = recommendation === "Approved";
-  const isMinorRevisions = recommendation.includes("Minor");
-  const isMajorRevisions = recommendation.includes("Major");
-  const isRevisionsRequired = isMinorRevisions || isMajorRevisions;
-  const isDisapproved = recommendation === "Disapproved";
+  const statusStr = (typeof application?.status === "string" ? application.status : "").trim().toLowerCase();
+  const isClearanceGranted = statusStr === "clearance granted";
+  const isRevisionsSubmitted = statusStr === "revisions submitted";
+  const isApproved = recommendation === "Approved" || isClearanceGranted;
+  const recStr = typeof recommendation === "string" ? recommendation : String(recommendation || "");
+  const isMinorRevisions = !isClearanceGranted && recStr.includes("Minor");
+  const isMajorRevisions = !isClearanceGranted && recStr.includes("Major");
+  const isRevisionsRequired = !isClearanceGranted && !isRevisionsSubmitted && (isMinorRevisions || isMajorRevisions);
+  const isDisapproved = !isClearanceGranted && recStr === "Disapproved";
   const isAppealed = Boolean(
     application?.is_appealed === true ||
     application?.is_appealed === 1 ||
@@ -110,14 +162,31 @@ export default function ApplicantDecisionLetterModal({
     application?.current_cycle > 1
   );
 
-  // Offline Print Trigger
+  const clearanceDetails = (typeof parsedFormData.clearance_details === "object" && parsedFormData.clearance_details !== null)
+    ? parsedFormData.clearance_details
+    : ((typeof application?.clearance_details === "object" && application?.clearance_details !== null) ? application.clearance_details : {});
+
+  const certificateNumber = clearanceDetails.certificate_number || application?.certificate_number || `AdZU-REC-${protocolCode.replace(/^REC-?/i, "")}`;
+  const validityStart = clearanceDetails.validity_start ? formatDate(clearanceDetails.validity_start) : meetingDate;
+  const validityEnd = clearanceDetails.validity_end ? formatDate(clearanceDetails.validity_end) : "1 Year Post-Approval";
+  const validityPeriodYears = Number(clearanceDetails.validity_period_years) || 1;
+  const clearanceNotes = typeof clearanceDetails.general_verification_notes === "string" ? clearanceDetails.general_verification_notes : "";
+
+  // Offline Print Trigger via Isolated Canvas Engine
   const handleTriggerPrint = () => {
-    setActiveTab("form13");
+    if (activeTab !== "form13") {
+      setActiveTab("form13");
+    }
     setIsPrinting(true);
-    setTimeout(() => {
-      window.print();
-      setIsPrinting(false);
-    }, 250);
+    setTimeout(async () => {
+      try {
+        await printIsolatedElement("printable-form13-notice", `ADZU-REC Form 13 - ${protocolCode}`);
+      } catch (err) {
+        console.error("Error invoking isolated print:", err);
+      } finally {
+        setIsPrinting(false);
+      }
+    }, 150);
   };
 
   // Determination Visual Config
@@ -128,10 +197,9 @@ export default function ApplicantDecisionLetterModal({
         badgeClass: "bg-success text-white",
         borderClass: "border-success",
         accentColor: "#198754",
-        icon: "bi-check-circle-fill",
-        leadText: "The AdZU Research Ethics Committee has formally approved your study protocol.",
-        guidelineText:
-          "The protocol satisfies all ethical standards for human participant protection. Ethical clearance is effective for one (1) calendar year. An annual progress report or final completion report must be submitted prior to study expiration.",
+        icon: "bi-patch-check-fill",
+        leadText: "The AdZU Research Ethics Committee has formally granted ethical clearance for your study protocol.",
+        guidelineText: `The protocol satisfies all ethical standards for human participant protection. Ethical clearance is effective for ${validityPeriodYears} calendar year(s) (${validityStart} to ${validityEnd}). An annual progress report or final completion report must be submitted prior to study expiration.`,
       };
     }
     if (isMinorRevisions) {
@@ -278,13 +346,13 @@ export default function ApplicantDecisionLetterModal({
                 <div>
                   <div className="d-flex align-items-center gap-2 flex-wrap">
                     <h5 className="modal-title fw-bold text-white mb-0" id="applicantDecisionModalTitle">
-                      Committee Decision Notice
+                      {isApproved ? "Formal Ethical Clearance Notice" : "Committee Decision Notice"}
                     </h5>
                     <span className="badge bg-secondary font-monospace px-2 py-1">
                       {protocolCode}
                     </span>
                     <span className={`badge ${decisionConfig.badgeClass}`}>
-                      {recommendation}
+                      {isApproved ? "CERTIFIED CLEARANCE" : recommendation}
                     </span>
                   </div>
                   <small className="text-secondary fw-medium">
@@ -360,20 +428,80 @@ export default function ApplicantDecisionLetterModal({
 
                   {/* Ethical Approval Celebration Card */}
                   {isApproved && (
-                    <div className="alert alert-success border-success-subtle shadow-sm p-3 rounded-3 mb-0">
-                      <div className="d-flex align-items-start gap-2">
-                        <i className="bi bi-award-fill text-success fs-4"></i>
-                        <div>
-                          <h6 className="fw-bold text-success mb-1">Formal Ethical Clearance Notice</h6>
-                          <p className="small text-secondary mb-2">
-                            Congratulations! Your protocol has successfully passed comprehensive ethical evaluation. 
-                            The signed <strong>Certificate of Ethical Clearance</strong> has been filed with the University REC Secretariat.
+                    <div className="card border-0 border-start border-4 border-success shadow-sm p-4 bg-white rounded-3">
+                      <div className="d-flex align-items-start gap-3">
+                        <div className="bg-success bg-opacity-10 text-success p-3 rounded-circle d-flex align-items-center justify-content-center">
+                          <i className="bi bi-award-fill fs-2"></i>
+                        </div>
+                        <div className="flex-grow-1">
+                          <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                            <h5 className="fw-bold text-success mb-0">Certificate of Ethical Clearance</h5>
+                            <span className="badge bg-success-subtle text-success border border-success-subtle font-monospace px-2 py-1">
+                              CERT NO: {certificateNumber}
+                            </span>
+                          </div>
+                          <p className="small text-secondary mb-3">
+                            Congratulations! Your research protocol has successfully passed comprehensive ethical evaluation and committee verification. 
+                            The signed institutional Certificate of Ethical Clearance is officially registered with the University REC Secretariat.
                           </p>
-                          <ul className="small text-secondary mb-0 ps-3">
-                            <li>Clearance Validity: <strong>1 Calendar Year</strong> from {meetingDate}.</li>
-                            <li>Continuing Review: Submit an annual progress report 30 days prior to expiry.</li>
-                            <li>Amendments: Any prospective protocol alterations must receive prior REC approval.</li>
-                          </ul>
+
+                          {/* Certificate Details Credential Grid */}
+                          <div className="row g-2 mb-3">
+                            <div className="col-12 col-md-4">
+                              <div className="p-2 border rounded bg-light">
+                                <span className="d-block text-muted small" style={{ fontSize: "0.75rem" }}>Clearance Number</span>
+                                <strong className="font-monospace text-dark small">{certificateNumber}</strong>
+                              </div>
+                            </div>
+                            <div className="col-12 col-md-4">
+                              <div className="p-2 border rounded bg-light">
+                                <span className="d-block text-muted small" style={{ fontSize: "0.75rem" }}>Active Term</span>
+                                <strong className="text-dark small">{validityStart} — {validityEnd}</strong>
+                              </div>
+                            </div>
+                            <div className="col-12 col-md-4">
+                              <div className="p-2 border rounded bg-light">
+                                <span className="d-block text-muted small" style={{ fontSize: "0.75rem" }}>Sign-Off Authority</span>
+                                <strong className="text-dark small">{clearanceDetails.chair_name || chairName}</strong>
+                              </div>
+                            </div>
+                          </div>
+
+                          {clearanceNotes && (
+                            <div className="p-2 border rounded bg-success-subtle bg-opacity-25 mb-3">
+                              <span className="d-block text-success-emphasis fw-semibold small" style={{ fontSize: "0.75rem" }}>
+                                Verification & Clearance Endorsement Notes:
+                              </span>
+                              <span className="small text-dark fst-italic">{clearanceNotes}</span>
+                            </div>
+                          )}
+
+                          <div className="border-top pt-2">
+                            <h6 className="fw-bold text-dark small mb-1">Post-Clearance Obligations:</h6>
+                            <ul className="small text-secondary mb-0 ps-3">
+                              <li>Clearance Validity: <strong>{validityPeriodYears} Calendar Year(s)</strong> (Valid through {validityEnd}).</li>
+                              <li>Continuing Review: Submit an annual progress report 30 days prior to protocol expiry.</li>
+                              <li>Mandatory Amendments: Any prospective protocol alterations must receive prior REC approval.</li>
+                              <li>Adverse Event Reporting: Serious adverse events must be reported within 48 hours.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Revision Submitted & Pending Verification Banner */}
+                  {isRevisionsSubmitted && (
+                    <div className="alert alert-info border-info-subtle shadow-sm p-3 rounded-3 mb-0">
+                      <div className="d-flex align-items-start gap-2">
+                        <i className="bi bi-hourglass-split text-info fs-4 flex-shrink-0"></i>
+                        <div>
+                          <h6 className="fw-bold text-info-emphasis mb-1">Revisions Under Verification</h6>
+                          <p className="small text-secondary mb-0">
+                            Your point-by-point clarification matrix and revised protocol documents have been successfully submitted 
+                            and are currently being verified by the Ethics Committee Chair and Secretariat. You will be notified once 
+                            formal ethical clearance is signed off or if any further clarification is needed.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -552,8 +680,13 @@ export default function ApplicantDecisionLetterModal({
                     <div className="text-end border p-2 rounded bg-light" style={{ minWidth: "150px" }}>
                       <div className="fw-bold font-monospace text-primary small">ADZU-REC Form 13</div>
                       <div className="text-uppercase fw-semibold text-secondary" style={{ fontSize: "0.68rem" }}>
-                        Decision Notice
+                        {isApproved ? "Clearance Notice" : "Decision Notice"}
                       </div>
+                      {isApproved && (
+                        <div className="small font-monospace text-success fw-bold" style={{ fontSize: "0.72rem" }}>
+                          {certificateNumber}
+                        </div>
+                      )}
                       <div className="small font-monospace text-dark fw-bold">Cycle {cycleNumber}</div>
                       <div className="text-muted" style={{ fontSize: "0.68rem" }}>{meetingDate}</div>
                     </div>
@@ -562,10 +695,10 @@ export default function ApplicantDecisionLetterModal({
                   {/* Document Title Banner */}
                   <div className="text-center mb-4 page-break-avoid">
                     <h5 className="fw-bold text-uppercase mb-1" style={{ letterSpacing: "0.04em", color: "#060297" }}>
-                      Formal Notice of Committee Action & Actionable Directives
+                      {isApproved ? "Official Certificate of Ethical Clearance & Approval Notice" : "Formal Notice of Committee Action & Actionable Directives"}
                     </h5>
                     <p className="text-muted small mb-0">
-                      Synthesis of Protocol & Informed Consent Ethical Evaluation
+                      {isApproved ? "Institutional Research Ethics Review Certification" : "Synthesis of Protocol & Informed Consent Ethical Evaluation"}
                     </p>
                   </div>
 
@@ -850,8 +983,17 @@ export default function ApplicantDecisionLetterModal({
                   disabled={isPrinting}
                   className="btn btn-outline-dark btn-sm fw-medium d-inline-flex align-items-center gap-2"
                 >
-                  <i className="bi bi-printer-fill text-danger"></i>
-                  <span>Download / Print PDF</span>
+                  {isPrinting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm text-danger" role="status" aria-hidden="true"></span>
+                      <span>Preparing PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-printer-fill text-danger"></i>
+                      <span>Download / Print PDF</span>
+                    </>
+                  )}
                 </button>
               </div>
 
