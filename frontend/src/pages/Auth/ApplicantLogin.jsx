@@ -29,10 +29,10 @@ function ApplicantLogin() {
       const data = await response.json();
 
       if (data.status === 'success') {
-        // Save their name, department, and id to browser memory
         localStorage.setItem('applicantName', data.user.first_name + ' ' + data.user.last_name);
         localStorage.setItem('applicantDepartment', data.user.department);
         localStorage.setItem('applicantId', data.user.applicant_id);
+        localStorage.setItem('applicantEmail', data.user.email);
 
         // Teleporting to the Applicant Dashboard
         navigate('/applicant/dashboard');
