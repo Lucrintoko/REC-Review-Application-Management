@@ -40,20 +40,9 @@ import ResearcherManager from "../ApplicationCreate/components/ResearcherManager
 export const DRAFT_STORAGE_KEY = "adzu_rec_application_draft_v1";
 
 export const FORM_SECTIONS = [
-  { id: "section-1", number: 1, title: "Research Compliance Questions", shortTitle: "Compliance Questions", required: true, icon: "bi-shield-check" },
-  { id: "section-2", number: 2, title: "Full Study Title", shortTitle: "Study Title & REC Code", required: true, icon: "bi-card-heading" },
-  { id: "section-3", number: 3, title: "Primary Researchers", shortTitle: "Primary Researchers", required: true, icon: "bi-people-fill" },
-  { id: "section-4", number: 4, title: "Co-researchers (if any)", shortTitle: "Co-Researchers", required: false, icon: "bi-person-plus" },
-  { id: "section-5", number: 5, title: "Institution", shortTitle: "Institution Details", required: true, icon: "bi-building" },
-  { id: "section-6", number: 6, title: "Contact Information", shortTitle: "Contact Info", required: true, icon: "bi-telephone" },
-  { id: "section-7", number: 7, title: "Brief Description of the Study", shortTitle: "Study Description", required: true, icon: "bi-file-earmark-text" },
-  { id: "section-8", number: 8, title: "Type of Study", shortTitle: "Type of Study", required: true, icon: "bi-ui-radios-grid" },
-  { id: "section-9", number: 9, title: "Site Classification", shortTitle: "Site Classification", required: true, icon: "bi-geo-alt" },
-  { id: "section-10", number: 10, title: "Source of Funding", shortTitle: "Funding Source", required: true, icon: "bi-cash-coin" },
-  { id: "section-11", number: 11, title: "Study Duration & Participants", shortTitle: "Duration & Subjects", required: true, icon: "bi-calendar-range" },
-  { id: "section-12", number: 12, title: "Basic Requirements (Checklist & Files)", shortTitle: "Basic Requirements", required: true, icon: "bi-paperclip" },
-  { id: "section-13", number: 13, title: "Supplementary Documents", shortTitle: "Supplementary Docs", required: false, icon: "bi-files" },
-  { id: "section-14", number: 14, title: "Declaration and Signature", shortTitle: "Declaration & Sign", required: true, icon: "bi-pen" },
+  { id: "general-information", number: 1, title: "General Information", shortTitle: "General Information", required: true, icon: "bi-card-list" },
+  { id: "brief-description", number: 2, title: "Brief Description of the Study", shortTitle: "Study Description", required: true, icon: "bi-file-earmark-text" },
+  { id: "checklist-documents", number: 3, title: "Checklist of Documents", shortTitle: "Checklist of Documents", required: true, icon: "bi-paperclip" },
 ];
 
 export const STUDY_TYPES = [
@@ -87,6 +76,7 @@ export const INITIAL_FORM_DATA = {
   compliance_technical_reviewed: "",
   compliance_technical_body: "",
   compliance_technical_file: null,
+  compliance_technical_files: [],
   compliance_other_erc: "",
   compliance_other_erc_name: "",
   compliance_other_erc_status: "",
@@ -126,9 +116,7 @@ export const INITIAL_FORM_DATA = {
   contact_alternate: "",
 
   // 7. Brief Description of the Study
-  description_background: "",
-  description_objectives: "",
-  description_methodology: "",
+  description_study: "",
 
   // 8. Type of Study
   study_type: "",
@@ -152,14 +140,15 @@ export const INITIAL_FORM_DATA = {
 
   // 12. Basic Requirements
   requirements: {
-    letterOfRequest: { checked: false, file: null, name: "Letter/Request for Review" },
-    endorsementLetter: { checked: false, file: null, name: "Endorsement/Referral Letter" },
-    fullProtocol: { checked: false, file: null, name: "Full Protocol/Study Protocol" },
-    technicalApproval: { checked: false, file: null, name: "Technical Review Approval" },
-    cvResearchers: { checked: false, file: null, name: "CV of Researcher/s" },
+    letterOfRequest: { checked: false, file: null, files: [], name: "Letter/Request for Review" },
+    endorsementLetter: { checked: false, file: null, files: [], name: "Endorsement/Referral Letter" },
+    fullProtocol: { checked: false, file: null, files: [], name: "Full Proposal/Study Protocol" },
+    technicalApproval: { checked: false, file: null, files: [], name: "Technical Review Approval" },
+    cvResearchers: { checked: false, file: null, files: [], name: "Curriculum Vitae of Researcher/s" },
     informedConsent: {
       checked: false,
       file: null,
+      files: [],
       name: "Informed Consent Form",
       languages: { english: false, filipino: false, other: false, otherSpecify: "" },
     },
@@ -167,6 +156,7 @@ export const INITIAL_FORM_DATA = {
       checked: false,
       notApplicable: false,
       file: null,
+      files: [],
       name: "Assent Form",
       languages: { english: false, filipino: false, other: false, otherSpecify: "" },
     },
@@ -174,12 +164,12 @@ export const INITIAL_FORM_DATA = {
 
   // 13. Supplementary Documents
   supplementary: {
-    questionnaire: { checked: false, file: null, name: "Questionnaire" },
-    dataCollectionForms: { checked: false, file: null, name: "Data Collection Forms" },
-    productBrochure: { checked: false, file: null, name: "Product Brochure" },
-    fdaAuthorization: { checked: false, file: null, name: "Philippine FDA Marketing Authorization or Import License" },
-    specialPermits: { checked: false, specify: "", file: null, name: "Permit/s for special populations" },
-    otherSupplementary: { checked: false, specify: "", file: null, name: "Other Supplementary Documents" },
+    questionnaire: { checked: false, file: null, files: [], name: "Questionnaire" },
+    dataCollectionForms: { checked: false, file: null, files: [], name: "Data Collection Forms" },
+    productBrochure: { checked: false, file: null, files: [], name: "Product Brochure" },
+    fdaAuthorization: { checked: false, file: null, files: [], name: "Philippine FDA Marketing Authorization or Import License" },
+    specialPermits: { checked: false, specify: "", file: null, files: [], name: "Permit/s for special populations" },
+    otherSupplementary: { checked: false, specify: "", file: null, files: [], name: "Other Supplementary Documents" },
   },
 
   // 14. Declaration and Signature
@@ -197,30 +187,7 @@ function evaluateFormStatusAndErrors(formData) {
   const errors = {};
   const status = {};
 
-  // Section 1: Compliance
-  if (!formData.compliance_technical_reviewed) {
-    errors.compliance_technical_reviewed = "Please indicate if protocol underwent technical review.";
-  }
-  if (
-    formData.compliance_technical_reviewed === "Yes" &&
-    !formData.compliance_technical_file &&
-    !formData.requirements.technicalApproval.file
-  ) {
-    errors.compliance_technical_file = "Technical Review approval attachment is required when 'Yes' is chosen.";
-  }
-  if (!formData.compliance_other_erc) {
-    errors.compliance_other_erc = "Please indicate if submitted to another ERC.";
-  }
-  if (formData.compliance_other_erc === "Yes" && !formData.compliance_other_erc_name.trim()) {
-    errors.compliance_other_erc_name = "Please provide the name of the previous ERC.";
-  }
-  status["section-1"] =
-    Boolean(formData.compliance_technical_reviewed) &&
-    (formData.compliance_technical_reviewed === "No" || formData.compliance_technical_file !== null) &&
-    Boolean(formData.compliance_other_erc) &&
-    (formData.compliance_other_erc === "No" || formData.compliance_other_erc_name.trim().length > 0);
-
-  // Section 2: Study Title
+  // Section 1: Study Title
   if (!formData.study_title.trim()) {
     errors.study_title = "Full Study Title is required.";
   } else if (formData.study_title.trim().length < 5) {
@@ -231,7 +198,7 @@ function evaluateFormStatusAndErrors(formData) {
   }
   status["section-2"] = formData.study_title.trim().length >= 5 && formData.study_site.trim().length > 0;
 
-  // Section 3: Primary Researchers
+  // Section 2: Primary Researchers
   if (!formData.primary_researchers || formData.primary_researchers.length === 0) {
     errors.primary_researchers = "At least one Primary Researcher is required.";
   } else {
@@ -248,10 +215,10 @@ function evaluateFormStatusAndErrors(formData) {
     formData.primary_researchers.length > 0 &&
     formData.primary_researchers.every((r) => r.firstName.trim() && r.lastName.trim() && r.email.trim());
 
-  // Section 4: Co-researchers (optional)
+  // Section 3: Co-researchers (optional)
   status["section-4"] = true;
 
-  // Section 5: Institution
+  // Section 4: Institution
   if (!formData.institution_name.trim()) {
     errors.institution_name = "Institution name is required.";
   }
@@ -260,7 +227,7 @@ function evaluateFormStatusAndErrors(formData) {
   }
   status["section-5"] = formData.institution_name.trim().length > 0 && formData.institution_address.trim().length > 0;
 
-  // Section 6: Contact Info
+  // Section 5: Contact Info
   if (!formData.contact_name.trim()) {
     errors.contact_name = "Primary contact name is required.";
   }
@@ -275,22 +242,13 @@ function evaluateFormStatusAndErrors(formData) {
     formData.contact_email.trim().length > 0 &&
     formData.contact_phone.trim().length > 0;
 
-  // Section 7: Description
-  if (!formData.description_background.trim() || formData.description_background.trim().length < 20) {
-    errors.description_background = "Background description must be at least 20 characters.";
+  // Section 6: Description
+  if (!formData.description_study.trim() || formData.description_study.trim().length < 20) {
+    errors.description_study = "A brief description of the study must be at least 20 characters.";
   }
-  if (!formData.description_objectives.trim() || formData.description_objectives.trim().length < 10) {
-    errors.description_objectives = "Study objectives are required.";
-  }
-  if (!formData.description_methodology.trim() || formData.description_methodology.trim().length < 20) {
-    errors.description_methodology = "Methodology summary must be at least 20 characters.";
-  }
-  status["section-7"] =
-    formData.description_background.trim().length >= 20 &&
-    formData.description_objectives.trim().length >= 10 &&
-    formData.description_methodology.trim().length >= 20;
+  status["section-7"] = formData.description_study.trim().length >= 20;
 
-  // Section 8: Type of Study
+  // Section 7: Type of Study
   if (!formData.study_type) {
     errors.study_type = "Please select a study type.";
   }
@@ -301,13 +259,13 @@ function evaluateFormStatusAndErrors(formData) {
     Boolean(formData.study_type) &&
     (formData.study_type !== "Other (please specify)" || formData.study_type_other.trim().length > 0);
 
-  // Section 9: Site Classification
+  // Section 8: Site Classification
   if (!formData.site_classification) {
     errors.site_classification = "Site classification selection is required.";
   }
   status["section-9"] = Boolean(formData.site_classification);
 
-  // Section 10: Funding Source
+  // Section 9: Funding Source
   if (!formData.funding_source) {
     errors.funding_source = "Source of funding is required.";
   }
@@ -322,7 +280,7 @@ function evaluateFormStatusAndErrors(formData) {
     (formData.funding_source !== "Pharmaceutical Company Sponsored (please specify)" || formData.funding_pharmaceutical_specify.trim().length > 0) &&
     (formData.funding_source !== "Other (please specify)" || formData.funding_other_specify.trim().length > 0);
 
-  // Section 11: Duration
+  // Section 10: Duration
   if (!formData.duration_start_date) {
     errors.duration_start_date = "Proposed start date is required.";
   }
@@ -332,25 +290,49 @@ function evaluateFormStatusAndErrors(formData) {
   if (formData.duration_start_date && formData.duration_end_date && formData.duration_end_date < formData.duration_start_date) {
     errors.duration_end_date = "End date cannot be prior to start date.";
   }
-  if (!formData.duration_participants_count || Number(formData.duration_participants_count) <= 0) {
-    errors.duration_participants_count = "Number of participants must be greater than zero.";
-  }
   status["section-11"] =
     Boolean(formData.duration_start_date) &&
     Boolean(formData.duration_end_date) &&
-    formData.duration_end_date >= formData.duration_start_date &&
-    Number(formData.duration_participants_count) > 0;
+    formData.duration_end_date >= formData.duration_start_date;
+
+  // Section 11: Reviewed by Technical Review Committee and Other ERC
+  if (!formData.compliance_technical_reviewed) {
+    errors.compliance_technical_reviewed = "Please indicate if protocol underwent technical review.";
+  }
+  if (
+    formData.compliance_technical_reviewed === "Yes" &&
+    !formData.compliance_technical_file &&
+    !formData.requirements.technicalApproval.file
+  ) {
+    errors.compliance_technical_file = "Technical Review approval attachment is required when 'Yes' is chosen.";
+  }
+  if (!formData.compliance_other_erc) {
+    errors.compliance_other_erc = "Please indicate if submitted to another ERC.";
+  }
+  if (formData.compliance_other_erc === "Yes" && !formData.compliance_other_erc_name.trim()) {
+    errors.compliance_other_erc_name = "Please provide the name of the previous ERC.";
+  }
+  const hasDoc = (item) => Boolean(item && (item.file || (Array.isArray(item.files) && item.files.length > 0)));
+  const hasComplianceDoc = Boolean(formData.compliance_technical_file || (Array.isArray(formData.compliance_technical_files) && formData.compliance_technical_files.length > 0));
+
+  status["section-1"] =
+    Boolean(formData.compliance_technical_reviewed) &&
+    (formData.compliance_technical_reviewed === "No" ||
+      hasComplianceDoc ||
+      hasDoc(formData.requirements.technicalApproval)) &&
+    Boolean(formData.compliance_other_erc) &&
+    (formData.compliance_other_erc === "No" || formData.compliance_other_erc_name.trim().length > 0);
 
   // Section 12: Basic Requirements
   const req = formData.requirements;
-  if (!req.letterOfRequest.file) errors.letterOfRequest = "Letter / Request for Review document is required.";
-  if (!req.endorsementLetter.file) errors.endorsementLetter = "Endorsement / Referral Letter is required.";
-  if (!req.fullProtocol.file) errors.fullProtocol = "Full Protocol document is required.";
-  if (formData.compliance_technical_reviewed === "Yes" && !req.technicalApproval.file && !formData.compliance_technical_file) {
+  if (!hasDoc(req.letterOfRequest)) errors.letterOfRequest = "Letter / Request for Review document is required.";
+  if (!hasDoc(req.endorsementLetter)) errors.endorsementLetter = "Endorsement / Referral Letter is required.";
+  if (!hasDoc(req.fullProtocol)) errors.fullProtocol = "Full Proposal / Study Protocol document is required.";
+  if (!hasDoc(req.technicalApproval) && !hasComplianceDoc) {
     errors.technicalApproval = "Technical Review Approval attachment is required.";
   }
-  if (!req.cvResearchers.file) errors.cvResearchers = "CV of Researcher/s is required.";
-  if (!req.informedConsent.file) errors.informedConsent = "Informed Consent Form document is required.";
+  if (!hasDoc(req.cvResearchers)) errors.cvResearchers = "Curriculum Vitae of Researcher/s is required.";
+  if (!hasDoc(req.informedConsent)) errors.informedConsent = "Informed Consent Form document is required.";
 
   const icfLang = req.informedConsent.languages;
   if (!icfLang.english && !icfLang.filipino && !icfLang.other) {
@@ -358,22 +340,22 @@ function evaluateFormStatusAndErrors(formData) {
   }
 
   if (!req.assentForm.notApplicable) {
-    if (!req.assentForm.file) errors.assentForm = "Assent Form document is required (or check Not Applicable).";
+    if (!hasDoc(req.assentForm)) errors.assentForm = "Assent Form document is required (or check Not Applicable).";
     const assentLang = req.assentForm.languages;
     if (!assentLang.english && !assentLang.filipino && !assentLang.other) {
       errors.assentFormLanguages = "Please select at least one language for Assent Form.";
     }
   }
   status["section-12"] =
-    req.letterOfRequest.file !== null &&
-    req.endorsementLetter.file !== null &&
-    req.fullProtocol.file !== null &&
-    (formData.compliance_technical_reviewed !== "Yes" || req.technicalApproval.file !== null || formData.compliance_technical_file !== null) &&
-    req.cvResearchers.file !== null &&
-    req.informedConsent.file !== null &&
+    hasDoc(req.letterOfRequest) &&
+    hasDoc(req.endorsementLetter) &&
+    hasDoc(req.fullProtocol) &&
+    (hasDoc(req.technicalApproval) || hasComplianceDoc) &&
+    hasDoc(req.cvResearchers) &&
+    hasDoc(req.informedConsent) &&
     (icfLang.english || icfLang.filipino || icfLang.other) &&
     (req.assentForm.notApplicable ||
-      (req.assentForm.file !== null && (req.assentForm.languages.english || req.assentForm.languages.filipino || req.assentForm.languages.other)));
+      (hasDoc(req.assentForm) && (req.assentForm.languages.english || req.assentForm.languages.filipino || req.assentForm.languages.other)));
 
   // Section 13: Supplementary (optional)
   status["section-13"] = true;
@@ -387,28 +369,32 @@ function evaluateFormStatusAndErrors(formData) {
   }
   status["section-14"] = formData.declaration_agreed && formData.declaration_signature_name.trim().length > 0;
 
+  status["general-information"] = [1, 2, 3, 4, 5, 6, 8, 9, 10, 11].every((section) => status[`section-${section}`]);
+  status["brief-description"] = status["section-7"];
+  status["checklist-documents"] = status["section-12"] && status["section-13"] && status["section-14"];
+
   // Determine first section with error for auto-scroll
   let firstErrorSectionId = null;
   if (errors.compliance_technical_reviewed || errors.compliance_technical_file || errors.compliance_other_erc || errors.compliance_other_erc_name) {
-    firstErrorSectionId = "section-1";
+    firstErrorSectionId = "general-information";
   } else if (errors.study_title || errors.study_site) {
-    firstErrorSectionId = "section-2";
+    firstErrorSectionId = "general-information";
   } else if (errors.primary_researchers || Object.keys(errors).some((k) => k.startsWith("researcher_"))) {
-    firstErrorSectionId = "section-3";
+    firstErrorSectionId = "general-information";
   } else if (errors.institution_name || errors.institution_address) {
-    firstErrorSectionId = "section-5";
+    firstErrorSectionId = "general-information";
   } else if (errors.contact_name || errors.contact_email || errors.contact_phone) {
-    firstErrorSectionId = "section-6";
-  } else if (errors.description_background || errors.description_objectives || errors.description_methodology) {
-    firstErrorSectionId = "section-7";
+    firstErrorSectionId = "general-information";
+  } else if (errors.description_study) {
+    firstErrorSectionId = "brief-description";
   } else if (errors.study_type || errors.study_type_other) {
-    firstErrorSectionId = "section-8";
+    firstErrorSectionId = "general-information";
   } else if (errors.site_classification) {
-    firstErrorSectionId = "section-9";
+    firstErrorSectionId = "general-information";
   } else if (errors.funding_source || errors.funding_pharmaceutical_specify || errors.funding_other_specify) {
-    firstErrorSectionId = "section-10";
+    firstErrorSectionId = "general-information";
   } else if (errors.duration_start_date || errors.duration_end_date || errors.duration_participants_count) {
-    firstErrorSectionId = "section-11";
+    firstErrorSectionId = "general-information";
   } else if (
     errors.letterOfRequest ||
     errors.endorsementLetter ||
@@ -420,9 +406,9 @@ function evaluateFormStatusAndErrors(formData) {
     errors.assentForm ||
     errors.assentFormLanguages
   ) {
-    firstErrorSectionId = "section-12";
+    firstErrorSectionId = "checklist-documents";
   } else if (errors.declaration_agreed || errors.declaration_signature_name) {
-    firstErrorSectionId = "section-14";
+    firstErrorSectionId = "checklist-documents";
   }
 
   return {
@@ -461,7 +447,7 @@ function ApplicantForm({ onBack }) {
     return INITIAL_FORM_DATA;
   });
 
-  const [activeSectionId, setActiveSectionId] = useState("section-1");
+  const [activeSectionId, setActiveSectionId] = useState("general-information");
   const [toastMessage, setToastMessage] = useState(null);
   const [hasDraftNotice, setHasDraftNotice] = useState(() => Boolean(localStorage.getItem(DRAFT_STORAGE_KEY)));
   const [validationErrors, setValidationErrors] = useState({});
@@ -469,6 +455,8 @@ function ApplicantForm({ onBack }) {
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [stickyHeaderOffset, setStickyHeaderOffset] = useState(0);
+  const isProgrammaticScroll = useRef(false);
+  const scrollSpyLockTimeoutRef = useRef(null);
 
   const [lastSavedTime, setLastSavedTime] = useState(() => {
     try {
@@ -492,25 +480,28 @@ function ApplicantForm({ onBack }) {
     return Math.round((completedRequired / requiredSections.length) * 100);
   }, [sectionStatus]);
 
-  // Performant Scrollspy using IntersectionObserver
+  // Keep the sidebar aligned with the last main section crossed while scrolling.
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSectionId(entry.target.id);
-          }
-        });
-      },
-      { rootMargin: "-80px 0px -70% 0px", threshold: 0.1 }
-    );
+    const updateActiveSection = () => {
+      if (isProgrammaticScroll.current) return;
 
-    FORM_SECTIONS.forEach((sec) => {
-      const el = document.getElementById(sec.id);
-      if (el) observer.observe(el);
-    });
+      const sectionOffset = 120;
+      const crossedSections = FORM_SECTIONS.filter((section) => {
+        const element = document.getElementById(section.id);
+        return element && element.getBoundingClientRect().top <= sectionOffset;
+      });
 
-    return () => observer.disconnect();
+      setActiveSectionId(crossedSections.at(-1)?.id || FORM_SECTIONS[0].id);
+    };
+
+    updateActiveSection();
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+
+    return () => {
+      window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+    };
   }, []);
 
   useEffect(() => {
@@ -539,7 +530,17 @@ function ApplicantForm({ onBack }) {
 
   // Generic Field Updater Callback
   const updateField = useCallback((field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      if (field === "compliance_technical_file") {
+        const fileList = value ? (Array.isArray(value) ? value : [value]) : [];
+        return {
+          ...prev,
+          compliance_technical_file: fileList.length > 0 ? fileList[0] : null,
+          compliance_technical_files: fileList,
+        };
+      }
+      return { ...prev, [field]: value };
+    });
     setHasUnsavedChanges(true);
   }, []);
 
@@ -591,7 +592,15 @@ function ApplicantForm({ onBack }) {
     if (element) {
       const yOffset = -90;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      isProgrammaticScroll.current = true;
+      if (scrollSpyLockTimeoutRef.current) {
+        clearTimeout(scrollSpyLockTimeoutRef.current);
+      }
       window.scrollTo({ top: y, behavior: "smooth" });
+      scrollSpyLockTimeoutRef.current = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+        scrollSpyLockTimeoutRef.current = null;
+      }, Math.min(1200, Math.max(400, Math.abs(window.pageYOffset - y) * 0.5)));
     }
   }, []);
 
@@ -606,7 +615,7 @@ function ApplicantForm({ onBack }) {
           email: "",
           contactNumber: "",
           department: "",
-          role: "Co-Principal Investigator",
+          role: "",
         }
       : {
           id: `cr-${Date.now()}`,
@@ -614,7 +623,7 @@ function ApplicantForm({ onBack }) {
           lastName: "",
           email: "",
           affiliation: "",
-          role: "Student Co-Researcher",
+          role: "",
         };
     setFormData((prev) => ({ ...prev, [key]: [...prev[key], newEntry] }));
     setHasUnsavedChanges(true);
@@ -642,24 +651,80 @@ function ApplicantForm({ onBack }) {
 
   // Requirement & Supplementary Updaters
   const updateRequirement = useCallback((key, updates) => {
-    setFormData((prev) => ({
-      ...prev,
-      requirements: {
-        ...prev.requirements,
-        [key]: { ...prev.requirements[key], ...updates },
-      },
-    }));
+    setFormData((prev) => {
+      const prevReq = prev.requirements[key] || {};
+      let updatedFiles = prevReq.files || [];
+      let updatedFile = prevReq.file || null;
+
+      if (updates.files !== undefined) {
+        updatedFiles = Array.isArray(updates.files) ? updates.files : (updates.files ? [updates.files] : []);
+        updatedFile = updatedFiles[0] || null;
+      } else if (updates.file !== undefined) {
+        if (Array.isArray(updates.file)) {
+          updatedFiles = updates.file;
+          updatedFile = updatedFiles[0] || null;
+        } else if (updates.file) {
+          updatedFiles = [updates.file];
+          updatedFile = updates.file;
+        } else {
+          updatedFiles = [];
+          updatedFile = null;
+        }
+      }
+
+      return {
+        ...prev,
+        requirements: {
+          ...prev.requirements,
+          [key]: {
+            ...prevReq,
+            ...updates,
+            files: updatedFiles,
+            file: updatedFile,
+            checked: updates.checked !== undefined ? updates.checked : (updatedFiles.length > 0 || prevReq.checked),
+          },
+        },
+      };
+    });
     setHasUnsavedChanges(true);
   }, []);
 
   const updateSupplementary = useCallback((key, updates) => {
-    setFormData((prev) => ({
-      ...prev,
-      supplementary: {
-        ...prev.supplementary,
-        [key]: { ...prev.supplementary[key], ...updates },
-      },
-    }));
+    setFormData((prev) => {
+      const prevSupp = prev.supplementary[key] || {};
+      let updatedFiles = prevSupp.files || [];
+      let updatedFile = prevSupp.file || null;
+
+      if (updates.files !== undefined) {
+        updatedFiles = Array.isArray(updates.files) ? updates.files : (updates.files ? [updates.files] : []);
+        updatedFile = updatedFiles[0] || null;
+      } else if (updates.file !== undefined) {
+        if (Array.isArray(updates.file)) {
+          updatedFiles = updates.file;
+          updatedFile = updatedFiles[0] || null;
+        } else if (updates.file) {
+          updatedFiles = [updates.file];
+          updatedFile = updates.file;
+        } else {
+          updatedFiles = [];
+          updatedFile = null;
+        }
+      }
+
+      return {
+        ...prev,
+        supplementary: {
+          ...prev.supplementary,
+          [key]: {
+            ...prevSupp,
+            ...updates,
+            files: updatedFiles,
+            file: updatedFile,
+            checked: updates.checked !== undefined ? updates.checked : (updatedFiles.length > 0 || Boolean(updates.specify)),
+          },
+        },
+      };
+    });
     setHasUnsavedChanges(true);
   }, []);
 
@@ -694,6 +759,7 @@ function ApplicantForm({ onBack }) {
     }));
 
     const submissionPayload = {
+      applicant_id: Number(localStorage.getItem("applicantId")) || 0,
       protocol_code: generatedCode,
       research_title: formData.study_title,
       research_type: "Undergraduate",
@@ -721,6 +787,28 @@ function ApplicantForm({ onBack }) {
       let fileCount = 0;
       const appendFiles = (obj, path = "") => {
         if (!obj || typeof obj !== "object") return;
+
+        if (Array.isArray(obj)) {
+          obj.forEach((item, idx) => {
+            appendFiles(item, `${path}[${idx}]`);
+          });
+          return;
+        }
+
+        // If this object has a 'files' array with files, prioritize uploading from 'files'
+        // and skip redundant single 'file' property to prevent duplicate uploads.
+        if (Array.isArray(obj.files) && obj.files.length > 0) {
+          obj.files.forEach((f, idx) => {
+            appendFiles(f, `${path}[files][${idx}]`);
+          });
+          for (const key in obj) {
+            if (key !== 'file' && key !== 'files') {
+              appendFiles(obj[key], path ? `${path}[${key}]` : `[${key}]`);
+            }
+          }
+          return;
+        }
+
         if (obj.rawFile && obj.rawFile instanceof File) {
           multipartData.append(`files${path}`, obj.rawFile);
           fileCount++;
@@ -749,10 +837,11 @@ function ApplicantForm({ onBack }) {
       }, 1500);
     } catch (err) {
       console.error("Draft save failed:", err);
+      const syncError = err instanceof Error ? err.message : "Unknown server error.";
       showToast(
         savedLocally
-          ? "Draft saved in this browser, but could not be synced with the server."
-          : "Draft could not be saved. Your form data is still available on this page.",
+          ? `Draft saved in this browser, but could not be synced with the server: ${syncError}`
+          : `Draft could not be saved: ${syncError}`,
         "warning"
       );
     } finally {
@@ -762,7 +851,7 @@ function ApplicantForm({ onBack }) {
 
   const handleNavigateHome = () => {
     if (onBack) onBack();
-    else navigate("/");
+    else navigate("/applicant/dashboard");
   };
 
   // =========================================================================
@@ -989,7 +1078,7 @@ function ApplicantForm({ onBack }) {
                       key={sec.id}
                       type="button"
                       onClick={() => scrollToSection(sec.id)}
-                      className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 px-3 border-start border-4 ${
+                      className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 px-3 border-start border-2 ${
                         isActive
                           ? "border-primary bg-primary-subtle text-primary fw-bold"
                           : "border-transparent text-secondary"
@@ -1044,19 +1133,26 @@ function ApplicantForm({ onBack }) {
           {/* ============================================================= */}
           <section className="col-12 col-lg-9 col-xl-9">
             <form onSubmit={handlePreSubmit} noValidate>
-              {/* SECTION 1: Research Compliance Questions */}
-              <SectionCard
-                id="section-1"
-                number={1}
-                title="Research Compliance Questions"
-                isRequired={true}
-                isComplete={sectionStatus["section-1"]}
-                icon="bi-shield-check"
-              >
+              <div id="general-information" className="form-main-section" style={{ display: "flex", flexDirection: "column" }}>
+                <div className="mb-3">
+                  <h2 className="h4 fw-bold text-primary mb-1">General Information</h2>
+                  <p className="text-muted mb-0">Provide the study, researcher, institution, funding, and participant details.</p>
+                </div>
+
+              <div style={{ order: 10 }}>
+                {/* SECTION 1: Research Compliance Questions */}
+                <SectionCard
+                  id="section-1"
+                  number={10}
+                  title="Research Review Questions"
+                  isRequired={true}
+                  isComplete={sectionStatus["section-1"]}
+                  icon="bi-shield-check"
+                >
                 <div className="alert alert-info d-flex align-items-start gap-2 mb-4">
                   <i className="bi bi-info-circle-fill fs-5"></i>
                   <div>
-                    Compliance questions verify whether your study protocol has passed institutional technical review
+                    Review questions verify whether your study protocol has passed institutional technical review
                     and whether it is currently active under any other ethics review committee.
                   </div>
                 </div>
@@ -1122,9 +1218,10 @@ function ApplicantForm({ onBack }) {
                       </div>
 
                       <FileUploadWidget
-                        label="Technical Review Approval Certificate / Endorsement"
+                        label="Technical Review Approval"
                         isRequired={true}
                         file={formData.compliance_technical_file}
+                        files={formData.compliance_technical_files}
                         error={validationErrors.compliance_technical_file}
                         onFileSelect={(f) => updateField("compliance_technical_file", f)}
                         onFileRemove={() => updateField("compliance_technical_file", null)}
@@ -1143,7 +1240,7 @@ function ApplicantForm({ onBack }) {
                 {/* Another ERC Question */}
                 <div>
                   <label className="form-label fw-semibold d-block">
-                    Has the research been submitted to another Ethics Review Committee (ERC)? <span className="text-danger">*</span>
+                    Has the research been submitted to another Research Ethics Committee (REC)? <span className="text-danger">*</span>
                     <InfoTooltip
                       title="Prior ERC Submission"
                       text="Disclose if this research was previously evaluated or is concurrently undergoing review at another hospital, university, or national board."
@@ -1194,7 +1291,7 @@ function ApplicantForm({ onBack }) {
                         <input
                           type="text"
                           className="form-control form-control-sm"
-                          placeholder="e.g. ZCMC Ethics Review Board"
+                          placeholder="e.g. ZCMC Ethics Research Board"
                           value={formData.compliance_other_erc_name}
                           onChange={(e) => updateField("compliance_other_erc_name", e.target.value)}
                         />
@@ -1220,20 +1317,21 @@ function ApplicantForm({ onBack }) {
                     </div>
                   )}
                 </div>
-              </SectionCard>
+                </SectionCard>
+              </div>
 
               {/* SECTION 2: Full Study Title */}
               <SectionCard
                 id="section-2"
-                number={2}
-                title="Full Study Title"
+                number={1}
+                title="Title of the Study"
                 isRequired={true}
                 isComplete={sectionStatus["section-2"]}
                 icon="bi-card-heading"
               >
                 <div className="mb-3">
                   <label className="form-label fw-semibold">
-                    Full Study Title: <span className="text-danger">*</span>
+                    Title of the Study: <span className="text-danger">*</span>
                     <InfoTooltip
                       title="Study Title"
                       text="Enter the complete formal title of the research as stated in your full protocol document."
@@ -1299,7 +1397,7 @@ function ApplicantForm({ onBack }) {
               {/* SECTION 3: Primary Researchers */}
               <SectionCard
                 id="section-3"
-                number={3}
+                number={2}
                 title="Primary Researchers"
                 isRequired={true}
                 isComplete={sectionStatus["section-3"]}
@@ -1321,7 +1419,7 @@ function ApplicantForm({ onBack }) {
               {/* SECTION 4: Co-researchers */}
               <SectionCard
                 id="section-4"
-                number={4}
+                number={3}
                 title="Co-researchers (if any)"
                 isRequired={false}
                 isComplete={true}
@@ -1342,7 +1440,7 @@ function ApplicantForm({ onBack }) {
               {/* SECTION 5: Institution */}
               <SectionCard
                 id="section-5"
-                number={5}
+                number={4}
                 title="Institution"
                 isRequired={true}
                 isComplete={sectionStatus["section-5"]}
@@ -1397,7 +1495,7 @@ function ApplicantForm({ onBack }) {
               {/* SECTION 6: Contact Information */}
               <SectionCard
                 id="section-6"
-                number={6}
+                number={5}
                 title="Contact Information"
                 isRequired={true}
                 isComplete={sectionStatus["section-6"]}
@@ -1469,77 +1567,10 @@ function ApplicantForm({ onBack }) {
                 </div>
               </SectionCard>
 
-              {/* SECTION 7: Brief Description of the Study */}
-              <SectionCard
-                id="section-7"
-                number={7}
-                title="Brief Description of the Study"
-                isRequired={true}
-                isComplete={sectionStatus["section-7"]}
-                icon="bi-file-earmark-text"
-              >
-                <div className="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
-                  <i className="bi bi-lightbulb-fill text-warning me-1"></i>
-                  Summarize your research in clear, understandable language for multidisciplinary ethics committee members who may not be experts in your exact field.
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">
-                    Background and Rationale: <span className="text-danger">*</span>
-                  </label>
-                  <textarea
-                    rows="3"
-                    className={`form-control ${validationErrors.description_background ? "is-invalid" : ""}`}
-                    placeholder="Explain the background, research problem, and justification for conducting the study..."
-                    value={formData.description_background}
-                    onChange={(e) => updateField("description_background", e.target.value)}
-                  ></textarea>
-                  {validationErrors.description_background && (
-                    <div className="invalid-feedback">{validationErrors.description_background}</div>
-                  )}
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label fw-semibold">
-                    Objectives of the Study (General & Specific): <span className="text-danger">*</span>
-                  </label>
-                  <textarea
-                    rows="3"
-                    className={`form-control ${validationErrors.description_objectives ? "is-invalid" : ""}`}
-                    placeholder="State the general objective and primary specific endpoints / outcomes..."
-                    value={formData.description_objectives}
-                    onChange={(e) => updateField("description_objectives", e.target.value)}
-                  ></textarea>
-                  {validationErrors.description_objectives && (
-                    <div className="invalid-feedback">{validationErrors.description_objectives}</div>
-                  )}
-                </div>
-
-                <div className="mb-2">
-                  <label className="form-label fw-semibold">
-                    Summary of Methodology & Target Population: <span className="text-danger">*</span>
-                    <InfoTooltip
-                      title="Ethical Methodology"
-                      text="Briefly outline participant sampling, recruitment procedures, instruments to be used, and data storage."
-                    />
-                  </label>
-                  <textarea
-                    rows="3"
-                    className={`form-control ${validationErrors.description_methodology ? "is-invalid" : ""}`}
-                    placeholder="Outline study design, participant selection criteria, recruitment plan, and instruments..."
-                    value={formData.description_methodology}
-                    onChange={(e) => updateField("description_methodology", e.target.value)}
-                  ></textarea>
-                  {validationErrors.description_methodology && (
-                    <div className="invalid-feedback">{validationErrors.description_methodology}</div>
-                  )}
-                </div>
-              </SectionCard>
-
               {/* SECTION 8: Type of Study */}
               <SectionCard
                 id="section-8"
-                number={8}
+                number={6}
                 title="Type of Study"
                 isRequired={true}
                 isComplete={sectionStatus["section-8"]}
@@ -1585,7 +1616,7 @@ function ApplicantForm({ onBack }) {
               {/* SECTION 9: Site Classification */}
               <SectionCard
                 id="section-9"
-                number={9}
+                number={7}
                 title="Site Classification"
                 isRequired={true}
                 isComplete={sectionStatus["section-9"]}
@@ -1614,7 +1645,7 @@ function ApplicantForm({ onBack }) {
               {/* SECTION 10: Source of Funding */}
               <SectionCard
                 id="section-10"
-                number={10}
+                number={8}
                 title="Source of Funding"
                 isRequired={true}
                 isComplete={sectionStatus["section-10"]}
@@ -1702,7 +1733,7 @@ function ApplicantForm({ onBack }) {
               {/* SECTION 11: Study Duration & Participants */}
               <SectionCard
                 id="section-11"
-                number={11}
+                number={9}
                 title="Study Duration & Participants"
                 isRequired={true}
                 isComplete={sectionStatus["section-11"]}
@@ -1741,7 +1772,7 @@ function ApplicantForm({ onBack }) {
 
                   <div className="col-12 col-md-4">
                     <label className="form-label fw-semibold">
-                      Number of Participants: <span className="text-danger">*</span>
+                      Number of Participants (Optional):
                       <InfoTooltip
                         title="Sample Size"
                         text="Total target number of human subjects, interviewees, or patient records to be included."
@@ -1755,9 +1786,6 @@ function ApplicantForm({ onBack }) {
                       value={formData.duration_participants_count}
                       onChange={(e) => updateField("duration_participants_count", e.target.value)}
                     />
-                    {validationErrors.duration_participants_count && (
-                      <div className="invalid-feedback">{validationErrors.duration_participants_count}</div>
-                    )}
                   </div>
 
                   <div className="col-12">
@@ -1774,6 +1802,56 @@ function ApplicantForm({ onBack }) {
                   </div>
                 </div>
               </SectionCard>
+
+              </div>
+
+              <div id="brief-description" className="form-main-section">
+                <div className="mb-3">
+                  <h2 className="h4 fw-bold text-primary mb-1">Brief Description of the Study</h2>
+                  <p className="text-muted mb-0">Describe the study in one clear, complete summary.</p>
+                </div>
+
+                {/* SECTION 7: Brief Description of the Study */}
+                <SectionCard
+                  id="section-7"
+                  number={11}
+                  title="Brief Description of the Study"
+                  isRequired={true}
+                  isComplete={sectionStatus["section-7"]}
+                  icon="bi-file-earmark-text"
+                >
+                  <div className="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+                    <i className="bi bi-lightbulb-fill text-warning me-1"></i>
+                    Summarize your research in clear, understandable language for multidisciplinary ethics committee members who may not be experts in your exact field.
+                  </div>
+
+                  <div className="mb-2">
+                    <label className="form-label fw-semibold">
+                      Brief Description of the Study: <span className="text-danger">*</span>
+                      <InfoTooltip
+                        title="Study Description"
+                        text="Include the background, objectives, methodology, target population, and ethical considerations in one summary."
+                      />
+                    </label>
+                    <textarea
+                      rows="10"
+                      className={`form-control ${validationErrors.description_study ? "is-invalid" : ""}`}
+                      placeholder="Summarize the background and rationale, objectives, study design, methodology, participants, recruitment, data collection, and expected benefits or risks..."
+                      value={formData.description_study}
+                      onChange={(e) => updateField("description_study", e.target.value)}
+                    ></textarea>
+                    {validationErrors.description_study && (
+                      <div className="invalid-feedback">{validationErrors.description_study}</div>
+                    )}
+                  </div>
+                </SectionCard>
+              </div>
+
+              <div id="checklist-documents" className="form-main-section">
+                <div className="mb-3">
+                  <h2 className="h4 fw-bold text-primary mb-1">Checklist of Documents</h2>
+                  <p className="text-muted mb-0">Complete the basic requirements, add supplementary documents, and sign with the submission date.</p>
+                </div>
 
               {/* SECTION 12: Basic Requirements */}
               <SectionCard
@@ -1806,9 +1884,10 @@ function ApplicantForm({ onBack }) {
                     </label>
                   </div>
                   <FileUploadWidget
-                    label="Upload Signed Letter of Request (addressed to AdZU-REC Chair)"
+                    label="Upload Signed Letter of Request (addressed to AdZU-ERB Chair)"
                     isRequired={true}
                     file={formData.requirements.letterOfRequest.file}
+                    files={formData.requirements.letterOfRequest.files}
                     error={validationErrors.letterOfRequest}
                     onFileSelect={(f) => updateRequirement("letterOfRequest", { file: f, checked: true })}
                     onFileRemove={() => updateRequirement("letterOfRequest", { file: null })}
@@ -1822,7 +1901,7 @@ function ApplicantForm({ onBack }) {
                       className="form-check-input"
                       type="checkbox"
                       id="chk_endorsementLetter"
-                      checked={formData.requirements.endorsementLetter.checked || !!formData.requirements.endorsementLetter.file}
+                      checked={formData.requirements.endorsementLetter.checked || !!formData.requirements.endorsementLetter.file || (formData.requirements.endorsementLetter.files && formData.requirements.endorsementLetter.files.length > 0)}
                       onChange={(e) => updateRequirement("endorsementLetter", { checked: e.target.checked })}
                     />
                     <label className="form-check-label fw-bold" htmlFor="chk_endorsementLetter">
@@ -1837,6 +1916,7 @@ function ApplicantForm({ onBack }) {
                     label="Upload Endorsement / Referral Letter"
                     isRequired={true}
                     file={formData.requirements.endorsementLetter.file}
+                    files={formData.requirements.endorsementLetter.files}
                     error={validationErrors.endorsementLetter}
                     onFileSelect={(f) => updateRequirement("endorsementLetter", { file: f, checked: true })}
                     onFileRemove={() => updateRequirement("endorsementLetter", { file: null })}
@@ -1850,17 +1930,18 @@ function ApplicantForm({ onBack }) {
                       className="form-check-input"
                       type="checkbox"
                       id="chk_fullProtocol"
-                      checked={formData.requirements.fullProtocol.checked || !!formData.requirements.fullProtocol.file}
+                      checked={formData.requirements.fullProtocol.checked || !!formData.requirements.fullProtocol.file || (formData.requirements.fullProtocol.files && formData.requirements.fullProtocol.files.length > 0)}
                       onChange={(e) => updateRequirement("fullProtocol", { checked: e.target.checked })}
                     />
                     <label className="form-check-label fw-bold" htmlFor="chk_fullProtocol">
-                      Full Protocol / Study Protocol <span className="text-danger">*</span>
+                      Full Proposal / Study Protocol <span className="text-danger">*</span>
                     </label>
                   </div>
                   <FileUploadWidget
-                    label="Upload Full Protocol Document"
+                    label="Upload Full Proposal / Study Protocol Document"
                     isRequired={true}
                     file={formData.requirements.fullProtocol.file}
+                    files={formData.requirements.fullProtocol.files}
                     error={validationErrors.fullProtocol}
                     onFileSelect={(f) => updateRequirement("fullProtocol", { file: f, checked: true })}
                     onFileRemove={() => updateRequirement("fullProtocol", { file: null })}
@@ -1877,19 +1958,20 @@ function ApplicantForm({ onBack }) {
                       checked={
                         formData.requirements.technicalApproval.checked ||
                         !!formData.requirements.technicalApproval.file ||
+                        (formData.requirements.technicalApproval.files && formData.requirements.technicalApproval.files.length > 0) ||
                         !!formData.compliance_technical_file
                       }
                       onChange={(e) => updateRequirement("technicalApproval", { checked: e.target.checked })}
                     />
                     <label className="form-check-label fw-bold" htmlFor="chk_technicalApproval">
-                      Technical Review Approval Certificate / Memo{" "}
-                      {formData.compliance_technical_reviewed === "Yes" && <span className="text-danger">*</span>}
+                      Technical Review Approval <span className="text-danger">*</span>
                     </label>
                   </div>
                   <FileUploadWidget
-                    label="Upload Technical Review Clearance"
-                    isRequired={formData.compliance_technical_reviewed === "Yes"}
+                    label="Upload Technical Review Approval"
+                    isRequired={true}
                     file={formData.requirements.technicalApproval.file || formData.compliance_technical_file}
+                    files={formData.requirements.technicalApproval.files?.length > 0 ? formData.requirements.technicalApproval.files : formData.compliance_technical_files}
                     error={validationErrors.technicalApproval}
                     onFileSelect={(f) => updateRequirement("technicalApproval", { file: f, checked: true })}
                     onFileRemove={() => updateRequirement("technicalApproval", { file: null })}
@@ -1903,7 +1985,7 @@ function ApplicantForm({ onBack }) {
                       className="form-check-input"
                       type="checkbox"
                       id="chk_cvResearchers"
-                      checked={formData.requirements.cvResearchers.checked || !!formData.requirements.cvResearchers.file}
+                      checked={formData.requirements.cvResearchers.checked || !!formData.requirements.cvResearchers.file || (formData.requirements.cvResearchers.files && formData.requirements.cvResearchers.files.length > 0)}
                       onChange={(e) => updateRequirement("cvResearchers", { checked: e.target.checked })}
                     />
                     <label className="form-check-label fw-bold" htmlFor="chk_cvResearchers">
@@ -1918,6 +2000,7 @@ function ApplicantForm({ onBack }) {
                     label="Upload Consolidated CVs of All Researchers"
                     isRequired={true}
                     file={formData.requirements.cvResearchers.file}
+                    files={formData.requirements.cvResearchers.files}
                     error={validationErrors.cvResearchers}
                     onFileSelect={(f) => updateRequirement("cvResearchers", { file: f, checked: true })}
                     onFileRemove={() => updateRequirement("cvResearchers", { file: null })}
@@ -1935,13 +2018,13 @@ function ApplicantForm({ onBack }) {
                       onChange={(e) => updateRequirement("informedConsent", { checked: e.target.checked })}
                     />
                     <label className="form-check-label fw-bold" htmlFor="chk_informedConsent">
-                      Informed Consent Form (ICF) <span className="text-danger">*</span>
+                      Informed Consent Form <span className="text-danger">*</span>
                     </label>
                   </div>
 
                   <div className="ps-4 mb-2">
                     <label className="form-label small fw-semibold text-secondary mb-1">
-                      ICF Language Version(s): <span className="text-danger">*</span>
+                      Language Version(s): <span className="text-danger">*</span>
                     </label>
                     <div className="d-flex flex-wrap gap-3 align-items-center mb-2">
                       {["english", "filipino", "other"].map((lang) => (
@@ -1992,6 +2075,7 @@ function ApplicantForm({ onBack }) {
                     label="Upload Informed Consent Form Document(s)"
                     isRequired={true}
                     file={formData.requirements.informedConsent.file}
+                    files={formData.requirements.informedConsent.files}
                     error={validationErrors.informedConsent}
                     onFileSelect={(f) => updateRequirement("informedConsent", { file: f, checked: true })}
                     onFileRemove={() => updateRequirement("informedConsent", { file: null })}
@@ -2006,7 +2090,7 @@ function ApplicantForm({ onBack }) {
                         className="form-check-input"
                         type="checkbox"
                         id="chk_assentForm"
-                        checked={formData.requirements.assentForm.checked || !!formData.requirements.assentForm.file}
+                        checked={formData.requirements.assentForm.checked || !!formData.requirements.assentForm.file || (formData.requirements.assentForm.files && formData.requirements.assentForm.files.length > 0)}
                         disabled={formData.requirements.assentForm.notApplicable}
                         onChange={(e) => updateRequirement("assentForm", { checked: e.target.checked })}
                       />
@@ -2042,7 +2126,7 @@ function ApplicantForm({ onBack }) {
                     <>
                       <div className="ps-4 mb-2">
                         <label className="form-label small fw-semibold text-secondary mb-1">
-                          Assent Form Language Version(s): <span className="text-danger">*</span>
+                          Language Version(s): <span className="text-danger">*</span>
                         </label>
                         <div className="d-flex flex-wrap gap-3 align-items-center mb-2">
                           {["english", "filipino", "other"].map((lang) => (
@@ -2093,6 +2177,7 @@ function ApplicantForm({ onBack }) {
                         label="Upload Assent Form Document"
                         isRequired={true}
                         file={formData.requirements.assentForm.file}
+                        files={formData.requirements.assentForm.files}
                         error={validationErrors.assentForm}
                         onFileSelect={(f) => updateRequirement("assentForm", { file: f, checked: true })}
                         onFileRemove={() => updateRequirement("assentForm", { file: null })}
@@ -2120,9 +2205,9 @@ function ApplicantForm({ onBack }) {
                 </p>
 
                 {[
-                  { key: "questionnaire", label: "Questionnaire / Survey Tools" },
-                  { key: "dataCollectionForms", label: "Data Collection Forms / Case Report Forms (CRF)" },
-                  { key: "productBrochure", label: "Product Brochure / Investigator's Brochure" },
+                  { key: "questionnaire", label: "Questionnaire" },
+                  { key: "dataCollectionForms", label: "Data Collection Forms" },
+                  { key: "productBrochure", label: "Product Brochure" },
                   { key: "fdaAuthorization", label: "Philippine FDA Marketing Authorization or Import License" },
                   { key: "specialPermits", label: "Permit/s for special populations (specify)", hasSpecify: true, placeholder: "e.g. NCIP FPIC Clearance, DepEd Division Permit, LGU Clearance" },
                   { key: "otherSupplementary", label: "Other (please specify)", hasSpecify: true, placeholder: "Specify document title or permit type" },
@@ -2133,7 +2218,7 @@ function ApplicantForm({ onBack }) {
                         className="form-check-input"
                         type="checkbox"
                         id={`chk_${item.key}`}
-                        checked={formData.supplementary[item.key].checked || !!formData.supplementary[item.key].file}
+                        checked={formData.supplementary[item.key].checked || !!formData.supplementary[item.key].file || (formData.supplementary[item.key].files && formData.supplementary[item.key].files.length > 0)}
                         onChange={(e) => updateSupplementary(item.key, { checked: e.target.checked })}
                       />
                       <label className="form-check-label fw-bold" htmlFor={`chk_${item.key}`}>
@@ -2159,6 +2244,7 @@ function ApplicantForm({ onBack }) {
                     <FileUploadWidget
                       label={`Upload ${item.label}`}
                       file={formData.supplementary[item.key].file}
+                      files={formData.supplementary[item.key].files}
                       onFileSelect={(f) => updateSupplementary(item.key, { file: f, checked: true })}
                       onFileRemove={() => updateSupplementary(item.key, { file: null })}
                     />
@@ -2183,10 +2269,10 @@ function ApplicantForm({ onBack }) {
                       I/We certify that all statements and information contained in this application and accompanying documents are true, correct, and complete.
                     </li>
                     <li className="mb-1">
-                      I/We agree to conduct this study in full compliance with the National Ethical Guidelines for Health and Health-Related Research (NEGHHR), the Declaration of Helsinki, and AdZU-REC Standard Operating Procedures (SOPs).
+                      I/We agree to conduct this study in full compliance with the National Ethical Guidelines for Health and Health-Related Research (NEGHHR), the Declaration of Helsinki, and AdZU-ERB Standard Operating Procedures (SOPs).
                     </li>
                     <li className="mb-1">
-                      I/We will not initiate participant recruitment, consent procedures, or data collection until formal ethical clearance is granted by the AdZU-REC.
+                      I/We will not initiate participant recruitment, consent procedures, or data collection until formal ethical clearance is granted by the AdZU-ERB.
                     </li>
                     <li className="mb-0">
                       I/We will report any unanticipated problems involving risks to human subjects, serious adverse events, or proposed protocol amendments to the committee immediately.
@@ -2244,7 +2330,7 @@ function ApplicantForm({ onBack }) {
                   </div>
 
                   <div className="col-12 col-md-3">
-                    <label className="form-label fw-semibold">Date of Declaration:</label>
+                    <label className="form-label fw-semibold">Date Submitted:</label>
                     <input
                       type="date"
                       className="form-control"
@@ -2254,6 +2340,8 @@ function ApplicantForm({ onBack }) {
                   </div>
                 </div>
               </SectionCard>
+
+              </div>
 
               {/* Bottom Sticky Action Bar */}
               <div className="card shadow-sm border-0 rounded-3 p-3 bg-white mb-5">
