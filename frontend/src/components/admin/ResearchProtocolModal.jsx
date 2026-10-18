@@ -4,6 +4,7 @@ import PaymentVerificationModal from "./PaymentVerificationModal";
 import ReviewTypeModal from "./ReviewTypeModal";
 import OngoingReviewModal from "./OngoingReviewModal";
 import ConsolidationModal from "./ConsolidationModal";
+import RevisionsVerificationModal from "./RevisionsVerificationModal";
 
 function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
     const role = localStorage.getItem('adminRole') || "Staff";
@@ -13,6 +14,7 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
     const [showReviewTypeModal, setShowReviewTypeModal] = useState(false);
     const [showOngoingReviewModal, setShowOngoingReviewModal] = useState(false);
     const [showConsolidationModal, setShowConsolidationModal] = useState(false);
+    const [showVerificationModal, setShowVerificationModal] = useState(false);
     const [historyData, setHistoryData] = useState([]);
     const [milestone, setMilestone] = useState(null);
 
@@ -41,6 +43,13 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
     const progressPercentage = isTerminal
         ? 100
         : (milestone?.progressPercentage ?? Math.min(99, Math.round((historyData.filter(item => item.status === 'Completed' && !item.isRejected).length / 9) * 100)));
+
+    if (!protocol) return null;
+
+    // Protocol researchers safe formatting
+    const researchersList = Array.isArray(protocol?.researchers)
+        ? protocol.researchers
+        : (protocol?.researchers ? [String(protocol.researchers)] : ['N/A']);
 
     return (
         <>
@@ -80,10 +89,10 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                             {/* Protocol Researchers */}
                             <p className="mb-0 text-secondary pt-1" style={{ fontSize: '1.1rem' }}>
                                 <strong>
-                                    {protocol.researchers.length > 1 ? "Protocol Researchers: " : "Protocol Researcher: "}
+                                    {researchersList.length > 1 ? "Protocol Researchers: " : "Protocol Researcher: "}
                                 </strong>
                                 <span>
-                                    {protocol.researchers.join(', ')}
+                                    {researchersList.join(', ')}
                                 </span>
                             </p>
 
@@ -104,6 +113,8 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                                             setShowOngoingReviewModal(true);
                                         } else if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
                                             setShowConsolidationModal(true);
+                                        } else if (protocol.status === 'REVISIONS SUBMITTED') {
+                                            setShowVerificationModal(true);
                                         }
                                     }}
                                 >
@@ -111,7 +122,9 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                                         ? (isReviewerRole ? 'Evaluate Protocol' : `Monitor Reviews (${protocol.reviews_completed || 0}/${protocol.reviews_total || 0})`)
                                         : protocol.status === 'CONSOLIDATION OF EVALUATION'
                                             ? 'Consolidate Reviews'
-                                            : 'Update Status'}
+                                            : protocol.status === 'REVISIONS SUBMITTED'
+                                                ? 'Verify Revisions'
+                                                : 'Update Status'}
                                 </button>
                             </div>
 
@@ -264,6 +277,19 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                     onClose={() => setShowConsolidationModal(false)}
                     onRefresh={() => {
                         setShowConsolidationModal(false);
+                        if (onRefresh) {
+                            onRefresh();
+                        }
+                    }}
+                />
+            )}
+
+            {showVerificationModal && (
+                <RevisionsVerificationModal 
+                    protocol={protocol}
+                    onClose={() => setShowVerificationModal(false)}
+                    onRefresh={() => {
+                        setShowVerificationModal(false);
                         if (onRefresh) {
                             onRefresh();
                         }

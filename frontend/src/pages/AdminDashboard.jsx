@@ -4,6 +4,7 @@ import adzuSeal from '../assets/AdZU Seal.png';
 import ResearchProtocolModal from '../components/admin/ResearchProtocolModal';
 import OngoingReviewModal from '../components/admin/OngoingReviewModal';
 import ConsolidationModal from '../components/admin/ConsolidationModal';
+import RevisionsVerificationModal from '../components/admin/RevisionsVerificationModal';
 
 function AdminDashboard() {
     const navigate = useNavigate();
@@ -28,6 +29,7 @@ function AdminDashboard() {
     const [protocolData, setProtocolData] = useState([]);
     const [ongoingReviewProtocol, setOngoingReviewProtocol] = useState(null);
     const [consolidationProtocol, setConsolidationProtocol] = useState(null);
+    const [verificationProtocol, setVerificationProtocol] = useState(null);
 
     // Fetching the data from the database
     const fetchProtocols = () => {
@@ -362,6 +364,8 @@ function AdminDashboard() {
                                                             onClick={() => {
                                                                 if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
                                                                     setConsolidationProtocol(protocol);
+                                                                } else if (protocol.status === 'REVISIONS SUBMITTED') {
+                                                                    setVerificationProtocol(protocol);
                                                                 } else if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
                                                                     setOngoingReviewProtocol(protocol);
                                                                 } else {
@@ -419,6 +423,8 @@ function AdminDashboard() {
                                                                 <span className='pe-2 text-white opacity-75'>
                                                                     {protocol.status === 'CONSOLIDATION OF EVALUATION' ? (
                                                                         <><i className="bi bi-diagram-3-fill me-1"></i>Consolidate</>
+                                                                    ) : protocol.status === 'REVISIONS SUBMITTED' ? (
+                                                                        <><i className="bi bi-patch-check-fill me-1"></i>Verify</>
                                                                     ) : isReviewerRole ? (
                                                                         <><i className="bi bi-pencil-square me-1"></i>Evaluate</>
                                                                     ) : (
@@ -495,6 +501,8 @@ function AdminDashboard() {
                                                                 onClick={() => {
                                                                     if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
                                                                         setConsolidationProtocol(protocol);
+                                                                    } else if (protocol.status === 'REVISIONS SUBMITTED') {
+                                                                        setVerificationProtocol(protocol);
                                                                     } else if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
                                                                         setOngoingReviewProtocol(protocol);
                                                                     } else {
@@ -594,6 +602,17 @@ function AdminDashboard() {
                                                                         >
                                                                             <i className="bi bi-diagram-3-fill me-1"></i>Consolidate
                                                                         </button>
+                                                                    ) : protocol.status === 'REVISIONS SUBMITTED' ? (
+                                                                        <button 
+                                                                            type="button" 
+                                                                            className="btn btn-sm btn-success fw-bold text-nowrap px-3 shadow-xs"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setVerificationProtocol(protocol);
+                                                                            }}
+                                                                        >
+                                                                            <i className="bi bi-patch-check-fill me-1"></i>Verify Revisions
+                                                                        </button>
                                                                     ) : (
                                                                         <button 
                                                                             type="button" 
@@ -661,6 +680,17 @@ function AdminDashboard() {
                 onRefresh={() => {
                     fetchProtocols();
                     setConsolidationProtocol(null);
+                }}
+            />
+        )}
+
+        {verificationProtocol && (
+            <RevisionsVerificationModal
+                protocol={verificationProtocol}
+                onClose={() => setVerificationProtocol(null)}
+                onRefresh={() => {
+                    fetchProtocols();
+                    setVerificationProtocol(null);
                 }}
             />
         )}

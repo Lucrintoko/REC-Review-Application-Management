@@ -330,9 +330,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         return false;
     }, [isOversightMode, activeReviewRecord]);
 
-    // -------------------------------------------------------------------------
     // Appeal & Multi-Cycle Re-deliberation Context
-    // -------------------------------------------------------------------------
     const parsedFormData = useMemo(() => {
         if (!protocol?.form_data) return {};
         if (typeof protocol.form_data === 'string') {
@@ -358,9 +356,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
 
     const [isAppealDrawerOpen, setIsAppealDrawerOpen] = useState(true);
 
-    // -------------------------------------------------------------------------
     // Document Workspace State & Extraction
-    // -------------------------------------------------------------------------
     const protocolDocuments = useMemo(() => {
         const list = [];
         const seen = new Set();
@@ -465,9 +461,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         }
     }, [protocolDocuments, selectedDoc]);
 
-    // -------------------------------------------------------------------------
     // Form State & Storage Handling
-    // -------------------------------------------------------------------------
     const localStorageKeyForm11 = `rec_eval_${protocol?.application_id}_f11_${isOversightMode ? selectedReviewerId : adminId}`;
     const localStorageKeyForm12 = `rec_eval_${protocol?.application_id}_f12_${isOversightMode ? selectedReviewerId : adminId}`;
 
@@ -781,9 +775,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                 >
                     <div className="modal-content border-0 shadow-lg rounded-4 h-100 d-flex flex-column overflow-hidden bg-white">
 
-                        {/* ======================================================== */}
-                        {/* 1. MODAL HEADER: PROTOCOL META & ROLE BADGING            */}
-                        {/* ======================================================== */}
+                        {/* 1. MODAL HEADER: PROTOCOL META & ROLE BADGING */}
                         <div className="modal-header bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center flex-shrink-0">
                             <div className="d-flex align-items-center gap-3">
                                 <div className="bg-light p-2 rounded-3 text-theme-primary border">
@@ -840,9 +832,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                             </div>
                         </div>
 
-                        {/* ======================================================== */}
-                        {/* 1b. HEIGHTENED BOARD SCRUTINY BANNER & APPEAL DRAWER      */}
-                        {/* ======================================================== */}
+                        {/* 1b. HEIGHTENED BOARD SCRUTINY BANNER & APPEAL DRAWER */}
                         {isAppealedProtocol && (
                             <div className="text-white px-4 py-2 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm flex-shrink-0" style={{ backgroundColor: '#002147' }}>
                                 <div className="d-flex align-items-center gap-2">
@@ -986,15 +976,11 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                             </div>
                         )}
 
-                        {/* ======================================================== */}
-                        {/* 2. MODAL BODY: DUAL SPLIT-PANE WORKSPACE                 */}
-                        {/* ======================================================== */}
+                        {/* 2. MODAL BODY: DUAL SPLIT-PANE WORKSPACE */}
                         <div className="modal-body p-0 flex-grow-1 overflow-hidden">
                             <div className="row g-0 h-100">
 
-                                {/* ---------------------------------------------------- */}
-                                {/* LEFT PANE (50%): PROTOCOL DOCUMENT WORKSPACE        */}
-                                {/* ---------------------------------------------------- */}
+                                {/* LEFT PANE (50%): PROTOCOL DOCUMENT WORKSPACE */}
                                 <div className="col-12 col-lg-6 h-100 d-flex flex-column border-end bg-body-tertiary overflow-hidden">
                                     
                                     {/* Document Header & File Selector */}
@@ -1214,9 +1200,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
 
                                 </div>
 
-                                {/* ---------------------------------------------------- */}
                                 {/* RIGHT PANE (50%): EVALUATION FORMS & CHAIR OVERSIGHT */}
-                                {/* ---------------------------------------------------- */}
                                 <div className="col-12 col-lg-6 h-100 d-flex flex-column bg-white overflow-hidden">
                                     
                                     {/* Top Control Bar: Chair Oversight Ribbon OR Reviewer Tabs */}
@@ -1393,9 +1377,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                     {/* Independent Scroll Container for Form Questions */}
                                     <div className="flex-grow-1 overflow-y-auto p-4 bg-body-tertiary">
 
-                                        {/* ==================================================== */}
                                         {/* TAB CONTENT: FORM 11 (PROTOCOL EVALUATION WORKSHEET) */}
-                                        {/* ==================================================== */}
                                         {activeFormTab === 'form11' && activeCanViewForm11 && (
                                             <div className="d-flex flex-column gap-4">
 
@@ -1997,9 +1979,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                             </div>
                                         )}
 
-                                        {/* ==================================================== */}
                                         {/* TAB CONTENT: FORM 12 (INFORMED CONSENT EVALUATION)   */}
-                                        {/* ==================================================== */}
                                         {activeFormTab === 'form12' && (
                                             <div className="d-flex flex-column gap-4">
 
