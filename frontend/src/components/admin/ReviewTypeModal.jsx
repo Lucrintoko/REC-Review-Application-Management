@@ -829,7 +829,7 @@ function ReviewTypeModal({ protocol, onClose }) {
                                                 </div>
                                                 <div className="bg-light p-3 rounded-3 border">
                                                     <p className="text-dark mb-0 small lh-base" style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                                                        {protocol?.form_data?.description_objectives || 'No specific description/objectives provided in form data.'}
+                                                        {protocol?.form_data?.description_objectives || protocol?.form_data?.description_study || 'No specific description/objectives provided in form data.'}
                                                     </p>
                                                 </div>
                                             </div>

@@ -1183,7 +1183,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                     <div className="col-12 col-md-8">
                                                         <span className="text-secondary fw-semibold small d-block mb-1">Study Objectives:</span>
                                                         <p className="small text-dark mb-0 lh-base">
-                                                            {protocol?.form_data?.description_objectives || 'No specific description/objectives provided in application snapshot.'}
+                                                            {protocol?.form_data?.description_objectives || protocol?.form_data?.description_study || 'No specific description/objectives provided in application snapshot.'}
                                                         </p>
                                                     </div>
                                                     <div className="col-12 col-md-4 border-start-md ps-md-3">
