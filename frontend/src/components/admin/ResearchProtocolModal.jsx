@@ -3,6 +3,7 @@ import Swal from 'sweetalert2';
 import PaymentVerificationModal from "./PaymentVerificationModal";
 import ReviewTypeModal from "./ReviewTypeModal";
 import OngoingReviewModal from "./OngoingReviewModal";
+import ConsolidationModal from "./ConsolidationModal";
 
 function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
     const role = localStorage.getItem('adminRole') || "Staff";
@@ -11,6 +12,7 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showReviewTypeModal, setShowReviewTypeModal] = useState(false);
     const [showOngoingReviewModal, setShowOngoingReviewModal] = useState(false);
+    const [showConsolidationModal, setShowConsolidationModal] = useState(false);
     const [historyData, setHistoryData] = useState([]);
     const [milestone, setMilestone] = useState(null);
 
@@ -100,12 +102,16 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                                             setShowReviewTypeModal(true);
                                         } else if (protocol.status === 'ONGOING REVIEW') {
                                             setShowOngoingReviewModal(true);
+                                        } else if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
+                                            setShowConsolidationModal(true);
                                         }
                                     }}
                                 >
                                     {protocol.status === 'ONGOING REVIEW'
                                         ? (isReviewerRole ? 'Evaluate Protocol' : `Monitor Reviews (${protocol.reviews_completed || 0}/${protocol.reviews_total || 0})`)
-                                        : 'Update Status'}
+                                        : protocol.status === 'CONSOLIDATION OF EVALUATION'
+                                            ? 'Consolidate Reviews'
+                                            : 'Update Status'}
                                 </button>
                             </div>
 
@@ -245,6 +251,19 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                     onClose={() => setShowOngoingReviewModal(false)}
                     onRefresh={() => {
                         setShowOngoingReviewModal(false);
+                        if (onRefresh) {
+                            onRefresh();
+                        }
+                    }}
+                />
+            )}
+
+            {showConsolidationModal && (
+                <ConsolidationModal 
+                    protocol={protocol}
+                    onClose={() => setShowConsolidationModal(false)}
+                    onRefresh={() => {
+                        setShowConsolidationModal(false);
                         if (onRefresh) {
                             onRefresh();
                         }

@@ -9,6 +9,7 @@ import SubmitORModal from "../components/applicant/SubmitORModal";
 import PaymentRejectionNoticeModal from "../components/applicant/PaymentRejectionNoticeModal";
 import ProtocolRevisionNoticeModal from "../components/applicant/ProtocolRevisionNoticeModal";
 import ReviseProtocolModal from "../components/applicant/ReviseProtocolModal";
+import ApplicantDecisionLetterModal from "../components/applicant/ApplicantDecisionLetterModal";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { useApplications } from "../hooks/useApplications";
 import { useTableSortFilter } from "../hooks/useTableSortFilter";
@@ -34,6 +35,7 @@ function ApplicantDashboard({
   const [rejectionNoticeApp, setRejectionNoticeApp] = useState(null);
   const [revisionNoticeApp, setRevisionNoticeApp] = useState(null);
   const [reviseProtocolApp, setReviseProtocolApp] = useState(null);
+  const [decisionLetterApp, setDecisionLetterApp] = useState(null);
 
   // 1. Fetch applications data via custom hook (handles API, abort controller, loading, error, and fallback data)
   const { applications, isLoading, refetch } = useApplications();
@@ -131,6 +133,7 @@ function ApplicantDashboard({
                     onOpenRejectionNotice={setRejectionNoticeApp}
                     onOpenRevisionNotice={setRevisionNoticeApp}
                     onOpenReviseModal={setReviseProtocolApp}
+                    onOpenDecisionLetter={setDecisionLetterApp}
                   />
                 </div>
               </div>
@@ -182,6 +185,17 @@ function ApplicantDashboard({
           onSuccess={() => {
             setReviseProtocolApp(null);
             refetch();
+          }}
+        />
+
+        {/* Stage 5: Applicant Decision Letter & Directives Notice Modal */}
+        <ApplicantDecisionLetterModal
+          show={!!decisionLetterApp}
+          application={decisionLetterApp}
+          onClose={() => setDecisionLetterApp(null)}
+          onProceedToRevise={(app) => {
+            setDecisionLetterApp(null);
+            setReviseProtocolApp(app);
           }}
         />
       </ErrorBoundary>

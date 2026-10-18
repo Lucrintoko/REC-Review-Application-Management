@@ -106,6 +106,39 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
                               AND ah.is_rejected = TRUE 
                             ORDER BY ah.history_id DESC LIMIT 1
                         ) AS chair_proponent_name,
+                        CASE 
+                            WHEN EXISTS (
+                                SELECT 1 FROM consolidated_evaluations ce 
+                                WHERE ce.application_id = r.application_id 
+                                  AND ce.status = 'Finalized'
+                            ) THEN TRUE 
+                            ELSE FALSE 
+                        END AS has_consolidated_decision,
+                        (
+                            SELECT json_build_object(
+                                'consolidation_id', ce.consolidation_id,
+                                'chair_id', ce.chair_id,
+                                'chair_name', COALESCE(adm.first_name || ' ' || adm.last_name, 'Ethics Committee Chair'),
+                                'cycle_number', ce.cycle_number,
+                                'status', ce.status,
+                                'consolidated_recommendation', ce.consolidated_recommendation,
+                                'summary_notes', ce.summary_notes,
+                                'directives_for_revisions', ce.directives_for_revisions,
+                                'meeting_date', ce.meeting_date,
+                                'per_question_findings', ce.per_question_findings,
+                                'actionable_directives', ce.actionable_directives,
+                                'compliance_checklist', ce.compliance_checklist,
+                                'pdf_report_path', ce.pdf_report_path,
+                                'finalized_at', ce.finalized_at,
+                                'created_at', ce.created_at
+                            )
+                            FROM consolidated_evaluations ce
+                            LEFT JOIN admins adm ON adm.admin_id = ce.chair_id
+                            WHERE ce.application_id = r.application_id 
+                              AND ce.status = 'Finalized'
+                            ORDER BY ce.cycle_number DESC, ce.consolidation_id DESC
+                            LIMIT 1
+                        ) AS latest_consolidation,
                         COALESCE(
                             (SELECT json_agg(json_build_object(
                                 'review_id', pr.review_id,
@@ -165,6 +198,18 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
                 }
             } else {
                 $app['assigned_reviewers'] = [];
+            }
+            if (isset($app['has_consolidated_decision'])) {
+                $app['has_consolidated_decision'] = filter_var($app['has_consolidated_decision'], FILTER_VALIDATE_BOOLEAN);
+            } else {
+                $app['has_consolidated_decision'] = false;
+            }
+            if (isset($app['latest_consolidation'])) {
+                if (is_string($app['latest_consolidation'])) {
+                    $app['latest_consolidation'] = json_decode($app['latest_consolidation'], true);
+                }
+            } else {
+                $app['latest_consolidation'] = null;
             }
             $app['reviews_total'] = isset($app['reviews_total']) ? intval($app['reviews_total']) : 0;
             $app['reviews_completed'] = isset($app['reviews_completed']) ? intval($app['reviews_completed']) : 0;

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import adzuSeal from '../assets/AdZU Seal.png';
 import ResearchProtocolModal from '../components/admin/ResearchProtocolModal';
 import OngoingReviewModal from '../components/admin/OngoingReviewModal';
+import ConsolidationModal from '../components/admin/ConsolidationModal';
 
 function AdminDashboard() {
     const navigate = useNavigate();
@@ -26,6 +27,7 @@ function AdminDashboard() {
     // For containing all of the Protocols
     const [protocolData, setProtocolData] = useState([]);
     const [ongoingReviewProtocol, setOngoingReviewProtocol] = useState(null);
+    const [consolidationProtocol, setConsolidationProtocol] = useState(null);
 
     // Fetching the data from the database
     const fetchProtocols = () => {
@@ -358,7 +360,9 @@ function AdminDashboard() {
                                                         <div 
                                                             className={`card h-100 border-0 shadow-sm rounded-4 overflow-hidden ${terminalStatuses.includes(protocol.status) ? 'opacity-50' : ''}`} 
                                                             onClick={() => {
-                                                                if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
+                                                                if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
+                                                                    setConsolidationProtocol(protocol);
+                                                                } else if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
                                                                     setOngoingReviewProtocol(protocol);
                                                                 } else {
                                                                     setSelectedProtocol(protocol);
@@ -413,7 +417,13 @@ function AdminDashboard() {
                                                             <div className='brand-header text-white p-2 d-flex justify-content-between align-items-center' style={{ fontSize: '0.75rem' }}>
                                                                 <span className='fw-bold ps-2'>{protocol.date}</span>
                                                                 <span className='pe-2 text-white opacity-75'>
-                                                                    {isReviewerRole ? <><i className="bi bi-pencil-square me-1"></i>Evaluate</> : <><i className="bi bi-eye me-1"></i>Details</>}
+                                                                    {protocol.status === 'CONSOLIDATION OF EVALUATION' ? (
+                                                                        <><i className="bi bi-diagram-3-fill me-1"></i>Consolidate</>
+                                                                    ) : isReviewerRole ? (
+                                                                        <><i className="bi bi-pencil-square me-1"></i>Evaluate</>
+                                                                    ) : (
+                                                                        <><i className="bi bi-eye me-1"></i>Details</>
+                                                                    )}
                                                                 </span>
                                                             </div>
 
@@ -483,7 +493,9 @@ function AdminDashboard() {
                                                             <tr
                                                                 key={index}
                                                                 onClick={() => {
-                                                                    if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
+                                                                    if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
+                                                                        setConsolidationProtocol(protocol);
+                                                                    } else if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
                                                                         setOngoingReviewProtocol(protocol);
                                                                     } else {
                                                                         setSelectedProtocol(protocol);
@@ -571,6 +583,17 @@ function AdminDashboard() {
                                                                         >
                                                                             <i className="bi bi-pencil-square me-1"></i>Evaluate
                                                                         </button>
+                                                                    ) : protocol.status === 'CONSOLIDATION OF EVALUATION' ? (
+                                                                        <button 
+                                                                            type="button" 
+                                                                            className="btn btn-sm btn-primary fw-bold text-nowrap px-3 shadow-xs"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setConsolidationProtocol(protocol);
+                                                                            }}
+                                                                        >
+                                                                            <i className="bi bi-diagram-3-fill me-1"></i>Consolidate
+                                                                        </button>
                                                                     ) : (
                                                                         <button 
                                                                             type="button" 
@@ -627,6 +650,17 @@ function AdminDashboard() {
                 onRefresh={() => {
                     fetchProtocols();
                     setOngoingReviewProtocol(null);
+                }}
+            />
+        )}
+
+        {consolidationProtocol && (
+            <ConsolidationModal
+                protocol={consolidationProtocol}
+                onClose={() => setConsolidationProtocol(null)}
+                onRefresh={() => {
+                    fetchProtocols();
+                    setConsolidationProtocol(null);
                 }}
             />
         )}

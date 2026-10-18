@@ -363,13 +363,23 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         return list;
     }, [protocol?.form_data]);
 
-    const [selectedDoc, setSelectedDoc] = useState(() => protocolDocuments[0] || null);
+    // Helper to prioritize previewable documents (PDF/Image) over non-inline files (Word/DOCX)
+    const getPreferredInitialDoc = (docs) => {
+        if (!docs || docs.length === 0) return null;
+        const pdfOrImg = docs.find(d => {
+            const path = (d.name || d.savedPath || '').toLowerCase();
+            return path.endsWith('.pdf') || /\.(png|jpe?g|gif|webp|svg)$/i.test(path);
+        });
+        return pdfOrImg || docs[0];
+    };
+
+    const [selectedDoc, setSelectedDoc] = useState(() => getPreferredInitialDoc(protocolDocuments));
     const [isSynopsisOpen, setIsSynopsisOpen] = useState(false);
 
     // Keep selected document in sync if list updates
     useEffect(() => {
         if (!selectedDoc && protocolDocuments.length > 0) {
-            setSelectedDoc(protocolDocuments[0]);
+            setSelectedDoc(getPreferredInitialDoc(protocolDocuments));
         }
     }, [protocolDocuments, selectedDoc]);
 
@@ -834,12 +844,91 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div className="flex-grow-1 w-100 h-100 bg-white">
-                                                    <iframe 
-                                                        src={resolveFileUrl(selectedDoc.savedPath)} 
-                                                        className="w-100 h-100 border-0" 
-                                                        title="Protocol Document Preview"
-                                                    />
+                                                <div className="flex-grow-1 w-100 h-100 bg-white overflow-hidden position-relative">
+                                                    {(() => {
+                                                        const docPathLower = (selectedDoc.name || selectedDoc.savedPath || '').toLowerCase();
+                                                        const isPdf = docPathLower.endsWith('.pdf');
+                                                        const isImage = /\.(png|jpe?g|gif|webp|svg)$/i.test(docPathLower);
+                                                        const isWord = /\.(docx?)$/i.test(docPathLower);
+
+                                                        if (isPdf) {
+                                                            return (
+                                                                <iframe 
+                                                                    src={resolveFileUrl(selectedDoc.savedPath)} 
+                                                                    className="w-100 h-100 border-0" 
+                                                                    title="Protocol Document Preview"
+                                                                />
+                                                            );
+                                                        }
+
+                                                        if (isImage) {
+                                                            return (
+                                                                <div className="w-100 h-100 d-flex align-items-center justify-content-center p-3 bg-light overflow-auto">
+                                                                    <img 
+                                                                        src={resolveFileUrl(selectedDoc.savedPath)} 
+                                                                        alt={selectedDoc.name} 
+                                                                        className="img-fluid rounded border shadow-sm"
+                                                                        style={{ maxHeight: '100%', objectFit: 'contain' }}
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        // Non-inline renderable files (DOCX, XLSX, etc.)
+                                                        const companionPdf = protocolDocuments.find(d => (d.name || d.savedPath || '').toLowerCase().endsWith('.pdf'));
+
+                                                        return (
+                                                            <div className="w-100 h-100 d-flex align-items-center justify-content-center p-4 bg-light overflow-auto">
+                                                                <div className="card border-0 shadow-sm rounded-4 p-4 text-center bg-white" style={{ maxWidth: '480px' }}>
+                                                                    <div className="mb-3">
+                                                                        <span className="d-inline-flex align-items-center justify-content-center rounded-circle p-3" style={{ backgroundColor: isWord ? '#e8f0fe' : '#f1f3f4', width: '72px', height: '72px' }}>
+                                                                            <i className={`bi ${isWord ? 'bi-file-earmark-word-fill text-primary' : 'bi-file-earmark-arrow-down-fill text-secondary'} fs-1`}></i>
+                                                                        </span>
+                                                                    </div>
+                                                                    <h6 className="fw-bold text-dark mb-1 text-truncate" title={selectedDoc.name}>
+                                                                        {selectedDoc.name}
+                                                                    </h6>
+                                                                    <div className="d-flex align-items-center justify-content-center gap-2 mb-3">
+                                                                        <span className={`badge ${DOCUMENT_CATEGORIES[selectedDoc.category]?.badgeClass || 'bg-secondary'}`}>
+                                                                            {DOCUMENT_CATEGORIES[selectedDoc.category]?.label || 'Document'}
+                                                                        </span>
+                                                                        <span className="text-muted small">({formatBytes(selectedDoc.size)})</span>
+                                                                    </div>
+
+                                                                    <div className="alert alert-light border small text-muted text-start mb-4 shadow-xs">
+                                                                        <div className="d-flex align-items-start gap-2">
+                                                                            <i className="bi bi-info-circle-fill text-primary mt-1"></i>
+                                                                            <div>
+                                                                                <strong>{isWord ? 'Microsoft Word Document (.docx)' : 'Offline File Attachment'}:</strong> Web browsers do not render Word files inline inside web pages. To prevent unwanted automatic downloads, view the PDF companion below or download this file to open in Office.
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="d-flex flex-column gap-2">
+                                                                        <a 
+                                                                            href={resolveFileUrl(selectedDoc.savedPath)} 
+                                                                            download 
+                                                                            className="btn btn-primary d-inline-flex align-items-center justify-content-center gap-2 py-2 px-3 fw-semibold shadow-sm"
+                                                                        >
+                                                                            <i className="bi bi-download"></i>
+                                                                            <span>Download {selectedDoc.name}</span>
+                                                                        </a>
+
+                                                                        {companionPdf && companionPdf.savedPath !== selectedDoc.savedPath && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setSelectedDoc(companionPdf)}
+                                                                                className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center gap-2 py-2"
+                                                                            >
+                                                                                <i className="bi bi-file-earmark-pdf-fill text-danger"></i>
+                                                                                <span>Switch to PDF Copy ({companionPdf.name})</span>
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
                                         ) : (
