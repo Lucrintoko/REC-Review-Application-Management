@@ -236,6 +236,9 @@ try {
         }
     }
 
+    // Populate consolidated_recommendation in consolidation_meta so client never falls back to undefined
+    $consolidationMeta['consolidated_recommendation'] = $existingConsol['consolidated_recommendation'] ?? $smartDefaultRec;
+
     // 4. Canonical Definitions of Form 11 and Form 12 Criteria
     $form11Definitions = [
         [

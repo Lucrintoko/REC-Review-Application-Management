@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 import adzuSeal from '../../assets/AdZU Seal.png';
 import { formatDate } from '../../utils/formatters';
+import { printIsolatedElement } from '../../utils/printHelper';
 
-/**
- * ConsolidatedDecisionLetterModal.jsx
- * Stage 5 - Phase 3: Official AdZU REC Consolidated Review Letter & Offline PDF Generator
- * 
- * Generates the formal Ateneo de Zamboanga University Research Ethics Committee Notice
- * (ADZU-REC Form 13: Notice of Committee Action & Directives Matrix).
- * 
- * Supports interactive screen preview and zero-bloat browser vector print to PDF.
- */
+// Generates the Consolidation Letter of the Ethics Chair with Offline PDF Generator
+
 export default function ConsolidatedDecisionLetterModal({
     show,
     onClose,
@@ -67,13 +61,16 @@ export default function ConsolidatedDecisionLetterModal({
     const displayForm12 = filterItems(form12Criteria);
     const totalActionItems = [...form11Criteria, ...form12Criteria].filter(i => getItemState(i).isActionRequired).length;
 
-    // Handle Print
-    const handleTriggerPrint = () => {
+    // Handle Print via Isolated Canvas Engine
+    const handleTriggerPrint = async () => {
         setIsPrinting(true);
-        setTimeout(() => {
-            window.print();
+        try {
+            await printIsolatedElement('printable-decision-letter', `ADZU-REC Form 13 - ${protocolCode}`);
+        } catch (err) {
+            console.error('Error invoking isolated print:', err);
+        } finally {
             setIsPrinting(false);
-        }, 150);
+        }
     };
 
     // Decision Banner Configurations
@@ -260,8 +257,17 @@ export default function ConsolidatedDecisionLetterModal({
                             disabled={isPrinting}
                             className="btn btn-sm btn-success fw-bold d-flex align-items-center gap-2 shadow-xs"
                         >
-                            <i className="bi bi-printer-fill"></i>
-                            <span>Print / Save as PDF</span>
+                            {isPrinting ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    <span>Preparing PDF...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <i className="bi bi-printer-fill"></i>
+                                    <span>Print / Save as PDF</span>
+                                </>
+                            )}
                         </button>
 
                         <button
@@ -280,9 +286,7 @@ export default function ConsolidatedDecisionLetterModal({
                 <div className="flex-grow-1 overflow-y-auto px-3 py-2">
                     <div className="letter-sheet-container p-4 p-md-5" id="printable-decision-letter">
                         
-                        {/* ======================================================== */}
-                        {/* A. INSTITUTIONAL LETTERHEAD                              */}
-                        {/* ======================================================== */}
+                        {/* A. INSTITUTIONAL LETTERHEAD */}
                         <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4 page-break-avoid">
                             {/* University Seal */}
                             <div className="d-flex align-items-center gap-3">
@@ -326,9 +330,7 @@ export default function ConsolidatedDecisionLetterModal({
                             </div>
                         </div>
 
-                        {/* ======================================================== */}
-                        {/* B. DOCUMENT TITLE BANNER                                 */}
-                        {/* ======================================================== */}
+                        {/* B. DOCUMENT TITLE BANNER */}
                         <div className="text-center mb-4 page-break-avoid">
                             <h5 className="fw-bold text-uppercase mb-1" style={{ letterSpacing: '0.04em', color: '#060297' }}>
                                 Formal Notice of Committee Action & Actionable Directives
@@ -338,9 +340,7 @@ export default function ConsolidatedDecisionLetterModal({
                             </p>
                         </div>
 
-                        {/* ======================================================== */}
-                        {/* C. PROTOCOL METADATA LEDGER                              */}
-                        {/* ======================================================== */}
+                        {/* C. PROTOCOL METADATA LEDGER*/}
                         <div className="border rounded mb-4 overflow-hidden page-break-avoid">
                             <div className="bg-light px-3 py-2 border-bottom fw-bold text-uppercase small text-dark d-flex justify-content-between align-items-center">
                                 <span><i className="bi bi-folder2-open me-2 text-primary"></i>Protocol Profile</span>
@@ -368,9 +368,7 @@ export default function ConsolidatedDecisionLetterModal({
                             </table>
                         </div>
 
-                        {/* ======================================================== */}
-                        {/* D. OFFICIAL COMMITTEE DECISION BANNER                    */}
-                        {/* ======================================================== */}
+                        {/* D. OFFICIAL COMMITTEE DECISION BANNER */}
                         <div className={`border-start border-4 ${decisionConfig.cardBorderClass} bg-light p-3 rounded mb-4 page-break-avoid shadow-xs`}>
                             <div className="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
                                 <div className="d-flex align-items-center gap-2">
@@ -393,9 +391,7 @@ export default function ConsolidatedDecisionLetterModal({
                             </p>
                         </div>
 
-                        {/* ======================================================== */}
-                        {/* E. CHAIR DIRECTIVES & DELIBERATION NOTES                 */}
-                        {/* ======================================================== */}
+                        {/* E. CHAIR DIRECTIVES & DELIBERATION NOTES */}
                         {directivesForRevisions && (
                             <div className="mb-4 page-break-avoid">
                                 <h6 className="fw-bold text-dark text-uppercase small mb-2 d-flex align-items-center gap-2">
@@ -419,9 +415,7 @@ export default function ConsolidatedDecisionLetterModal({
                             </div>
                         )}
 
-                        {/* ======================================================== */}
-                        {/* F. ACTIONABLE DIRECTIVES & EVALUATION MATRIX             */}
-                        {/* ======================================================== */}
+                        {/* F. ACTIONABLE DIRECTIVES & EVALUATION MATRIX */}
                         <div className="mb-4">
                             <div className="d-flex justify-content-between align-items-center mb-2 page-break-avoid">
                                 <h6 className="fw-bold text-dark text-uppercase small mb-0 d-flex align-items-center gap-2">
@@ -570,9 +564,7 @@ export default function ConsolidatedDecisionLetterModal({
                             </div>
                         </div>
 
-                        {/* ======================================================== */}
-                        {/* G. MANDATORY RESUBMISSION GUIDELINES                     */}
-                        {/* ======================================================== */}
+                        {/* G. MANDATORY RESUBMISSION GUIDELINES */}
                         <div className="border rounded p-3 mb-4 bg-light page-break-avoid">
                             <h6 className="fw-bold text-dark text-uppercase small mb-2 d-flex align-items-center gap-1">
                                 <i className="bi bi-info-circle-fill text-primary"></i>
@@ -591,9 +583,7 @@ export default function ConsolidatedDecisionLetterModal({
                             </ol>
                         </div>
 
-                        {/* ======================================================== */}
-                        {/* H. OFFICIAL SIGN-OFF & ATTESTATION BLOCK                 */}
-                        {/* ======================================================== */}
+                        {/* H. OFFICIAL SIGN-OFF & ATTESTATION BLOCK */}
                         <div className="pt-3 border-top page-break-avoid">
                             <div className="row g-4 align-items-end">
                                 {/* Secretariat Archival Stamp */}
