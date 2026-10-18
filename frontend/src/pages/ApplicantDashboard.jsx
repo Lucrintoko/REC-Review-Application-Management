@@ -14,6 +14,7 @@ import ProtocolAppealModal from "../components/applicant/ProtocolAppealModal";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { useApplications } from "../hooks/useApplications";
 import { useTableSortFilter } from "../hooks/useTableSortFilter";
+import Swal from "sweetalert2";
 
 const SORT_LABELS = {
   research_title: "Title",
@@ -32,6 +33,8 @@ function ApplicantDashboard({
   onSelectApplication,
 }) {
   const applicantName = localStorage.getItem('applicantName') || "Juan Dela Cruz";
+  const applicantDepartment = localStorage.getItem('applicantDepartment') || "Ateneo de Zamboanga University";
+  const applicantEmail = localStorage.getItem('applicantEmail') || "applicant@adzu.edu.ph";
   const [selectedOrApp, setSelectedOrApp] = useState(null);
   const [rejectionNoticeApp, setRejectionNoticeApp] = useState(null);
   const [revisionNoticeApp, setRevisionNoticeApp] = useState(null);
@@ -43,14 +46,72 @@ function ApplicantDashboard({
   const { applications, isLoading, refetch, deleteApplication } = useApplications();
 
   const handleDeleteDraft = async (application) => {
-    if (!window.confirm("Delete this draft application? This action cannot be undone.")) {
+    const studyTitle = application.research_title || application.title || "Untitled Draft";
+
+    const result = await Swal.fire({
+      title: "Discard Draft Application?",
+      html: `
+        <div class="text-start">
+          <p class="text-secondary small mb-2">You are about to permanently discard the unsubmitted draft:</p>
+          <div class="p-2 px-3 bg-light border rounded mb-3 text-dark fw-semibold small font-monospace text-truncate">
+            ${studyTitle}
+          </div>
+          <div class="alert alert-danger py-2 px-3 mb-0 d-flex align-items-center gap-2 small">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 fs-5"></i>
+            <div>
+              <strong>Irreversible Action:</strong> All local entries, uploaded document references, and progress will be lost.
+            </div>
+          </div>
+        </div>
+      `,
+      icon: "warning",
+      iconColor: "#d97706",
+      showCancelButton: true,
+      confirmButtonText: '<i class="bi bi-trash3-fill me-1"></i> Yes, Discard Draft',
+      cancelButtonText: "Keep Draft",
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#003366",
+      reverseButtons: true,
+      focusCancel: true,
+      customClass: {
+        popup: "rounded-4 shadow-lg border-0 p-3",
+        confirmButton: "btn btn-danger px-4 py-2 rounded-pill fw-semibold shadow-sm",
+        cancelButton: "btn btn-outline-secondary px-4 py-2 rounded-pill fw-medium me-2",
+      },
+      buttonsStyling: false,
+    });
+
+    if (!result.isConfirmed) {
       return;
     }
 
     try {
       await deleteApplication(application);
+
+      await Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Draft discarded successfully",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+          popup: "rounded-3 shadow-sm",
+        },
+      });
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : "The draft could not be deleted.");
+      await Swal.fire({
+        icon: "error",
+        title: "Discard Failed",
+        text: error instanceof Error ? error.message : "The draft could not be discarded. Please try again.",
+        confirmButtonColor: "#003366",
+        confirmButtonText: "Close",
+        customClass: {
+          confirmButton: "btn btn-primary px-4 py-2 rounded-pill fw-medium",
+        },
+        buttonsStyling: false,
+      });
     }
   };
 
@@ -77,7 +138,11 @@ function ApplicantDashboard({
   return (
     <div className="min-vh-100 d-flex flex-column">
       {/* Header */}
-      <DashboardHeader userName={applicantName} />
+      <DashboardHeader
+        userName={applicantName}
+        userDepartment={applicantDepartment}
+        userEmail={applicantEmail}
+      />
 
       {/* Main Dashboard Layout */}
       <main className="container my-4 flex-grow-1 d-flex flex-column">

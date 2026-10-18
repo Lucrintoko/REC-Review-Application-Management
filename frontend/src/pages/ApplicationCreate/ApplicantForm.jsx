@@ -242,11 +242,12 @@ function evaluateFormStatusAndErrors(formData) {
     formData.contact_email.trim().length > 0 &&
     formData.contact_phone.trim().length > 0;
 
-  // Section 6: Description
-  if (!formData.description_objectives.trim() || formData.description_objectives.trim().length < 20) {
+  // Section 7: Brief Description of the Study & Objectives
+  const studyDescription = (formData.description_objectives || formData.description_study || "").trim();
+  if (!studyDescription || studyDescription.length < 20) {
     errors.description_objectives = "A brief description of the study must be at least 20 characters.";
   }
-  status["section-7"] = formData.description_objectives.trim().length >= 20;
+  status["section-7"] = studyDescription.length >= 20;
 
   // Section 7: Type of Study
   if (!formData.study_type) {
@@ -385,7 +386,7 @@ function evaluateFormStatusAndErrors(formData) {
     firstErrorSectionId = "general-information";
   } else if (errors.contact_name || errors.contact_email || errors.contact_phone) {
     firstErrorSectionId = "general-information";
-  } else if (errors.description_objectives) {
+  } else if (errors.description_objectives || errors.description_study) {
     firstErrorSectionId = "brief-description";
   } else if (errors.study_type || errors.study_type_other) {
     firstErrorSectionId = "general-information";
@@ -435,6 +436,10 @@ function ApplicantForm({ onBack }) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.data) {
           const merged = { ...INITIAL_FORM_DATA, ...parsed.data };
+          // Normalize legacy description_study to description_objectives if needed
+          if (!merged.description_objectives && merged.description_study) {
+            merged.description_objectives = merged.description_study;
+          }
           // Validate the merged data to ensure no deeply nested keys are missing from older drafts
           evaluateFormStatusAndErrors(merged); 
           return merged;
@@ -538,6 +543,9 @@ function ApplicantForm({ onBack }) {
           compliance_technical_file: fileList.length > 0 ? fileList[0] : null,
           compliance_technical_files: fileList,
         };
+      }
+      if (field === "description_objectives") {
+        return { ...prev, description_objectives: value, description_study: value };
       }
       return { ...prev, [field]: value };
     });
@@ -757,6 +765,10 @@ function ApplicantForm({ onBack }) {
       if (key === 'rawFile') return undefined;
       return value;
     }));
+    // Mirror description keys so both legacy and modern readers resolve seamlessly
+    const normalizedObjectives = cleanFormData.description_objectives || cleanFormData.description_study || "";
+    cleanFormData.description_objectives = normalizedObjectives;
+    cleanFormData.description_study = normalizedObjectives;
 
     const submissionPayload = {
       applicant_id: Number(localStorage.getItem("applicantId")) || 0,
@@ -1837,7 +1849,7 @@ function ApplicantForm({ onBack }) {
                       rows="10"
                       className={`form-control ${validationErrors.description_objectives ? "is-invalid" : ""}`}
                       placeholder="Summarize the background and rationale, objectives, study design, methodology, participants, recruitment, data collection, and expected benefits or risks..."
-                      value={formData.description_objectives}
+                      value={formData.description_objectives || formData.description_study || ""}
                       onChange={(e) => updateField("description_objectives", e.target.value)}
                     ></textarea>
                     {validationErrors.description_objectives && (
