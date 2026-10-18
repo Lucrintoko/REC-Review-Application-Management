@@ -7,6 +7,7 @@ const DRAFT_STORAGE_KEY = "adzu_rec_application_draft_v1";
 
 /**
  * Renders an individual application row inside the applications table.
+ * Supports interactive states, workflow badges, and refined draft management.
  */
 function ApplicationRow({
   application,
@@ -20,9 +21,13 @@ function ApplicationRow({
   onDeleteDraft,
 }) {
   const navigate = useNavigate();
-  const title = application.research_title || application.title || "Untitled Application";
+  const rawTitle = application.research_title || application.title || "";
+  const isUntitled = !rawTitle.trim() || rawTitle.trim().toLowerCase() === "untitled draft";
+  const title = isUntitled ? "Untitled Draft Protocol" : rawTitle;
+  
   const protocolCode = application.protocol_code || application.protocol_no || "N/A";
-  const date = application.submission_date || application.date_submitted;
+  const isCodeAssigned = protocolCode && protocolCode !== "Draft" && protocolCode !== "N/A";
+  const date = application.submission_date || application.date_submitted || application.updated_at;
   
   // Convert status to lowercase and normalize it for safer checking
   const statusStr = (application.status || "").trim().toLowerCase();
@@ -65,7 +70,10 @@ function ApplicationRow({
     application.current_cycle > 1
   );
 
-  const rowClass = isPaymentRejected
+  // Row tinting logic
+  const rowClass = isDraft
+    ? "table-warning bg-opacity-10"
+    : isPaymentRejected
     ? "table-danger table-opacity-10"
     : isClearanceGranted || isApproved
     ? "table-success table-opacity-10"
@@ -79,7 +87,41 @@ function ApplicationRow({
     ? "table-primary table-opacity-10"
     : "";
 
+  const handleEditDraft = (event) => {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (application.form_data) {
+      try {
+        localStorage.setItem(
+          DRAFT_STORAGE_KEY,
+          JSON.stringify({
+            data: application.form_data,
+            savedAt: application.updated_at || application.submission_date || new Date().toISOString(),
+          })
+        );
+      } catch (err) {
+        console.error("Error serializing draft to localStorage:", err);
+      }
+    }
+
+    navigate("/applicant/form");
+  };
+
+  const handleDeleteDraft = (event) => {
+    if (event) {
+      event.stopPropagation();
+    }
+    onDeleteDraft?.(application);
+  };
+
   const handleRowClick = () => {
+    if (isDraft) {
+      handleEditDraft();
+      return;
+    }
+
     if (onSelect) {
       onSelect(application);
     } else if ((hasDecisionLetter || isClearanceGranted || isRevisionsSubmitted) && onOpenDecisionLetter) {
@@ -95,8 +137,22 @@ function ApplicationRow({
     }
   };
 
+  const handleKeyDown = (event) => {
+    if (isClickable && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      handleRowClick();
+    }
+  };
+
   const isClickable = Boolean(
-    onSelect || hasDecisionLetter || isClearanceGranted || isRevisionsSubmitted || hasActiveRevision || isPaymentRejected || isPaymentPending
+    isDraft ||
+    onSelect ||
+    hasDecisionLetter ||
+    isClearanceGranted ||
+    isRevisionsSubmitted ||
+    hasActiveRevision ||
+    isPaymentRejected ||
+    isPaymentPending
   );
 
   // Decision Sub-Badge configuration
@@ -155,53 +211,91 @@ function ApplicationRow({
 
   const decisionBadge = getDecisionBadge();
 
-  const handleEditDraft = (event) => {
-    event.stopPropagation();
-
-    if (application.form_data) {
-      localStorage.setItem(
-        DRAFT_STORAGE_KEY,
-        JSON.stringify({
-          data: application.form_data,
-          savedAt: application.updated_at || application.submission_date || new Date().toISOString(),
-        })
-      );
-    }
-
-    navigate("/applicant/form");
-  };
-
-  const handleDeleteDraft = (event) => {
-    event.stopPropagation();
-    onDeleteDraft?.(application);
-  };
-
   return (
     <tr
       className={rowClass}
       onClick={handleRowClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={isClickable ? 0 : undefined}
+      role={isClickable ? "button" : undefined}
+      aria-label={isDraft ? `Resume draft application: ${title}` : undefined}
       style={{ cursor: isClickable ? "pointer" : "default" }}
     >
+      {/* 1. Title Column */}
       <td>
-        <div className="fw-semibold text-dark">{title}</div>
-        {application.research_type && (
-          <small className="text-muted">
-            {application.research_type}
-            {application.review_type ? ` • ${application.review_type}` : ""}
-          </small>
+        <div className="d-flex align-items-center flex-wrap gap-2">
+          {isDraft && (
+            <span className="badge bg-warning text-dark border border-warning-subtle px-2 py-1 fw-semibold small">
+              <i className="bi bi-pencil-fill me-1"></i>Draft
+            </span>
+          )}
+          <span className={`fw-semibold ${isUntitled ? "text-secondary fst-italic" : "text-dark"}`}>
+            {title}
+          </span>
+        </div>
+
+        <div className="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap">
+          <span>{application.research_type || "Type Undetermined"}</span>
+          {application.review_type && (
+            <>
+              <span className="text-secondary">•</span>
+              <span>{application.review_type}</span>
+            </>
+          )}
+          {isDraft && (
+            <>
+              <span className="text-secondary">•</span>
+              <span className="text-warning-emphasis fw-medium">
+                <i className="bi bi-cloud-arrow-up me-1"></i>Auto-saved locally
+              </span>
+            </>
+          )}
+        </div>
+      </td>
+
+      {/* 2. Protocol Code Column */}
+      <td>
+        {isDraft && !isCodeAssigned ? (
+          <span
+            className="badge bg-light text-muted border border-secondary font-monospace px-2 py-1"
+            style={{ borderStyle: "dashed" }}
+            title="Official protocol number will be assigned upon formal submission"
+          >
+            <i className="bi bi-dash-circle me-1"></i>Unassigned
+          </span>
+        ) : (
+          <span className={`badge ${isDraft ? "bg-warning-subtle text-warning-emphasis border-warning-subtle" : "bg-light text-dark"} border font-monospace px-2 py-1`}>
+            {protocolCode}
+          </span>
         )}
       </td>
+
+      {/* 3. Date Column */}
       <td>
-        <span className="badge bg-light text-dark border font-monospace px-2 py-1">
-          {protocolCode}
-        </span>
+        <div className="d-flex flex-column align-items-start">
+          <span className="text-dark small fw-medium">{formatDate(date)}</span>
+          <span className="text-muted" style={{ fontSize: "0.75rem" }}>
+            <i className={`bi ${isDraft ? "bi-clock-history" : "bi-send-check"} me-1`}></i>
+            {isDraft ? "Last Saved" : "Submitted"}
+          </span>
+        </div>
       </td>
-      <td>
-        <span className="text-secondary small">{formatDate(date)}</span>
-      </td>
+
+      {/* 4. Status Column */}
       <td>
         <div className="d-flex flex-column align-items-start gap-1">
-          <StatusBadge status={application.status} />
+          {isDraft ? (
+            <>
+              <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 d-inline-flex align-items-center gap-1 fw-semibold">
+                <i className="bi bi-pencil-square"></i> Draft
+              </span>
+              <span className="text-muted" style={{ fontSize: "0.725rem" }}>
+                <i className="bi bi-eye-slash me-1"></i>Unsubmitted
+              </span>
+            </>
+          ) : (
+            <StatusBadge status={application.status} />
+          )}
 
           {/* Decision Letter Sub-Badge */}
           {hasDecisionLetter && decisionBadge && (
@@ -252,14 +346,42 @@ function ApplicationRow({
           )}
         </div>
       </td>
+
+      {/* 5. Actions Column */}
       <td className="text-center align-middle" onClick={(e) => e.stopPropagation()}>
-        {/* Stage 7: Ethical Clearance Granted Action */}
-        {isClearanceGranted ? (
+        {isDraft ? (
+          <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+            {/* Primary Action: Continue Editing */}
+            <button
+              type="button"
+              className="btn btn-sm btn-primary fw-semibold px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-2"
+              style={{ minHeight: "44px" }}
+              onClick={handleEditDraft}
+              title="Resume and complete this application draft"
+            >
+              <i className="bi bi-pencil-square"></i>
+              <span>Continue Editing</span>
+            </button>
+
+            {/* Destructive Action: Discard Draft */}
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-1"
+              style={{ minHeight: "44px" }}
+              onClick={handleDeleteDraft}
+              title="Discard this draft and clear local inputs"
+              aria-label="Discard draft application"
+            >
+              <i className="bi bi-trash3"></i>
+              <span className="d-none d-xl-inline">Discard</span>
+            </button>
+          </div>
+        ) : isClearanceGranted ? (
           <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
             <button
               type="button"
               className="btn btn-sm btn-success fw-semibold px-3 rounded-pill shadow-xs d-inline-flex align-items-center gap-1"
-              style={{ minHeight: "36px" }}
+              style={{ minHeight: "44px" }}
               onClick={(e) => {
                 e.stopPropagation();
                 onOpenDecisionLetter && onOpenDecisionLetter(application);
@@ -271,12 +393,11 @@ function ApplicationRow({
             </button>
           </div>
         ) : isRevisionsSubmitted ? (
-          /* Stage 6: Revisions Submitted Under Verification Action */
           <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
             <button
               type="button"
               className="btn btn-sm btn-outline-info text-dark fw-medium px-3 rounded-pill shadow-xs d-inline-flex align-items-center gap-1"
-              style={{ minHeight: "36px" }}
+              style={{ minHeight: "44px" }}
               onClick={(e) => {
                 e.stopPropagation();
                 onOpenDecisionLetter && onOpenDecisionLetter(application);
@@ -289,11 +410,10 @@ function ApplicationRow({
           </div>
         ) : hasDecisionLetter ? (
           <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
-            {/* Decision Letter Modal Trigger */}
             <button
               type="button"
               className="btn btn-sm btn-outline-primary fw-medium px-2 rounded-pill shadow-xs d-inline-flex align-items-center gap-1"
-              style={{ minHeight: "36px" }}
+              style={{ minHeight: "44px" }}
               onClick={(e) => {
                 e.stopPropagation();
                 onOpenDecisionLetter && onOpenDecisionLetter(application);
@@ -304,12 +424,11 @@ function ApplicationRow({
               <span>Decision Notice</span>
             </button>
 
-            {/* Direct Revisions Resubmit Button if Minor or Major Revisions */}
             {isRevisionsRequired && (
               <button
                 type="button"
                 className="btn btn-sm btn-warning text-dark fw-semibold px-2 rounded-pill shadow-xs d-inline-flex align-items-center gap-1"
-                style={{ minHeight: "36px" }}
+                style={{ minHeight: "44px" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   onOpenReviseModal ? onOpenReviseModal(application) : onOpenDecisionLetter && onOpenDecisionLetter(application);
@@ -321,12 +440,11 @@ function ApplicationRow({
               </button>
             )}
 
-            {/* Formal Appeal Action Button when Disapproved and Not Yet Appealed */}
             {isDisapproved && !isAppealed && (
               <button
                 type="button"
                 className="btn btn-sm btn-outline-danger fw-semibold px-2 rounded-pill shadow-xs d-inline-flex align-items-center gap-1"
-                style={{ minHeight: "36px" }}
+                style={{ minHeight: "44px" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   onOpenFileAppeal ? onOpenFileAppeal(application) : onOpenDecisionLetter && onOpenDecisionLetter(application);
@@ -338,7 +456,6 @@ function ApplicationRow({
               </button>
             )}
 
-            {/* Under Appeal Cycle 2 Indicator */}
             {isDisapproved && isAppealed && (
               <span
                 className="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 d-inline-flex align-items-center gap-1 small"
@@ -353,7 +470,7 @@ function ApplicationRow({
           <button
             type="button"
             className="btn btn-sm btn-danger fw-semibold px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-1"
-            style={{ minHeight: "36px" }}
+            style={{ minHeight: "44px" }}
             onClick={(e) => {
               e.stopPropagation();
               onOpenOrModal && onOpenOrModal(application);
@@ -377,34 +494,11 @@ function ApplicationRow({
             <i className="bi bi-receipt"></i>
             <span>Submit OR</span>
           </button>
-        ) : isDraft ? (
-          <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-primary fw-semibold px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-1"
-              style={{ minHeight: "36px" }}
-              onClick={handleEditDraft}
-              title="Open this draft for editing"
-            >
-              <i className="bi bi-pencil-square"></i>
-              <span>Edit Draft</span>
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-danger rounded-pill shadow-sm d-inline-flex align-items-center"
-              style={{ minHeight: "36px" }}
-              onClick={handleDeleteDraft}
-              title="Delete this draft"
-              aria-label="Delete this draft"
-            >
-              <i className="bi bi-trash"></i>
-            </button>
-          </div>
         ) : hasActiveRevision ? (
           <button
             type="button"
             className="btn btn-sm btn-warning text-dark fw-semibold px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-1"
-            style={{ minHeight: "36px" }}
+            style={{ minHeight: "44px" }}
             onClick={(e) => {
               e.stopPropagation();
               if (onOpenReviseModal) {
@@ -421,7 +515,7 @@ function ApplicationRow({
         ) : (
           <span 
             className="d-inline-flex align-items-center justify-content-center text-muted opacity-25"
-            style={{ height: '36px', width: '36px' }}
+            style={{ height: '44px', width: '44px' }}
             title="No action required at this stage"
           >
             <i className="bi bi-dash-lg fs-5"></i>
