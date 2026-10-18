@@ -14,7 +14,7 @@ const STATUS_CLASS_MAP = {
   "needs revisions": "badge bg-warning text-dark",
   "revisions required": "badge bg-warning text-dark",
   "revisions submitted": "badge bg-warning text-dark",
-  "decision letter issued": "badge bg-secondary",
+  "decision letter issued": "badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold",
   "needs progress report": "badge bg-warning text-dark",
   "awaiting approval": "badge bg-success",
   "certification finished": "badge bg-success",
