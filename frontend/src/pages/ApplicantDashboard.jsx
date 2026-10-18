@@ -10,6 +10,7 @@ import PaymentRejectionNoticeModal from "../components/applicant/PaymentRejectio
 import ProtocolRevisionNoticeModal from "../components/applicant/ProtocolRevisionNoticeModal";
 import ReviseProtocolModal from "../components/applicant/ReviseProtocolModal";
 import ApplicantDecisionLetterModal from "../components/applicant/ApplicantDecisionLetterModal";
+import ProtocolAppealModal from "../components/applicant/ProtocolAppealModal";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { useApplications } from "../hooks/useApplications";
 import { useTableSortFilter } from "../hooks/useTableSortFilter";
@@ -36,6 +37,7 @@ function ApplicantDashboard({
   const [revisionNoticeApp, setRevisionNoticeApp] = useState(null);
   const [reviseProtocolApp, setReviseProtocolApp] = useState(null);
   const [decisionLetterApp, setDecisionLetterApp] = useState(null);
+  const [appealProtocolApp, setAppealProtocolApp] = useState(null);
 
   // 1. Fetch applications data via custom hook (handles API, abort controller, loading, error, and fallback data)
   const { applications, isLoading, refetch } = useApplications();
@@ -134,6 +136,7 @@ function ApplicantDashboard({
                     onOpenRevisionNotice={setRevisionNoticeApp}
                     onOpenReviseModal={setReviseProtocolApp}
                     onOpenDecisionLetter={setDecisionLetterApp}
+                    onOpenFileAppeal={setAppealProtocolApp}
                   />
                 </div>
               </div>
@@ -196,6 +199,21 @@ function ApplicantDashboard({
           onProceedToRevise={(app) => {
             setDecisionLetterApp(null);
             setReviseProtocolApp(app);
+          }}
+          onProceedToAppeal={(app) => {
+            setDecisionLetterApp(null);
+            setAppealProtocolApp(app);
+          }}
+        />
+
+        {/* Stage 5: Formal Reconsideration & Protocol Appeal Modal (Approach A) */}
+        <ProtocolAppealModal
+          show={!!appealProtocolApp}
+          application={appealProtocolApp}
+          onClose={() => setAppealProtocolApp(null)}
+          onSuccess={() => {
+            setAppealProtocolApp(null);
+            refetch();
           }}
         />
       </ErrorBoundary>

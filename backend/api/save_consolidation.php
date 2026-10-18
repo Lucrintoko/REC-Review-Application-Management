@@ -52,7 +52,7 @@ try {
     $db->beginTransaction();
 
     // 1. Verify application existence
-    $appStmt = $db->prepare("SELECT application_id, protocol_code, status, review_type FROM research_applications WHERE application_id = :id");
+    $appStmt = $db->prepare("SELECT application_id, protocol_code, status, review_type, current_cycle FROM research_applications WHERE application_id = :id");
     $appStmt->execute([':id' => $application_id]);
     $app = $appStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -98,7 +98,9 @@ try {
     $compliance_checklist  = isset($data['compliance_checklist']) ? json_encode($data['compliance_checklist']) : '{}';
     $reviewer_snapshots    = isset($data['reviewer_snapshots']) ? json_encode($data['reviewer_snapshots']) : '[]';
     $pdf_report_path       = !empty($data['pdf_report_path']) ? $data['pdf_report_path'] : null;
-    $cycle_number          = isset($data['cycle_number']) ? intval($data['cycle_number']) : 1;
+    $cycle_number          = isset($data['cycle_number']) && intval($data['cycle_number']) > 0 
+        ? intval($data['cycle_number']) 
+        : (int)($app['current_cycle'] ?? 1);
 
     // 4. Upsert into consolidated_evaluations
     $checkConsol = $db->prepare("

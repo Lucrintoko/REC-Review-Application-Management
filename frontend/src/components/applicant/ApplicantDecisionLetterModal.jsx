@@ -20,6 +20,7 @@ export default function ApplicantDecisionLetterModal({
   application,
   onClose,
   onProceedToRevise,
+  onProceedToAppeal,
 }) {
   // Top-level hooks strictly before early returns to preserve Hook Count Invariance
   const [activeTab, setActiveTab] = useState("overview"); // 'overview' | 'form13'
@@ -100,6 +101,14 @@ export default function ApplicantDecisionLetterModal({
   const isMinorRevisions = recommendation.includes("Minor");
   const isMajorRevisions = recommendation.includes("Major");
   const isRevisionsRequired = isMinorRevisions || isMajorRevisions;
+  const isDisapproved = recommendation === "Disapproved";
+  const isAppealed = Boolean(
+    application?.is_appealed === true ||
+    application?.is_appealed === 1 ||
+    application?.is_appealed === "true" ||
+    application?.is_appealed === "1" ||
+    application?.current_cycle > 1
+  );
 
   // Offline Print Trigger
   const handleTriggerPrint = () => {
@@ -385,6 +394,53 @@ export default function ApplicantDecisionLetterModal({
                       </div>
                     </div>
                   </div>
+
+                  {/* Formal Appeal & Reconsideration (Approach A) Banner */}
+                  {isDisapproved && !isAppealed && (
+                    <div className="card bg-danger-subtle bg-opacity-25 border border-danger-subtle shadow-sm p-3 rounded-3">
+                      <div className="d-flex align-items-start gap-3">
+                        <i className="bi bi-shield-exclamation text-danger fs-3 mt-1 flex-shrink-0"></i>
+                        <div className="flex-grow-1">
+                          <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                            <h6 className="fw-bold text-danger mb-0 text-uppercase">
+                              Formal Reconsideration &amp; Appeal Available (Cycle 2)
+                            </h6>
+                            <span className="badge bg-danger text-white">Approach A Active</span>
+                          </div>
+                          <p className="small text-secondary mb-2">
+                            Under AdZU-REC Standard Operating Procedures, you are entitled to file a <strong>Formal Appeal &amp; Request for Reconsideration</strong> under this same protocol without initiating a duplicate application. Submitting corrective safeguards and specialist endorsements will advance this protocol to <strong>Cycle 2 Review under Heightened Board Scrutiny</strong>.
+                          </p>
+                          {onProceedToAppeal && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-danger fw-semibold d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill shadow-xs"
+                              onClick={() => {
+                                onClose();
+                                onProceedToAppeal(application);
+                              }}
+                            >
+                              <i className="bi bi-arrow-repeat"></i>
+                              <span>File Formal Appeal &amp; Reconsideration</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isDisapproved && isAppealed && (
+                    <div className="alert alert-info border-info-subtle shadow-sm p-3 rounded-3 mb-0">
+                      <div className="d-flex align-items-start gap-2">
+                        <i className="bi bi-shield-shaded text-primary fs-4 flex-shrink-0"></i>
+                        <div>
+                          <h6 className="fw-bold text-primary mb-1">Formal Appeal Submitted (Cycle 2 Re-Deliberation)</h6>
+                          <p className="small text-secondary mb-0">
+                            Your formal appeal and corrective protocol documentation have been received and logged under <strong>Doc Ref: {protocolCode}-APL2</strong>. The protocol is scheduled for comprehensive re-evaluation under <strong>Heightened Board Scrutiny</strong>. You will be notified once the full committee convenes.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Ethics Committee Directives for Applicant */}
                   {directivesForRevisions && (
@@ -819,6 +875,20 @@ export default function ApplicantDecisionLetterModal({
                   >
                     <i className="bi bi-pencil-square"></i>
                     <span>Proceed to Revise Protocol</span>
+                  </button>
+                )}
+
+                {isDisapproved && !isAppealed && onProceedToAppeal && (
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm px-4 fw-semibold shadow-xs d-inline-flex align-items-center gap-2"
+                    onClick={() => {
+                      onClose();
+                      onProceedToAppeal(application);
+                    }}
+                  >
+                    <i className="bi bi-arrow-repeat"></i>
+                    <span>File Formal Appeal &amp; Reconsideration</span>
                   </button>
                 )}
               </div>

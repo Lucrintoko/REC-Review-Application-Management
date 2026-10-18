@@ -47,7 +47,7 @@ DO $$ BEGIN
         CREATE TYPE notification_type_enum AS ENUM ('Status Update', 'Payment Verification', 'Review Assignment', 'Revision Request', 'Decision Issued', 'Clearance Granted', 'System Alert'); 
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'process_point_enum') THEN 
-        CREATE TYPE process_point_enum AS ENUM ('Initial Submission', 'Payment Required', 'Payment Verification', 'Review Type Assessment', 'Ethical Review', 'Decision Issued', 'Proponent Revisions', 'Revisions Verification', 'Clearance Granted', 'Application Rejected', 'Application Withdrawn', 'Protocol Revision', 'Consolidation of Review'); 
+        CREATE TYPE process_point_enum AS ENUM ('Initial Submission', 'Payment Required', 'Payment Verification', 'Review Type Assessment', 'Ethical Review', 'Decision Issued', 'Proponent Revisions', 'Revisions Verification', 'Clearance Granted', 'Application Rejected', 'Application Withdrawn', 'Protocol Revision', 'Consolidation of Review', 'Protocol Appeal', 'Appeal Re-deliberation'); 
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'history_status_enum') THEN 
         CREATE TYPE history_status_enum AS ENUM ('Pending', 'Completed'); 
@@ -115,6 +115,8 @@ CREATE TABLE IF NOT EXISTS research_applications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     form_data JSONB NULL,
+    current_cycle INT NOT NULL DEFAULT 1,
+    is_appealed BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT fk_application_applicant
         FOREIGN KEY (applicant_id) REFERENCES applicants (applicant_id)
         ON DELETE CASCADE
@@ -123,6 +125,7 @@ CREATE TABLE IF NOT EXISTS research_applications (
 CREATE INDEX IF NOT EXISTS idx_app_status ON research_applications(status);
 CREATE INDEX IF NOT EXISTS idx_app_review_type ON research_applications(review_type);
 CREATE INDEX IF NOT EXISTS idx_app_submission_date ON research_applications(submission_date);
+CREATE INDEX IF NOT EXISTS idx_research_applications_appealed ON research_applications(is_appealed, current_cycle);
 
 -- -----------------------------------------------------------------------------
 -- 4. Table: PAYMENTS
@@ -184,6 +187,7 @@ CREATE TABLE IF NOT EXISTS protocol_reviews (
     completed_date DATE NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     form_data JSONB NULL,
+    cycle_number INT NOT NULL DEFAULT 1,
     CONSTRAINT fk_review_application
         FOREIGN KEY (application_id) REFERENCES research_applications (application_id)
         ON DELETE CASCADE
@@ -192,9 +196,10 @@ CREATE TABLE IF NOT EXISTS protocol_reviews (
         FOREIGN KEY (reviewer_id) REFERENCES admins (admin_id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
-    UNIQUE (application_id, reviewer_id)
+    UNIQUE (application_id, reviewer_id, cycle_number)
 );
 CREATE INDEX IF NOT EXISTS idx_review_status ON protocol_reviews(review_status);
+CREATE INDEX IF NOT EXISTS idx_protocol_reviews_app_cycle ON protocol_reviews(application_id, cycle_number);
 
 -- -----------------------------------------------------------------------------
 -- 7. Table: NOTIFICATIONS

@@ -51,6 +51,8 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
                         r.created_at, 
                         r.updated_at, 
                         r.form_data,
+                        r.current_cycle,
+                        r.is_appealed,
                         p.payment_id,
                         p.payment_status,
                         p.verification_notes AS payment_notes,
@@ -150,23 +152,27 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
                                 'comments', pr.comments,
                                 'assigned_date', pr.assigned_date,
                                 'completed_date', pr.completed_date,
+                                'cycle_number', pr.cycle_number,
                                 'form_data', pr.form_data
                             ) ORDER BY pr.reviewer_role, pr.reviewer_id)
                             FROM protocol_reviews pr
                             JOIN admins a ON a.admin_id = pr.reviewer_id
-                            WHERE pr.application_id = r.application_id),
+                            WHERE pr.application_id = r.application_id
+                              AND pr.cycle_number = r.current_cycle),
                             '[]'::json
                         ) AS assigned_reviewers,
                         (
                             SELECT COUNT(*)::int 
                             FROM protocol_reviews pr 
                             WHERE pr.application_id = r.application_id
+                              AND pr.cycle_number = r.current_cycle
                         ) AS reviews_total,
                         (
                             SELECT COUNT(*)::int 
                             FROM protocol_reviews pr 
                             WHERE pr.application_id = r.application_id 
                               AND pr.review_status = 'Completed'
+                              AND pr.cycle_number = r.current_cycle
                         ) AS reviews_completed
                       FROM research_applications r
                       LEFT JOIN payments p ON p.application_id = r.application_id";

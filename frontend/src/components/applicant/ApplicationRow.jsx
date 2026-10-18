@@ -13,6 +13,7 @@ function ApplicationRow({
   onOpenRevisionNotice,
   onOpenReviseModal,
   onOpenDecisionLetter,
+  onOpenFileAppeal,
 }) {
   const title = application.research_title || application.title || "Untitled Application";
   const protocolCode = application.protocol_code || application.protocol_no || "N/A";
@@ -46,6 +47,13 @@ function ApplicationRow({
   const isApproved = recommendation === "Approved";
   const isRevisionsRequired = recommendation.includes("Revision");
   const isDisapproved = recommendation === "Disapproved";
+  const isAppealed = Boolean(
+    application.is_appealed === true ||
+    application.is_appealed === 1 ||
+    application.is_appealed === "true" ||
+    application.is_appealed === "1" ||
+    application.current_cycle > 1
+  );
 
   const rowClass = isPaymentRejected
     ? "table-danger table-opacity-10"
@@ -53,6 +61,10 @@ function ApplicationRow({
     ? "table-success table-opacity-10"
     : (hasDecisionLetter && isRevisionsRequired) || hasActiveRevision
     ? "table-warning table-opacity-10"
+    : isDisapproved && !isAppealed
+    ? "table-danger table-opacity-10"
+    : isDisapproved && isAppealed
+    ? "table-primary table-opacity-10"
     : "";
 
   const handleRowClick = () => {
@@ -101,10 +113,17 @@ function ApplicationRow({
       };
     }
     if (isDisapproved) {
+      if (isAppealed) {
+        return {
+          label: "Under Appeal Re-deliberation (Cycle 2)",
+          icon: "bi-hammer",
+          className: "bg-primary-subtle text-primary border-primary-subtle fw-semibold",
+        };
+      }
       return {
-        label: "Decision: Disapproved",
-        icon: "bi-x-circle-fill",
-        className: "bg-dark-subtle text-dark border-dark-subtle",
+        label: "Disapproved - Appeal Available",
+        icon: "bi-exclamation-octagon-fill",
+        className: "bg-danger-subtle text-danger border-danger-subtle fw-bold",
       };
     }
     return {
@@ -225,6 +244,34 @@ function ApplicationRow({
                 <i className="bi bi-pencil-square"></i>
                 <span>Revise</span>
               </button>
+            )}
+
+            {/* Formal Appeal Action Button when Disapproved and Not Yet Appealed */}
+            {isDisapproved && !isAppealed && (
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-danger fw-semibold px-2 rounded-pill shadow-xs d-inline-flex align-items-center gap-1"
+                style={{ minHeight: "36px" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenFileAppeal ? onOpenFileAppeal(application) : onOpenDecisionLetter && onOpenDecisionLetter(application);
+                }}
+                title="File Formal Appeal & Request for Reconsideration (Cycle 2)"
+              >
+                <i className="bi bi-arrow-repeat"></i>
+                <span>File Formal Appeal</span>
+              </button>
+            )}
+
+            {/* Under Appeal Cycle 2 Indicator */}
+            {isDisapproved && isAppealed && (
+              <span
+                className="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 d-inline-flex align-items-center gap-1 small"
+                title="Undergoing Cycle 2 Heightened Board Scrutiny"
+              >
+                <i className="bi bi-shield-shaded"></i>
+                <span>Cycle 2 Appeal</span>
+              </span>
             )}
           </div>
         ) : isPaymentRejected ? (

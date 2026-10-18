@@ -3,6 +3,26 @@ import Swal from 'sweetalert2';
 
 // Standardized AdZU REC Document Taxonomy & Visual Badging
 const DOCUMENT_CATEGORIES = {
+    restructured_protocol_clean: {
+        label: "Clean Restructured Protocol",
+        badgeClass: "bg-success text-white",
+        icon: "bi-file-earmark-check-fill",
+    },
+    restructured_protocol_tracked: {
+        label: "Tracked Changes Protocol",
+        badgeClass: "bg-warning text-dark",
+        icon: "bi-file-earmark-diff-fill",
+    },
+    institutional_safeguard_moa: {
+        label: "Institutional Safety Accord / MOA",
+        badgeClass: "bg-primary text-white",
+        icon: "bi-shield-check",
+    },
+    specialist_endorsement: {
+        label: "Specialist / Dept Endorsement",
+        badgeClass: "bg-info text-dark",
+        icon: "bi-award-fill",
+    },
     revised_protocol_clean: {
         label: "Clean Protocol",
         badgeClass: "bg-success text-white",
@@ -311,6 +331,34 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
     }, [isOversightMode, activeReviewRecord]);
 
     // -------------------------------------------------------------------------
+    // Appeal & Multi-Cycle Re-deliberation Context
+    // -------------------------------------------------------------------------
+    const parsedFormData = useMemo(() => {
+        if (!protocol?.form_data) return {};
+        if (typeof protocol.form_data === 'string') {
+            try { return JSON.parse(protocol.form_data); } catch (e) { return {}; }
+        }
+        return protocol.form_data;
+    }, [protocol?.form_data]);
+
+    const isAppealedProtocol = useMemo(() => {
+        return Boolean(
+            protocol?.is_appealed || 
+            (protocol?.current_cycle && Number(protocol.current_cycle) >= 2) ||
+            (Array.isArray(parsedFormData?.appeal_submissions) && parsedFormData.appeal_submissions.length > 0)
+        );
+    }, [protocol?.is_appealed, protocol?.current_cycle, parsedFormData]);
+
+    const latestAppeal = useMemo(() => {
+        if (!isAppealedProtocol || !Array.isArray(parsedFormData?.appeal_submissions) || parsedFormData.appeal_submissions.length === 0) {
+            return null;
+        }
+        return parsedFormData.appeal_submissions[parsedFormData.appeal_submissions.length - 1];
+    }, [isAppealedProtocol, parsedFormData]);
+
+    const [isAppealDrawerOpen, setIsAppealDrawerOpen] = useState(true);
+
+    // -------------------------------------------------------------------------
     // Document Workspace State & Extraction
     // -------------------------------------------------------------------------
     const protocolDocuments = useMemo(() => {
@@ -326,17 +374,43 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
             });
         };
 
+        // 0. Appeal Submissions (Prioritized on top for Cycle 2 Re-deliberation)
+        if (Array.isArray(parsedFormData?.appeal_submissions)) {
+            parsedFormData.appeal_submissions.forEach(appSub => {
+                (appSub.corrective_documents || []).forEach(f => {
+                    addFile({
+                        ...f,
+                        isAppealDoc: true,
+                        cycleNumber: appSub.cycle_number || 2,
+                        appealTitle: appSub.appeal_title || 'Formal Appeal Rebuttal'
+                    }, f.category || 'restructured_protocol_clean');
+                });
+            });
+        }
+
+        // Requirements appealDocuments
+        if (Array.isArray(parsedFormData?.requirements?.appealDocuments)) {
+            parsedFormData.requirements.appealDocuments.forEach(f => {
+                addFile({
+                    ...f,
+                    isAppealDoc: true,
+                    cycleNumber: 2
+                }, f.category || 'restructured_protocol_clean');
+            });
+        }
+
         // 1. Revision submissions
-        if (Array.isArray(protocol?.form_data?.revision_submissions)) {
-            protocol.form_data.revision_submissions.forEach(sub => {
+        if (Array.isArray(parsedFormData?.revision_submissions)) {
+            parsedFormData.revision_submissions.forEach(sub => {
                 (sub.files || []).forEach(f => addFile(f, 'revised_protocol_clean'));
             });
         }
 
         // 2. Requirements folder
-        if (protocol?.form_data?.requirements) {
-            const req = protocol.form_data.requirements;
+        if (parsedFormData?.requirements) {
+            const req = parsedFormData.requirements;
             Object.keys(req).forEach(key => {
+                if (key === 'appealDocuments') return;
                 const item = req[key];
                 if (Array.isArray(item)) {
                     item.forEach(f => addFile(f, key));
@@ -359,13 +433,21 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
             }
         };
 
-        if (protocol?.form_data) recurse(protocol.form_data);
+        recurse(parsedFormData);
         return list;
-    }, [protocol?.form_data]);
+    }, [parsedFormData]);
 
     // Helper to prioritize previewable documents (PDF/Image) over non-inline files (Word/DOCX)
     const getPreferredInitialDoc = (docs) => {
         if (!docs || docs.length === 0) return null;
+        // Prioritize appeal PDF/Image if present
+        const appealPdf = docs.find(d => {
+            if (!d.isAppealDoc) return false;
+            const path = (d.name || d.savedPath || '').toLowerCase();
+            return path.endsWith('.pdf') || /\.(png|jpe?g|gif|webp|svg)$/i.test(path);
+        });
+        if (appealPdf) return appealPdf;
+
         const pdfOrImg = docs.find(d => {
             const path = (d.name || d.savedPath || '').toLowerCase();
             return path.endsWith('.pdf') || /\.(png|jpe?g|gif|webp|svg)$/i.test(path);
@@ -759,6 +841,152 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                         </div>
 
                         {/* ======================================================== */}
+                        {/* 1b. HEIGHTENED BOARD SCRUTINY BANNER & APPEAL DRAWER      */}
+                        {/* ======================================================== */}
+                        {isAppealedProtocol && (
+                            <div className="text-white px-4 py-2 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm flex-shrink-0" style={{ backgroundColor: '#002147' }}>
+                                <div className="d-flex align-items-center gap-2">
+                                    <span className="badge px-2.5 py-1 text-uppercase fw-bold" style={{ backgroundColor: '#c59b27', color: '#002147', fontSize: '0.75rem' }}>
+                                        <i className="bi bi-shield-exclamation me-1"></i>Heightened Board Scrutiny
+                                    </span>
+                                    <span className="small text-white-50">
+                                        Cycle {protocol?.current_cycle || 2} Re-deliberation: Formal Appeal lodged following Cycle 1 Disapproval.
+                                    </span>
+                                </div>
+                                <div className="d-flex align-items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAppealDrawerOpen(prev => !prev)}
+                                        className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-1.5 py-1 px-3 rounded-pill"
+                                        style={{ fontSize: '0.78rem', borderColor: 'rgba(255,255,255,0.4)' }}
+                                    >
+                                        <i className={`bi ${isAppealDrawerOpen ? 'bi-chevron-up' : 'bi-layout-split'}`}></i>
+                                        <span>{isAppealDrawerOpen ? 'Hide Appeal Comparison' : '⚖️ Compare Appeal & Prior Disapproval'}</span>
+                                        {latestAppeal?.corrective_documents?.length > 0 && (
+                                            <span className="badge bg-warning text-dark rounded-pill ms-1">
+                                                {latestAppeal.corrective_documents.length} docs
+                                            </span>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Collapsible Side-by-Side Appeal Comparison Drawer */}
+                        {isAppealedProtocol && isAppealDrawerOpen && (
+                            <div className="border-bottom bg-light px-4 py-3 shadow-inner flex-shrink-0" style={{ maxHeight: '340px', overflowY: 'auto' }}>
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <span className="small fw-bold text-uppercase text-secondary d-flex align-items-center gap-2">
+                                        <i className="bi bi-columns-gap text-theme-primary"></i>
+                                        Disapproval Reconsideration Analysis (Cycle 1 vs Cycle 2)
+                                    </span>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-link btn-sm text-muted text-decoration-none p-0"
+                                        onClick={() => setIsAppealDrawerOpen(false)}
+                                    >
+                                        <i className="bi bi-x-lg me-1"></i>Dismiss
+                                    </button>
+                                </div>
+
+                                <div className="row g-3">
+                                    {/* Left Column: Prior Disapproval Directives */}
+                                    <div className="col-12 col-md-6">
+                                        <div className="card h-100 border-danger-subtle bg-danger-subtle bg-opacity-10 shadow-none">
+                                            <div className="card-header py-2 px-3 bg-danger-subtle border-danger-subtle d-flex align-items-center justify-content-between">
+                                                <span className="fw-bold small text-danger-emphasis d-flex align-items-center gap-1">
+                                                    <i className="bi bi-x-octagon-fill text-danger"></i>
+                                                    Cycle 1 Fatal Shortcomings & Directives
+                                                </span>
+                                                <span className="badge bg-danger text-white small">
+                                                    {latestAppeal?.prior_disapproval_snapshot?.meeting_date 
+                                                        ? `Deliberated: ${latestAppeal.prior_disapproval_snapshot.meeting_date}` 
+                                                        : 'Prior Decision'}
+                                                </span>
+                                            </div>
+                                            <div className="card-body p-3 small text-secondary">
+                                                <div className="mb-2">
+                                                    <strong className="text-dark d-block">Chair's Actionable Directives:</strong>
+                                                    <p className="mb-0 text-dark-emphasis font-monospace bg-white p-2 rounded border border-danger-subtle" style={{ fontSize: '0.82rem', whiteSpace: 'pre-wrap' }}>
+                                                        {latestAppeal?.prior_disapproval_snapshot?.directives_for_revisions || 
+                                                         protocol?.latest_consolidation?.directives_for_revisions || 
+                                                         'Protocol was determined non-compliant with AdZU REC and PHREB ethical standards.'}
+                                                    </p>
+                                                </div>
+                                                {latestAppeal?.prior_disapproval_snapshot?.summary_notes && (
+                                                    <div>
+                                                        <strong className="text-dark d-block">Summary Notes:</strong>
+                                                        <span className="text-muted fst-italic" style={{ fontSize: '0.8rem' }}>
+                                                            {latestAppeal.prior_disapproval_snapshot.summary_notes}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Column: Proponent's Appeal Justification & Quick Launchers */}
+                                    <div className="col-12 col-md-6">
+                                        <div className="card h-100 border-primary-subtle bg-light shadow-none">
+                                            <div className="card-header py-2 px-3 bg-primary-subtle border-primary-subtle d-flex align-items-center justify-content-between">
+                                                <span className="fw-bold small text-primary-emphasis d-flex align-items-center gap-1">
+                                                    <i className="bi bi-file-earmark-check-fill text-primary"></i>
+                                                    Cycle 2 Reconsideration Justification
+                                                </span>
+                                                <span className="badge bg-primary text-white small">
+                                                    {latestAppeal?.submitted_at ? `Lodged: ${new Date(latestAppeal.submitted_at).toLocaleDateString()}` : 'Cycle 2 Appeal'}
+                                                </span>
+                                            </div>
+                                            <div className="card-body p-3 small">
+                                                <h6 className="fw-bold text-dark mb-1" style={{ fontSize: '0.88rem' }}>
+                                                    {latestAppeal?.appeal_title || 'Formal Petition for Reconsideration'}
+                                                </h6>
+                                                <p className="text-secondary mb-3 bg-white p-2 rounded border" style={{ fontSize: '0.82rem', whiteSpace: 'pre-wrap', maxHeight: '110px', overflowY: 'auto' }}>
+                                                    {latestAppeal?.appeal_justification || 'Proponent submitted formal corrective safeguards and restructured protocol methodology.'}
+                                                </p>
+
+                                                {/* Quick-Launch Corrective Documents */}
+                                                {Array.isArray(latestAppeal?.corrective_documents) && latestAppeal.corrective_documents.length > 0 && (
+                                                    <div>
+                                                        <div className="text-muted fw-bold mb-1 d-flex align-items-center gap-1" style={{ fontSize: '0.75rem' }}>
+                                                            <i className="bi bi-folder-check text-theme-primary"></i>
+                                                            LAUNCH CORRECTIVE EVIDENCE IN LEFT VIEWER:
+                                                        </div>
+                                                        <div className="d-flex flex-wrap gap-1">
+                                                            {latestAppeal.corrective_documents.map((cd, idx) => {
+                                                                const cat = DOCUMENT_CATEGORIES[cd.category] || DOCUMENT_CATEGORIES.other_supporting;
+                                                                const isSelected = selectedDoc?.savedPath === cd.savedPath;
+                                                                const matchedDoc = protocolDocuments.find(d => d.savedPath === cd.savedPath) || cd;
+
+                                                                return (
+                                                                    <button
+                                                                        key={idx}
+                                                                        type="button"
+                                                                        onClick={() => setSelectedDoc(matchedDoc)}
+                                                                        className={`btn btn-sm rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 transition-all ${
+                                                                            isSelected
+                                                                                ? 'btn-theme-primary text-white shadow-xs fw-bold'
+                                                                                : 'btn-outline-secondary bg-white text-dark'
+                                                                        }`}
+                                                                        style={{ fontSize: '0.75rem', maxWidth: '240px' }}
+                                                                        title={`Preview ${cd.name} in document viewer`}
+                                                                    >
+                                                                        <i className={`bi ${cat.icon}`}></i>
+                                                                        <span className="text-truncate">{cd.name}</span>
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ======================================================== */}
                         {/* 2. MODAL BODY: DUAL SPLIT-PANE WORKSPACE                 */}
                         {/* ======================================================== */}
                         <div className="modal-body p-0 flex-grow-1 overflow-hidden">
@@ -775,6 +1003,11 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                             <span className="fw-bold small text-uppercase text-secondary d-flex align-items-center gap-2">
                                                 <i className="bi bi-folder2-open text-theme-primary fs-5"></i>
                                                 Protocol Submissions ({protocolDocuments.length})
+                                                {isAppealedProtocol && (
+                                                    <span className="badge bg-warning text-dark px-2 py-0.5 small">
+                                                        Cycle 2 Appeal
+                                                    </span>
+                                                )}
                                             </span>
                                             {selectedDoc && (
                                                 <div className="d-flex align-items-center gap-1">
@@ -819,6 +1052,11 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         style={{ maxWidth: '240px' }}
                                                         title={doc.name}
                                                     >
+                                                        {doc.isAppealDoc && (
+                                                            <span className="badge bg-warning text-dark px-1.5 py-0.5 fw-bold" style={{ fontSize: '0.65rem' }}>
+                                                                C2
+                                                            </span>
+                                                        )}
                                                         <i className={`bi ${cat.icon}`}></i>
                                                         <span className="text-truncate">{doc.name}</span>
                                                     </button>

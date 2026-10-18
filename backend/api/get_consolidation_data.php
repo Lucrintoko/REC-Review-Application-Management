@@ -47,6 +47,8 @@ try {
             ra.status,
             ra.submission_date,
             ra.form_data,
+            ra.current_cycle,
+            ra.is_appealed,
             TRIM(CONCAT(u.first_name, ' ', u.last_name)) as applicant_name,
             u.email as applicant_email
         FROM research_applications ra
@@ -65,6 +67,10 @@ try {
         ]);
         exit;
     }
+
+    $targetCycle = isset($_GET['cycle_number']) && intval($_GET['cycle_number']) > 0
+        ? intval($_GET['cycle_number'])
+        : (int)($protocolRow['current_cycle'] ?? 1);
 
     $formData = json_decode($protocolRow['form_data'] ?? '{}', true) ?: [];
     $proponents = [];
@@ -87,11 +93,14 @@ try {
         "review_type"    => $protocolRow['review_type'],
         "status"         => $protocolRow['status'],
         "submission_date"=> $protocolRow['submission_date'],
+        "current_cycle"  => (int)($protocolRow['current_cycle'] ?? 1),
+        "is_appealed"    => (bool)($protocolRow['is_appealed'] ?? false),
+        "active_cycle"   => $targetCycle,
         "proponents"     => $proponents,
         "institution"    => $formData['institution'] ?? "Ateneo de Zamboanga University"
     ];
 
-    // 2. Fetch Existing Consolidated Evaluation Record (Draft or Finalized)
+    // 2. Fetch Existing Consolidated Evaluation Record for the target cycle (Draft or Finalized)
     $consolStmt = $db->prepare("
         SELECT 
             ce.consolidation_id,
@@ -114,11 +123,11 @@ try {
             adm.last_name as chair_last_name
         FROM consolidated_evaluations ce
         LEFT JOIN admins adm ON ce.chair_id = adm.admin_id
-        WHERE ce.application_id = :id
-        ORDER BY ce.cycle_number DESC
+        WHERE ce.application_id = :id AND ce.cycle_number = :cycle_number
+        ORDER BY ce.consolidation_id DESC
         LIMIT 1
     ");
-    $consolStmt->execute([':id' => $application_id]);
+    $consolStmt->execute([':id' => $application_id, ':cycle_number' => $targetCycle]);
     $existingConsol = $consolStmt->fetch(PDO::FETCH_ASSOC);
 
     $savedFindings   = $existingConsol ? json_decode($existingConsol['per_question_findings'] ?? '{}', true) : [];
@@ -129,7 +138,7 @@ try {
         "consolidation_id"  => $existingConsol ? (int)$existingConsol['consolidation_id'] : null,
         "status"            => $existingConsol['status'] ?? "Draft",
         "is_draft"          => ($existingConsol['status'] ?? "Draft") === "Draft",
-        "cycle_number"      => $existingConsol ? (int)$existingConsol['cycle_number'] : 1,
+        "cycle_number"      => $existingConsol ? (int)$existingConsol['cycle_number'] : $targetCycle,
         "chair_id"          => $existingConsol ? (int)$existingConsol['chair_id'] : null,
         "chair_name"        => $existingConsol && !empty($existingConsol['chair_first_name'])
             ? trim($existingConsol['chair_first_name'] . ' ' . $existingConsol['chair_last_name'])
@@ -143,7 +152,7 @@ try {
         "pdf_report_path"   => $existingConsol['pdf_report_path'] ?? null
     ];
 
-    // 3. Fetch Assigned Peer Reviewers and their Evaluation Forms
+    // 3. Fetch Assigned Peer Reviewers and their Evaluation Forms for the target cycle
     $revStmt = $db->prepare("
         SELECT 
             pr.review_id,
@@ -155,18 +164,19 @@ try {
             pr.form_data,
             pr.assigned_date,
             pr.completed_date,
+            pr.cycle_number,
             adm.first_name,
             adm.last_name,
             adm.email,
             adm.specialization
         FROM protocol_reviews pr
         JOIN admins adm ON pr.reviewer_id = adm.admin_id
-        WHERE pr.application_id = :id
+        WHERE pr.application_id = :id AND pr.cycle_number = :cycle_number
         ORDER BY 
             CASE WHEN pr.reviewer_role = 'Primary Reviewer' THEN 1 ELSE 2 END,
             pr.review_id ASC
     ");
-    $revStmt->execute([':id' => $application_id]);
+    $revStmt->execute([':id' => $application_id, ':cycle_number' => $targetCycle]);
     $reviewerRows = $revStmt->fetchAll(PDO::FETCH_ASSOC);
 
     $reviewerRoster = [];

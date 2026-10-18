@@ -62,26 +62,43 @@ try {
     $db = (new Database())->getConnection();
     $db->beginTransaction();
 
-    // 1. Verify that the reviewer is assigned to this protocol
+    // 0. Fetch application details to check current cycle & appeal status
+    $appStmt = $db->prepare("SELECT current_cycle, is_appealed, status FROM research_applications WHERE application_id = :app_id");
+    $appStmt->execute([':app_id' => $application_id]);
+    $appRow = $appStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$appRow) {
+        $db->rollBack();
+        http_response_code(404);
+        echo json_encode(["status" => "error", "success" => false, "message" => "Research application not found."]);
+        exit;
+    }
+
+    $current_cycle = isset($data->cycle_number) && intval($data->cycle_number) > 0 
+        ? intval($data->cycle_number) 
+        : (int)($appRow['current_cycle'] ?? 1);
+
+    // 1. Verify that the reviewer is assigned to this protocol for the active cycle
     $checkReviewerStmt = $db->prepare("
         SELECT review_id, reviewer_role, review_status 
         FROM protocol_reviews 
-        WHERE application_id = :app_id AND reviewer_id = :rev_id
+        WHERE application_id = :app_id AND reviewer_id = :rev_id AND cycle_number = :cycle_number
     ");
     $checkReviewerStmt->execute([
-        ':app_id' => $application_id,
-        ':rev_id' => $reviewer_id
+        ':app_id'       => $application_id,
+        ':rev_id'       => $reviewer_id,
+        ':cycle_number' => $current_cycle
     ]);
     $existingReview = $checkReviewerStmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$existingReview) {
         $db->rollBack();
         http_response_code(403);
-        echo json_encode(["status" => "error", "success" => false, "message" => "Reviewer is not assigned to evaluate this research protocol."]);
+        echo json_encode(["status" => "error", "success" => false, "message" => "Reviewer is not assigned to evaluate this research protocol for Cycle " . $current_cycle . "."]);
         exit;
     }
 
-    // 2. Update protocol_reviews table
+    // 2. Update protocol_reviews table for active cycle
     $updateReviewStmt = $db->prepare("
         UPDATE protocol_reviews
         SET review_status = 'Completed',
@@ -89,7 +106,7 @@ try {
             recommendation = :recommendation::recommendation_enum,
             comments = :comments,
             form_data = :form_data
-        WHERE application_id = :app_id AND reviewer_id = :rev_id
+        WHERE application_id = :app_id AND reviewer_id = :rev_id AND cycle_number = :cycle_number
     ");
 
     $updateReviewStmt->execute([
@@ -97,18 +114,22 @@ try {
         ':comments'       => $comments,
         ':form_data'      => json_encode($formData),
         ':app_id'         => $application_id,
-        ':rev_id'         => $reviewer_id
+        ':rev_id'         => $reviewer_id,
+        ':cycle_number'   => $current_cycle
     ]);
 
-    // 3. Check committee completion condition
+    // 3. Check committee completion condition for active cycle
     $countStmt = $db->prepare("
         SELECT 
             COUNT(*)::int AS total_assigned,
             COUNT(CASE WHEN review_status = 'Completed' THEN 1 END)::int AS total_completed
         FROM protocol_reviews
-        WHERE application_id = :app_id
+        WHERE application_id = :app_id AND cycle_number = :cycle_number
     ");
-    $countStmt->execute([':app_id' => $application_id]);
+    $countStmt->execute([
+        ':app_id'       => $application_id,
+        ':cycle_number' => $current_cycle
+    ]);
     $reviewCounts = $countStmt->fetch(PDO::FETCH_ASSOC);
 
     $totalAssigned  = (int)($reviewCounts['total_assigned'] ?? 0);
@@ -133,14 +154,17 @@ try {
             ':app_id' => $application_id
         ]);
 
-        // Complete active 'Ethical Review' step in application_history
+        // Complete active 'Ethical Review' or 'Appeal Re-deliberation' step in application_history
         $completeHistoryStmt = $db->prepare("
             UPDATE application_history
             SET status = 'Completed',
                 date_completed = CURRENT_TIMESTAMP,
-                notes = 'All assigned committee reviews completed.'
+                notes = CASE 
+                    WHEN process_point = 'Appeal Re-deliberation' THEN 'All assigned committee reviews for Cycle 2 appeal completed.'
+                    ELSE 'All assigned committee reviews completed.'
+                END
             WHERE application_id = :app_id 
-              AND process_point = 'Ethical Review' 
+              AND process_point IN ('Ethical Review', 'Appeal Re-deliberation') 
               AND status = 'Pending'
         ");
         $completeHistoryStmt->execute([':app_id' => $application_id]);
@@ -152,7 +176,7 @@ try {
             'Consolidation of Review',
             'Pending',
             'Ethics Committee Chair',
-            'All committee reviews completed. Awaiting Chair consolidation synthesis.',
+            ($current_cycle > 1 ? "Cycle {$current_cycle} " : "") . 'All committee reviews completed. Awaiting Chair consolidation synthesis.',
             false
         );
     }

@@ -84,7 +84,7 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
             allCriteria.forEach((item) => {
                 initialFindings[item.question_id] = {
                     finding: item.chair_state?.finding || item.smart_default_finding || 'Satisfactory',
-                    remarks: item.chair_state?.remarks || item.smart_default_remarks || '',
+                    remarks: item.chair_state?.remarks !== undefined ? item.chair_state.remarks : (item.smart_default_remarks || ''),
                     is_modified: item.chair_state?.is_modified || false
                 };
             });
@@ -203,6 +203,17 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
         }));
     };
 
+    const clearRemarks = (item) => {
+        setChairFindings(prev => ({
+            ...prev,
+            [item.question_id]: {
+                finding: prev[item.question_id]?.finding || item.smart_default_finding,
+                remarks: "",
+                is_modified: true
+            }
+        }));
+    };
+
     const resetToSmartDefault = (item) => {
         setChairFindings(prev => ({
             ...prev,
@@ -237,7 +248,7 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
             directives_for_revisions: directivesForRevisions,
             meeting_date: meetingDate,
             per_question_findings: chairFindings,
-            cycle_number: consolidationData?.consolidation_meta?.cycle_number || 1
+            cycle_number: consolidationData?.consolidation_meta?.cycle_number || consolidationData?.protocol?.active_cycle || protocol?.current_cycle || 1
         };
 
         try {
@@ -355,7 +366,7 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
                     directives_for_revisions: directivesForRevisions,
                     meeting_date: meetingDate,
                     per_question_findings: chairFindings,
-                    cycle_number: consolidationData?.consolidation_meta?.cycle_number || 1
+                    cycle_number: consolidationData?.consolidation_meta?.cycle_number || consolidationData?.protocol?.active_cycle || protocol?.current_cycle || 1
                 };
 
                 try {
@@ -452,8 +463,13 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
                                             <i className="bi bi-diagram-3 me-1"></i>Consolidation of Evaluation
                                         </span>
                                         <span className="badge bg-light text-secondary border px-2 py-1 small">
-                                            Cycle {consolidationData?.consolidation_meta?.cycle_number || 1}
+                                            Cycle {consolidationData?.consolidation_meta?.cycle_number || consolidationData?.protocol?.active_cycle || 1}
                                         </span>
+                                        {consolidationData?.protocol?.is_appealed && (
+                                            <span className="badge px-2 py-1 text-uppercase fw-bold" style={{ backgroundColor: '#c59b27', color: '#002147', fontSize: '0.72rem' }}>
+                                                <i className="bi bi-shield-exclamation me-1"></i>Appeal Re-deliberation
+                                            </span>
+                                        )}
                                         {lastSavedTime && (
                                             <span className="badge bg-success-subtle text-success border border-success px-2 py-1 small">
                                                 <i className="bi bi-clock-history me-1"></i>Saved {lastSavedTime}
@@ -801,53 +817,76 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
                                                                 })}
                                                             </div>
 
-                                                            {/* Text Accelerators Bar */}
-                                                            <div className="d-flex justify-content-between align-items-center bg-light p-2 rounded-top border border-bottom-0 flex-wrap gap-1">
-                                                                <span className="small text-secondary fw-bold" style={{ fontSize: '0.72rem' }}>
-                                                                    <i className="bi bi-lightning-charge-fill text-warning me-1"></i>One-Click Accelerators:
-                                                                </span>
-                                                                <div className="d-flex gap-1 flex-wrap">
+                                                            {/* Text Accelerators & Action Toolbar */}
+                                                            <div className="d-flex justify-content-between align-items-center bg-light px-3 py-2 rounded-top border border-bottom-0 flex-wrap gap-2">
+                                                                {/* Left Cluster: Peer Accelerators */}
+                                                                <div className="d-flex align-items-center gap-1 flex-wrap">
+                                                                    <span className="small text-secondary fw-bold me-1 d-flex align-items-center" style={{ fontSize: '0.72rem' }}>
+                                                                        <i className="bi bi-lightning-charge-fill text-warning me-1"></i>Accelerators:
+                                                                    </span>
                                                                     {item.accelerators?.use_rev_1 && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => applyAccelerator(item.question_id, item.accelerators.use_rev_1)}
-                                                                            className="btn btn-xs btn-outline-primary py-0 px-2 rounded-pill"
+                                                                            className="btn btn-xs btn-outline-primary py-0 px-2 rounded-pill d-inline-flex align-items-center gap-1"
                                                                             style={{ fontSize: '0.7rem' }}
                                                                             title={item.accelerators.use_rev_1}
                                                                         >
-                                                                            📋 Use Rev 1
+                                                                            <i className="bi bi-clipboard-check"></i>
+                                                                            <span>Use Rev 1</span>
                                                                         </button>
                                                                     )}
                                                                     {item.accelerators?.use_rev_2 && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => applyAccelerator(item.question_id, item.accelerators.use_rev_2)}
-                                                                            className="btn btn-xs btn-outline-primary py-0 px-2 rounded-pill"
+                                                                            className="btn btn-xs btn-outline-primary py-0 px-2 rounded-pill d-inline-flex align-items-center gap-1"
                                                                             style={{ fontSize: '0.7rem' }}
                                                                             title={item.accelerators.use_rev_2}
                                                                         >
-                                                                            📋 Use Rev 2
+                                                                            <i className="bi bi-clipboard-check"></i>
+                                                                            <span>Use Rev 2</span>
                                                                         </button>
                                                                     )}
                                                                     {item.accelerators?.merge_comments && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => applyAccelerator(item.question_id, item.accelerators.merge_comments)}
-                                                                            className="btn btn-xs btn-theme-primary py-0 px-2 rounded-pill"
+                                                                            className="btn btn-xs btn-theme-primary py-0 px-2 rounded-pill d-inline-flex align-items-center gap-1"
                                                                             style={{ fontSize: '0.7rem' }}
-                                                                            title="Merge all peer comments"
+                                                                            title="Merge all peer comments with attribution"
                                                                         >
-                                                                            ✨ Merge Comments
+                                                                            <i className="bi bi-stars text-warning"></i>
+                                                                            <span>Merge Comments</span>
                                                                         </button>
                                                                     )}
+                                                                </div>
+
+                                                                {/* Right Cluster: Default Restoration & Clear Canvas */}
+                                                                <div className="d-flex align-items-center gap-1 ms-auto">
+                                                                    {/* Restore Smart-Default Synthesis */}
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => resetToSmartDefault(item)}
-                                                                        className="btn btn-xs btn-outline-secondary py-0 px-2 rounded-pill"
+                                                                        className="btn btn-xs btn-outline-secondary py-0 px-2 rounded-pill d-inline-flex align-items-center gap-1"
                                                                         style={{ fontSize: '0.7rem' }}
-                                                                        title="Reset to Smart Default Synthesis"
+                                                                        title="Restore pre-calculated smart-default finding & consensus remarks"
                                                                     >
-                                                                        ↺ Reset
+                                                                        <i className="bi bi-arrow-counterclockwise"></i>
+                                                                        <span>Default</span>
+                                                                    </button>
+
+                                                                    {/* Clear Remarks to blank */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => clearRemarks(item)}
+                                                                        className="btn btn-xs btn-outline-danger py-0 px-2 rounded-pill d-inline-flex align-items-center gap-1"
+                                                                        style={{ fontSize: '0.7rem' }}
+                                                                        title="Clear remarks to write a custom directive from a blank slate"
+                                                                        disabled={!currentRemarks}
+                                                                    >
+                                                                        <i className="bi bi-x-circle"></i>
+                                                                        <span>Clear</span>
                                                                     </button>
                                                                 </div>
                                                             </div>
@@ -856,8 +895,8 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
                                                             <textarea
                                                                 rows="3"
                                                                 className="form-control form-control-sm rounded-bottom rounded-0 border-top-0"
-                                                                placeholder="Enter consolidated remarks, applicant directives, or justification..."
-                                                                value={currentRemarks}
+                                                                placeholder="Enter consolidated remarks, applicant directives, or justification (or use an accelerator above)..."
+                                                                value={currentRemarks ?? ''}
                                                                 onChange={(e) => handleRemarksChange(item.question_id, e.target.value)}
                                                             />
                                                         </div>
