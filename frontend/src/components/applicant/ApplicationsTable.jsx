@@ -20,6 +20,7 @@ function ApplicationsTable({
   onOpenRevisionNotice,
   onOpenReviseModal,
   onOpenDecisionLetter,
+  onDeleteDraft,
 }) {
   return (
     <div
@@ -61,6 +62,7 @@ function ApplicationsTable({
                 onOpenRevisionNotice={onOpenRevisionNotice}
                 onOpenReviseModal={onOpenReviseModal}
                 onOpenDecisionLetter={onOpenDecisionLetter}
+                onDeleteDraft={onDeleteDraft}
               />
             ))
           ) : (

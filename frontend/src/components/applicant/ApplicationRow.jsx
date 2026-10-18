@@ -16,6 +16,7 @@ function ApplicationRow({
   onOpenRevisionNotice,
   onOpenReviseModal,
   onOpenDecisionLetter,
+  onDeleteDraft,
 }) {
   const navigate = useNavigate();
   const title = application.research_title || application.title || "Untitled Application";
@@ -135,6 +136,11 @@ function ApplicationRow({
     }
 
     navigate("/applicant/form");
+  };
+
+  const handleDeleteDraft = (event) => {
+    event.stopPropagation();
+    onDeleteDraft?.(application);
   };
 
   return (
@@ -277,16 +283,28 @@ function ApplicationRow({
             <span>Submit OR</span>
           </button>
         ) : isDraft ? (
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-primary fw-semibold px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-1"
-            style={{ minHeight: "36px" }}
-            onClick={handleEditDraft}
-            title="Open this draft for editing"
-          >
-            <i className="bi bi-pencil-square"></i>
-            <span>Edit Draft</span>
-          </button>
+          <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-primary fw-semibold px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-1"
+              style={{ minHeight: "36px" }}
+              onClick={handleEditDraft}
+              title="Open this draft for editing"
+            >
+              <i className="bi bi-pencil-square"></i>
+              <span>Edit Draft</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-danger rounded-pill shadow-sm d-inline-flex align-items-center"
+              style={{ minHeight: "36px" }}
+              onClick={handleDeleteDraft}
+              title="Delete this draft"
+              aria-label="Delete this draft"
+            >
+              <i className="bi bi-trash"></i>
+            </button>
+          </div>
         ) : hasActiveRevision ? (
           <button
             type="button"

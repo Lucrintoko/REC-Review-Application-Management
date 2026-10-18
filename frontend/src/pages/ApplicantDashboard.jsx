@@ -38,7 +38,19 @@ function ApplicantDashboard({
   const [decisionLetterApp, setDecisionLetterApp] = useState(null);
 
   // 1. Fetch applications data via custom hook (handles API, abort controller, loading, error, and fallback data)
-  const { applications, isLoading, refetch } = useApplications();
+  const { applications, isLoading, refetch, deleteApplication } = useApplications();
+
+  const handleDeleteDraft = async (application) => {
+    if (!window.confirm("Delete this draft application? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await deleteApplication(application);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The draft could not be deleted.");
+    }
+  };
 
   // 2. Manage client-side filtering and sorting via custom hook
   const {
@@ -134,6 +146,7 @@ function ApplicantDashboard({
                     onOpenRevisionNotice={setRevisionNoticeApp}
                     onOpenReviseModal={setReviseProtocolApp}
                     onOpenDecisionLetter={setDecisionLetterApp}
+                    onDeleteDraft={handleDeleteDraft}
                   />
                 </div>
               </div>

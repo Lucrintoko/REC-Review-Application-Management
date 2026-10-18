@@ -56,4 +56,16 @@ export const apiClient = {
     });
     return parseResponse(response);
   },
+
+  async delete(endpoint, data = {}) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    return parseResponse(response);
+  },
 };

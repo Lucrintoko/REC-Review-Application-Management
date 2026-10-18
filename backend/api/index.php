@@ -36,6 +36,47 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
         $db = $database->getConnection();
 
         $applicantId = isset($_GET['applicant_id']) ? intval($_GET['applicant_id']) : null;
+        $hasConsolidatedEvaluations = (bool) $db->query(
+            "SELECT to_regclass('public.consolidated_evaluations')"
+        )->fetchColumn();
+
+        $consolidatedDecisionExistsSql = $hasConsolidatedEvaluations
+            ? "CASE
+                            WHEN EXISTS (
+                                SELECT 1 FROM consolidated_evaluations ce
+                                WHERE ce.application_id = r.application_id
+                                  AND ce.status = 'Finalized'
+                            ) THEN TRUE
+                            ELSE FALSE
+                        END"
+            : "FALSE";
+        $latestConsolidationSql = $hasConsolidatedEvaluations
+            ? "(
+                            SELECT json_build_object(
+                                'consolidation_id', ce.consolidation_id,
+                                'chair_id', ce.chair_id,
+                                'chair_name', COALESCE(adm.first_name || ' ' || adm.last_name, 'Ethics Committee Chair'),
+                                'cycle_number', ce.cycle_number,
+                                'status', ce.status,
+                                'consolidated_recommendation', ce.consolidated_recommendation,
+                                'summary_notes', ce.summary_notes,
+                                'directives_for_revisions', ce.directives_for_revisions,
+                                'meeting_date', ce.meeting_date,
+                                'per_question_findings', ce.per_question_findings,
+                                'actionable_directives', ce.actionable_directives,
+                                'compliance_checklist', ce.compliance_checklist,
+                                'pdf_report_path', ce.pdf_report_path,
+                                'finalized_at', ce.finalized_at,
+                                'created_at', ce.created_at
+                            )
+                            FROM consolidated_evaluations ce
+                            LEFT JOIN admins adm ON adm.admin_id = ce.chair_id
+                            WHERE ce.application_id = r.application_id
+                              AND ce.status = 'Finalized'
+                            ORDER BY ce.cycle_number DESC, ce.consolidation_id DESC
+                            LIMIT 1
+                        )"
+            : "NULL";
 
         $baseQuery = "SELECT 
                         r.application_id, 
@@ -106,39 +147,8 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
                               AND ah.is_rejected = TRUE 
                             ORDER BY ah.history_id DESC LIMIT 1
                         ) AS chair_proponent_name,
-                        CASE 
-                            WHEN EXISTS (
-                                SELECT 1 FROM consolidated_evaluations ce 
-                                WHERE ce.application_id = r.application_id 
-                                  AND ce.status = 'Finalized'
-                            ) THEN TRUE 
-                            ELSE FALSE 
-                        END AS has_consolidated_decision,
-                        (
-                            SELECT json_build_object(
-                                'consolidation_id', ce.consolidation_id,
-                                'chair_id', ce.chair_id,
-                                'chair_name', COALESCE(adm.first_name || ' ' || adm.last_name, 'Ethics Committee Chair'),
-                                'cycle_number', ce.cycle_number,
-                                'status', ce.status,
-                                'consolidated_recommendation', ce.consolidated_recommendation,
-                                'summary_notes', ce.summary_notes,
-                                'directives_for_revisions', ce.directives_for_revisions,
-                                'meeting_date', ce.meeting_date,
-                                'per_question_findings', ce.per_question_findings,
-                                'actionable_directives', ce.actionable_directives,
-                                'compliance_checklist', ce.compliance_checklist,
-                                'pdf_report_path', ce.pdf_report_path,
-                                'finalized_at', ce.finalized_at,
-                                'created_at', ce.created_at
-                            )
-                            FROM consolidated_evaluations ce
-                            LEFT JOIN admins adm ON adm.admin_id = ce.chair_id
-                            WHERE ce.application_id = r.application_id 
-                              AND ce.status = 'Finalized'
-                            ORDER BY ce.cycle_number DESC, ce.consolidation_id DESC
-                            LIMIT 1
-                        ) AS latest_consolidation,
+                        {$consolidatedDecisionExistsSql} AS has_consolidated_decision,
+                        {$latestConsolidationSql} AS latest_consolidation,
                         COALESCE(
                             (SELECT json_agg(json_build_object(
                                 'review_id', pr.review_id,
@@ -226,6 +236,87 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
         echo json_encode([
             "status" => "error",
             "message" => "Failed to fetch applications: " . $e->getMessage()
+        ]);
+        exit;
+    }
+}
+
+if ($request_method === 'DELETE' && $isApplicationsEndpoint) {
+    try {
+        $database = new Database();
+        $db = $database->getConnection();
+        $input = json_decode(file_get_contents('php://input'), true) ?: [];
+
+        $applicationId = intval($_GET['application_id'] ?? $input['application_id'] ?? 0);
+        $applicantId = intval($_GET['applicant_id'] ?? $input['applicant_id'] ?? 0);
+
+        if ($applicationId <= 0 || $applicantId <= 0) {
+            http_response_code(400);
+            echo json_encode([
+                "status" => "error",
+                "message" => "A valid application ID and applicant ID are required."
+            ]);
+            exit;
+        }
+
+        $db->beginTransaction();
+
+        $findStmt = $db->prepare("SELECT form_data FROM research_applications
+                                  WHERE application_id = :application_id
+                                    AND applicant_id = :applicant_id
+                                    AND status = 'Draft'
+                                  FOR UPDATE");
+        $findStmt->execute([
+            ':application_id' => $applicationId,
+            ':applicant_id' => $applicantId,
+        ]);
+        $draft = $findStmt->fetch();
+
+        if (!$draft) {
+            $db->rollBack();
+            http_response_code(404);
+            echo json_encode([
+                "status" => "error",
+                "message" => "Draft application not found or it is no longer deletable."
+            ]);
+            exit;
+        }
+
+        $documentStmt = $db->prepare("SELECT file_path FROM research_documents WHERE application_id = :application_id");
+        $documentStmt->execute([':application_id' => $applicationId]);
+        $documentPaths = $documentStmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $deleteStmt = $db->prepare("DELETE FROM research_applications
+                                    WHERE application_id = :application_id
+                                      AND applicant_id = :applicant_id
+                                      AND status = 'Draft'");
+        $deleteStmt->execute([
+            ':application_id' => $applicationId,
+            ':applicant_id' => $applicantId,
+        ]);
+
+        $db->commit();
+
+        foreach ($documentPaths as $documentPath) {
+            $fullPath = __DIR__ . '/../' . ltrim($documentPath, '/');
+            if (is_file($fullPath)) {
+                @unlink($fullPath);
+            }
+        }
+
+        echo json_encode([
+            "status" => "success",
+            "message" => "Draft application deleted successfully."
+        ]);
+        exit;
+    } catch (Exception $e) {
+        if (isset($db) && $db->inTransaction()) {
+            $db->rollBack();
+        }
+        http_response_code(500);
+        echo json_encode([
+            "status" => "error",
+            "message" => "Failed to delete draft application: " . $e->getMessage()
         ]);
         exit;
     }

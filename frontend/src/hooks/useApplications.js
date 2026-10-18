@@ -84,10 +84,27 @@ export function useApplications() {
     };
   }, [fetchApplications]);
 
+  const deleteApplication = useCallback(async (application) => {
+    if (application.application_id === "local-draft") {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      await fetchApplications();
+      return;
+    }
+
+    const applicantId = localStorage.getItem("applicantId");
+    await apiClient.delete(`/applications/${application.application_id}`, {
+      application_id: application.application_id,
+      applicant_id: applicantId,
+    });
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    await fetchApplications();
+  }, [fetchApplications]);
+
   return {
     applications,
     isLoading,
     error,
     refetch: () => fetchApplications(),
+    deleteApplication,
   };
 }
