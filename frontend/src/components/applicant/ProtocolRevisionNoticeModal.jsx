@@ -29,6 +29,7 @@ function ProtocolRevisionNoticeModal({
       className="modal d-block show"
       tabIndex="-1"
       role="dialog"
+      aria-modal="true"
       aria-labelledby="protocolRevisionModalTitle"
       style={{ backgroundColor: "rgba(0,0,0,0.55)", zIndex: 1060, display: "block", opacity: 1 }}
     >

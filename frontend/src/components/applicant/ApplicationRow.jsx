@@ -137,13 +137,6 @@ function ApplicationRow({
     }
   };
 
-  const handleKeyDown = (event) => {
-    if (isClickable && (event.key === "Enter" || event.key === " ")) {
-      event.preventDefault();
-      handleRowClick();
-    }
-  };
-
   const isClickable = Boolean(
     isDraft ||
     onSelect ||
@@ -215,10 +208,6 @@ function ApplicationRow({
     <tr
       className={rowClass}
       onClick={handleRowClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={isClickable ? 0 : undefined}
-      role={isClickable ? "button" : undefined}
-      aria-label={isDraft ? `Resume draft application: ${title}` : undefined}
       style={{ cursor: isClickable ? "pointer" : "default" }}
     >
       {/* 1. Title Column */}
@@ -229,9 +218,23 @@ function ApplicationRow({
               <i className="bi bi-pencil-fill me-1"></i>Draft
             </span>
           )}
-          <span className={`fw-semibold ${isUntitled ? "text-secondary fst-italic" : "text-dark"}`}>
-            {title}
-          </span>
+          {isClickable ? (
+            <button
+              type="button"
+              className={`btn btn-link p-0 text-start text-decoration-none fw-semibold ${isUntitled ? "text-secondary fst-italic" : "text-dark"}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleRowClick();
+              }}
+              aria-label={isDraft ? `Resume draft application: ${title}` : `Open application: ${title}`}
+            >
+              {title}
+            </button>
+          ) : (
+            <span className={`fw-semibold ${isUntitled ? "text-secondary fst-italic" : "text-dark"}`}>
+              {title}
+            </span>
+          )}
         </div>
 
         <div className="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap">

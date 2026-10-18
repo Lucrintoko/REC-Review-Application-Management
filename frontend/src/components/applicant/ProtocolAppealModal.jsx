@@ -274,6 +274,7 @@ export default function ProtocolAppealModal({
       className="modal d-block show"
       tabIndex="-1"
       role="dialog"
+      aria-modal="true"
       aria-labelledby="appealModalTitle"
       style={{
         backgroundColor: "rgba(15, 23, 42, 0.75)",
