@@ -3,6 +3,7 @@ import DashboardHeader from "../components/applicant/DashboardHeader";
 import DashboardFooter from "../components/applicant/DashboardFooter";
 import SidebarFilter from "../components/applicant/SidebarFilter";
 import ApplicationSearchBar from "../components/applicant/ApplicationSearchBar";
+import ActionRequiredTray from "../components/applicant/ActionRequiredTray";
 import ApplicationsTable from "../components/applicant/ApplicationsTable";
 import ApplicationNewButton from "../components/applicant/ApplicationNewButton";
 import SubmitORModal from "../components/applicant/SubmitORModal";
@@ -161,7 +162,20 @@ function ApplicantDashboard({
 
           {/* Right Column: Applications Table & Search Controls */}
           <section className="col-md-9 d-flex flex-column">
-            <div className="card shadow-sm h-100">
+            {/* Urgent Action Center / Action Required Tray */}
+            <ActionRequiredTray
+              applications={applications}
+              onDeleteDraft={handleDeleteDraft}
+              onOpenOrModal={setSelectedOrApp}
+              onOpenRejectionNotice={setRejectionNoticeApp}
+              onOpenRevisionNotice={setRevisionNoticeApp}
+              onOpenReviseModal={setReviseProtocolApp}
+              onOpenDecisionLetter={setDecisionLetterApp}
+              onOpenFileAppeal={setAppealProtocolApp}
+            />
+
+            {/* Applications Table Card */}
+            <div className="card shadow-sm flex-grow-1">
               <div className="card-body d-flex flex-column">
                 {/* Header with Title and Search/New Action Bar */}
                 <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
