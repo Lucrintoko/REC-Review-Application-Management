@@ -8,7 +8,7 @@ function AdminSidebar() {
 
     return(
         <div
-            className='d-flex flex-column flex-shrink-0 p-3 bg-light border-end'
+            className='d-flex flex-column flex-shrink-0 p-3 bg-light border-end d-print-none'
             style={{ width: '240px', height: '100vh', position: 'sticky', top: 0 }}
         >
             {/* Top Side */}
