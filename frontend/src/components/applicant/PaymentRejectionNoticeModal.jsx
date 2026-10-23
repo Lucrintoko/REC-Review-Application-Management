@@ -21,6 +21,7 @@ function PaymentRejectionNoticeModal({
       className="modal d-block fade show" 
       tabIndex="-1" 
       role="dialog" 
+      aria-modal="true"
       aria-labelledby="paymentRejectionModalTitle" 
       style={{ backgroundColor: "rgba(0,0,0,0.55)", zIndex: 1060 }}
     >

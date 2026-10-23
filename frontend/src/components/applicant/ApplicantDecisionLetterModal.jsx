@@ -326,6 +326,7 @@ export default function ApplicantDecisionLetterModal({
         className="modal d-block show decision-modal-backdrop"
         tabIndex="-1"
         role="dialog"
+        aria-modal="true"
         aria-labelledby="applicantDecisionModalTitle"
       >
         <div className="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">

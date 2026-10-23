@@ -426,6 +426,7 @@ function ReviseProtocolModal({ show, application, onClose, onSuccess }) {
       className="modal d-block show"
       tabIndex="-1"
       role="dialog"
+      aria-modal="true"
       aria-labelledby="reviseProtocolModalTitle"
       style={{ backgroundColor: "rgba(0,0,0,0.65)", zIndex: 1065, display: "block", opacity: 1 }}
     >

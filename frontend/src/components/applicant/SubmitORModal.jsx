@@ -68,13 +68,13 @@ function SubmitORModal({ application, show, onClose, onSuccess }) {
   };
 
   return (
-    <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1055 }}>
+    <div className="modal d-block" tabIndex="-1" role="dialog" aria-modal="true" aria-labelledby="submitOrModalTitle" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1055 }}>
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content shadow-lg border-0">
           <div className={`modal-header ${isRejected ? "bg-danger" : "bg-primary"} text-white border-bottom-0`}>
             <div className="d-flex align-items-center gap-2">
               <i className={`bi ${isRejected ? "bi-arrow-repeat" : "bi-receipt"} fs-5`}></i>
-              <h5 className="modal-title fw-bold mb-0">
+              <h5 className="modal-title fw-bold mb-0" id="submitOrModalTitle">
                 {isRejected ? "Resubmit Official Receipt" : "Submit OR Details"}
               </h5>
             </div>
