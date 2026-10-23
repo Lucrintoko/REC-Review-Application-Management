@@ -172,9 +172,15 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
                             WHERE pr.application_id = r.application_id 
                               AND pr.review_status = 'Completed'
                               AND pr.cycle_number = r.current_cycle
-                        ) AS reviews_completed
+                        ) AS reviews_completed,
+                        app.department_agency AS applicant_department,
+                        app.affiliation_type AS applicant_affiliation,
+                        app.first_name AS applicant_first_name,
+                        app.last_name AS applicant_last_name,
+                        app.email AS applicant_email
                       FROM research_applications r
-                      LEFT JOIN payments p ON p.application_id = r.application_id";
+                      LEFT JOIN payments p ON p.application_id = r.application_id
+                      LEFT JOIN applicants app ON app.applicant_id = r.applicant_id";
 
         if ($applicantId) {
             $stmt = $db->prepare($baseQuery . " WHERE r.applicant_id = :applicant_id ORDER BY r.submission_date DESC, r.application_id DESC");
