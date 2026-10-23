@@ -2,7 +2,7 @@ import React from 'react';
 /**
  * Standard Card Wrapper for Form Sections (DRY Layout)
  */
-function SectionCard({ id, number, title, isRequired, isComplete, icon, children, badgeClass }) {
+function SectionCard({ id, number, title, description, isRequired, isComplete, icon, children, badgeClass }) {
   return (
     <div id={id} className={`card shadow-sm border-0 mb-4 rounded-3 ${badgeClass || ""}`}>
       <div className="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
@@ -26,10 +26,12 @@ function SectionCard({ id, number, title, isRequired, isComplete, icon, children
           )}
         </div>
       </div>
-      <div className="card-body p-4">{children}</div>
+      <div className="card-body p-4">
+        {description && <p className="text-muted small mb-3">{description}</p>}
+        {children}
+      </div>
     </div>
   );
 }
 
 export default SectionCard;
-

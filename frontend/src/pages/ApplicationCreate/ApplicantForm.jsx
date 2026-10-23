@@ -32,6 +32,7 @@ import FileUploadWidget from "../ApplicationCreate/components/FileUploadWidget.j
 import SectionCard from "../ApplicationCreate/components/SectionCard.jsx";
 import RadioCardGroup from "../ApplicationCreate/components/RadioCardGroup.jsx";
 import ResearcherManager from "../ApplicationCreate/components/ResearcherManager.jsx";
+import { INSTITUTION_OPTIONS } from "../../constants/institutionalUnits";
 
 // =============================================================================
 // STATIC CONFIGURATIONS & DEFINITIONS
@@ -107,6 +108,7 @@ export const INITIAL_FORM_DATA = {
   // 5. Institution
   institution_name: "",
   institution_department: "",
+  institution_department_custom: "",
   institution_address: "",
 
   // 6. Contact Information
@@ -1157,17 +1159,11 @@ function ApplicantForm({ onBack }) {
                   id="section-1"
                   number={10}
                   title="Research Review Questions"
+                  description="Answer both questions and attach the technical approval document when applicable."
                   isRequired={true}
                   isComplete={sectionStatus["section-1"]}
                   icon="bi-shield-check"
                 >
-                <div className="alert alert-info d-flex align-items-start gap-2 mb-4">
-                  <i className="bi bi-info-circle-fill fs-5"></i>
-                  <div>
-                    Review questions verify whether your study protocol has passed institutional technical review
-                    and whether it is currently active under any other ethics review committee.
-                  </div>
-                </div>
 
                 {/* Technical Review Question */}
                 <div className="mb-4 pb-3 border-bottom">
@@ -1337,6 +1333,7 @@ function ApplicantForm({ onBack }) {
                 id="section-2"
                 number={1}
                 title="Title of the Study"
+                description="Enter the formal study title and location. The REC Code is assigned by the system after submission."
                 isRequired={true}
                 isComplete={sectionStatus["section-2"]}
                 icon="bi-card-heading"
@@ -1381,7 +1378,7 @@ function ApplicantForm({ onBack }) {
                         readOnly
                       />
                     </div>
-                    <small className="text-muted">Assigned protocol code for submission tracking</small>
+                    <small className="text-muted">You do not need to enter anything here. The code is assigned after submission.</small>
                   </div>
 
                   <div className="col-12 col-md-6">
@@ -1411,6 +1408,7 @@ function ApplicantForm({ onBack }) {
                 id="section-3"
                 number={2}
                 title="Primary Researchers"
+                description="List the principal investigator and other primary investigators responsible for the study."
                 isRequired={true}
                 isComplete={sectionStatus["section-3"]}
                 icon="bi-people-fill"
@@ -1433,6 +1431,7 @@ function ApplicantForm({ onBack }) {
                 id="section-4"
                 number={3}
                 title="Co-researchers (if any)"
+                description="Add collaborators who will assist with the study. Leave this section empty if there are none."
                 isRequired={false}
                 isComplete={true}
                 icon="bi-person-plus"
@@ -1454,6 +1453,7 @@ function ApplicantForm({ onBack }) {
                 id="section-5"
                 number={4}
                 title="Institution"
+                description="Provide the applicant institution and select the matching department, school, or unit from the list."
                 isRequired={true}
                 isComplete={sectionStatus["section-5"]}
                 icon="bi-building"
@@ -1477,13 +1477,27 @@ function ApplicantForm({ onBack }) {
 
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold">Department / School / Unit:</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="e.g. College of Science and Information Technology"
+                    <select
+                      className="form-select"
                       value={formData.institution_department}
                       onChange={(e) => updateField("institution_department", e.target.value)}
-                    />
+                    >
+                      <option value="">Select school, college, or unit...</option>
+                      {INSTITUTION_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.institution_department === "External Entities & Partner Institutions (ZCMC, DOH, WMSU, etc.)" && (
+                      <input
+                        type="text"
+                        className="form-control mt-2"
+                        placeholder="Enter the external organization or unit"
+                        value={formData.institution_department_custom}
+                        onChange={(e) => updateField("institution_department_custom", e.target.value)}
+                      />
+                    )}
                   </div>
 
                   <div className="col-12">
@@ -1509,6 +1523,7 @@ function ApplicantForm({ onBack }) {
                 id="section-6"
                 number={5}
                 title="Contact Information"
+                description="Provide the person who should receive ERB correspondence. For studies with multiple researchers, use the primary contact who can coordinate communication for the group."
                 isRequired={true}
                 isComplete={sectionStatus["section-6"]}
                 icon="bi-telephone"
@@ -1584,6 +1599,7 @@ function ApplicantForm({ onBack }) {
                 id="section-8"
                 number={6}
                 title="Type of Study"
+                description="Choose the category that best describes the research protocol."
                 isRequired={true}
                 isComplete={sectionStatus["section-8"]}
                 icon="bi-ui-radios-grid"
@@ -1630,6 +1646,7 @@ function ApplicantForm({ onBack }) {
                 id="section-9"
                 number={7}
                 title="Site Classification"
+                description="Indicate whether the study will be conducted at one site or across multiple sites."
                 isRequired={true}
                 isComplete={sectionStatus["section-9"]}
                 icon="bi-geo-alt"
@@ -1659,6 +1676,7 @@ function ApplicantForm({ onBack }) {
                 id="section-10"
                 number={8}
                 title="Source of Funding"
+                description="Select the funding source and provide the requested details when the source requires clarification."
                 isRequired={true}
                 isComplete={sectionStatus["section-10"]}
                 icon="bi-cash-coin"
@@ -1747,6 +1765,7 @@ function ApplicantForm({ onBack }) {
                 id="section-11"
                 number={9}
                 title="Study Duration & Participants"
+                description="Enter the planned study period and describe the target participants."
                 isRequired={true}
                 isComplete={sectionStatus["section-11"]}
                 icon="bi-calendar-range"
@@ -1828,6 +1847,7 @@ function ApplicantForm({ onBack }) {
                   id="section-7"
                   number={11}
                   title="Brief Description of the Study"
+                  description="Summarize the study background, objectives, methods, participants, and expected benefits or risks in clear language."
                   isRequired={true}
                   isComplete={sectionStatus["section-7"]}
                   icon="bi-file-earmark-text"
@@ -1870,6 +1890,7 @@ function ApplicantForm({ onBack }) {
                 id="section-12"
                 number={12}
                 title="Basic Requirements"
+                description="Check each required document and upload the corresponding file. These documents are needed before the application can be submitted."
                 isRequired={true}
                 isComplete={sectionStatus["section-12"]}
                 icon="bi-paperclip"
@@ -2208,6 +2229,7 @@ function ApplicantForm({ onBack }) {
                 id="section-13"
                 number={13}
                 title="Supplementary Documents (if any)"
+                description="These documents are optional. Check an item only when it applies to your study, then upload the file or provide the requested details."
                 isRequired={false}
                 isComplete={true}
                 icon="bi-files"
@@ -2230,7 +2252,7 @@ function ApplicantForm({ onBack }) {
                         className="form-check-input"
                         type="checkbox"
                         id={`chk_${item.key}`}
-                        checked={formData.supplementary[item.key].checked || !!formData.supplementary[item.key].file || (formData.supplementary[item.key].files && formData.supplementary[item.key].files.length > 0)}
+                        checked={formData.supplementary[item.key].checked}
                         onChange={(e) => updateSupplementary(item.key, { checked: e.target.checked })}
                       />
                       <label className="form-check-label fw-bold" htmlFor={`chk_${item.key}`}>
@@ -2238,28 +2260,32 @@ function ApplicantForm({ onBack }) {
                       </label>
                     </div>
 
-                    {item.hasSpecify && (
-                      <input
-                        type="text"
-                        className="form-control form-control-sm mb-2"
-                        placeholder={item.placeholder}
-                        value={formData.supplementary[item.key].specify || ""}
-                        onChange={(e) =>
-                          updateSupplementary(item.key, {
-                            specify: e.target.value,
-                            checked: true,
-                          })
-                        }
-                      />
-                    )}
+                    {formData.supplementary[item.key].checked && (
+                      <>
+                        {item.hasSpecify && (
+                          <input
+                            type="text"
+                            className="form-control form-control-sm mb-2"
+                            placeholder={item.placeholder}
+                            value={formData.supplementary[item.key].specify || ""}
+                            onChange={(e) =>
+                              updateSupplementary(item.key, {
+                                specify: e.target.value,
+                                checked: true,
+                              })
+                            }
+                          />
+                        )}
 
-                    <FileUploadWidget
-                      label={`Upload ${item.label}`}
-                      file={formData.supplementary[item.key].file}
-                      files={formData.supplementary[item.key].files}
-                      onFileSelect={(f) => updateSupplementary(item.key, { file: f, checked: true })}
-                      onFileRemove={() => updateSupplementary(item.key, { file: null })}
-                    />
+                        <FileUploadWidget
+                          label={`Upload ${item.label}`}
+                          file={formData.supplementary[item.key].file}
+                          files={formData.supplementary[item.key].files}
+                          onFileSelect={(f) => updateSupplementary(item.key, { file: f, checked: true })}
+                          onFileRemove={() => updateSupplementary(item.key, { file: null })}
+                        />
+                      </>
+                    )}
                   </div>
                 ))}
               </SectionCard>
@@ -2269,6 +2295,7 @@ function ApplicantForm({ onBack }) {
                 id="section-14"
                 number={14}
                 title="Declaration and Signature"
+                description="Review the declarations, then confirm your agreement and provide the authorized signatory details."
                 isRequired={true}
                 isComplete={sectionStatus["section-14"]}
                 icon="bi-pen"
