@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import adzuSeal from '../assets/AdZU Seal.png';
 import ResearchProtocolModal from '../components/admin/ResearchProtocolModal';
 import OngoingReviewModal from '../components/admin/OngoingReviewModal';
@@ -8,6 +8,7 @@ import RevisionsVerificationModal from '../components/admin/RevisionsVerificatio
 
 function AdminDashboard() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     // Taking the data from Admin login Page
     const adminName = localStorage.getItem('adminName') || "Unknown Admin";
@@ -76,14 +77,89 @@ function AdminDashboard() {
     // For View Mode Togge-able; Table Mode will be default
     const [viewMode, setViewMode] = useState('table');
     
-    // For Status Filtering
-    const [filterStatus, setFilterStatus] = useState('All');
+    // Ingest URL Search Parameters for deep-linking
+    const urlSearchParam = searchParams.get('search') || '';
+    const urlStatusParam = searchParams.get('status') || '';
+
+    // For Status Filtering (reset to 'All' if a specific protocol search is present)
+    const [filterStatus, setFilterStatus] = useState(urlSearchParam ? 'All' : (urlStatusParam || 'All'));
 
     // Tracking of what user is typing
-    const [searchInput, setSearchInput] = useState('');
+    const [searchInput, setSearchInput] = useState(urlSearchParam);
 
     // For Search Filtering once button is pressed
-    const [activeSearchQuery, setActiveSearchQuery] = useState('');
+    const [activeSearchQuery, setActiveSearchQuery] = useState(urlSearchParam);
+
+    // Sync state when URL query parameters change (e.g., from deep links or browser history)
+    useEffect(() => {
+        const q = searchParams.get('search') || '';
+        const st = searchParams.get('status') || '';
+        if (q) {
+            setSearchInput(q);
+            setActiveSearchQuery(q);
+            setFilterStatus('All'); // Prevent search query from being masked by existing status filter
+        } else if (st && st !== 'All') {
+            setFilterStatus(st);
+        }
+    }, [searchParams]);
+
+    // Handle manual search submission with URL sync
+    const handleSearchSubmit = (term) => {
+        const trimmed = (term || '').trim();
+        setActiveSearchQuery(trimmed);
+        const nextParams = new URLSearchParams(searchParams);
+        if (trimmed) {
+            setFilterStatus('All');
+            nextParams.set('search', trimmed);
+        } else {
+            nextParams.delete('search');
+            nextParams.delete('protocolId');
+        }
+        setSearchParams(nextParams);
+    };
+
+    // Clear all filters, search query, and query string parameters
+    const handleClearFilters = () => {
+        setSearchInput('');
+        setActiveSearchQuery('');
+        setFilterStatus('All');
+        setSearchParams({});
+    };
+
+    // Auto-open guard to prevent repeat triggers on background refresh or modal re-renders
+    const hasAutoOpenedRef = useRef(false);
+
+    // Lifecycle-Aware Modal Auto-Opener for deep-linking
+    useEffect(() => {
+        if (!Array.isArray(protocolData) || protocolData.length === 0) return;
+
+        const shouldAutoOpen = searchParams.get('autoOpen') === 'true';
+        const targetSearch = (searchParams.get('search') || '').trim();
+        const targetId = (searchParams.get('protocolId') || '').trim();
+
+        if (shouldAutoOpen && !hasAutoOpenedRef.current && (targetSearch || targetId)) {
+            const found = protocolData.find(p => 
+                (targetId && String(p.application_id) === String(targetId)) ||
+                (targetSearch && (
+                    String(p.id).toLowerCase() === targetSearch.toLowerCase() ||
+                    String(p.protocol_code).toLowerCase() === targetSearch.toLowerCase()
+                ))
+            );
+
+            if (found) {
+                hasAutoOpenedRef.current = true;
+                if (found.status === 'CONSOLIDATION OF EVALUATION') {
+                    setConsolidationProtocol(found);
+                } else if (found.status === 'REVISIONS SUBMITTED') {
+                    setVerificationProtocol(found);
+                } else if (isReviewerRole && found.status === 'ONGOING REVIEW') {
+                    setOngoingReviewProtocol(found);
+                } else {
+                    setSelectedProtocol(found);
+                }
+            }
+        }
+    }, [protocolData, searchParams, isReviewerRole]);
 
     // Colors for the badges
     const typeBadgeColors = {
@@ -116,7 +192,8 @@ function AdminDashboard() {
         // Role-Based Access Control Logic for Admins: Secretariat, Chair, & Primary/Non-Primary Reviewer
         let hasAccess = true;
         if (role === 'Secretariat' || role === 'Ethics Chair') {
-            const hiddenStatuses = ['DRAFT', 'SUBMITTED', 'PROTOCOLS SUBMITTED'];
+            // Unhide 'PROTOCOLS SUBMITTED' so initial intake submissions requiring triage are visible
+            const hiddenStatuses = ['DRAFT', 'SUBMITTED'];
             hasAccess = !hiddenStatuses.includes(protocol.status);
         } else if (isReviewerRole) {
             // Reviewers ONLY see protocols assigned to them under Ongoing Review
@@ -141,9 +218,14 @@ function AdminDashboard() {
             }
         }
 
-        // ID & Protocol Title Logic
-        const matchesSearch = (protocol.title || '').toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
-                              (protocol.id || '').toLowerCase().includes(activeSearchQuery.toLowerCase());
+        // Multi-field Protocol Search Logic (ID, Protocol Code, Title, Researchers)
+        const query = (activeSearchQuery || '').trim().toLowerCase();
+        const matchesSearch = !query ||
+            (protocol.title || '').toLowerCase().includes(query) ||
+            (protocol.id || '').toLowerCase().includes(query) ||
+            (protocol.protocol_code || '').toLowerCase().includes(query) ||
+            String(protocol.application_id || '').toLowerCase().includes(query) ||
+            (Array.isArray(protocol.researchers) && protocol.researchers.some(r => r.toLowerCase().includes(query)));
 
         // Protocol Passes if it matches all Logics
         return matchesStatus && matchesSearch;
@@ -179,6 +261,7 @@ function AdminDashboard() {
     const dropdownOptionsByRole = {
         'Secretariat' : [
             { value: 'All', label: 'All Statuses' },
+            { value: 'PROTOCOLS SUBMITTED', label: 'Protocols Submitted' },
             { value: 'PAYMENT PENDING', label: 'Payment Pending' },
             { value: 'PAYMENT VERIFIED', label: 'Payment Verified' },
             { value: 'TYPE OF REVIEW', label: 'Type of Review' },
@@ -203,6 +286,7 @@ function AdminDashboard() {
         ],
         'Ethics Chair' : [
             { value: 'All', label: 'All Statuses' },
+            { value: 'PROTOCOLS SUBMITTED', label: 'Protocols Submitted' },
             { value: 'PAYMENT PENDING', label: 'Payment Pending' },
             { value: 'PAYMENT VERIFIED', label: 'Payment Verified' },
             { value: 'TYPE OF REVIEW', label: 'Type of Review' },
@@ -280,7 +364,7 @@ function AdminDashboard() {
                                 onChange={(e) => setSearchInput(e.target.value)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
-                                        setActiveSearchQuery(searchInput);
+                                        handleSearchSubmit(searchInput);
                                     }
                                 }}
                             />
@@ -289,7 +373,7 @@ function AdminDashboard() {
                             <button 
                                 className='btn btn-primary' 
                                 type='button'
-                                onClick={() => setActiveSearchQuery(searchInput)}
+                                onClick={() => handleSearchSubmit(searchInput)}
                             >
                                 <i
                                     className='bi bi-search me-2'
@@ -335,6 +419,35 @@ function AdminDashboard() {
                                     </div>
 
                                 </div>
+
+                                {/* Contextual Active Filter & Triage Banner */}
+                                {(activeSearchQuery || filterStatus !== 'All') && (
+                                    <div className="alert alert-primary-subtle border border-primary-subtle rounded-3 py-2 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 text-primary-emphasis">
+                                        <div className="d-flex align-items-center gap-2 small">
+                                            <i className="bi bi-funnel-fill text-primary fs-6"></i>
+                                            <span>
+                                                {activeSearchQuery && (
+                                                    <>Filtered by: <strong className="font-monospace bg-white px-2 py-0.5 rounded border border-primary-subtle">{activeSearchQuery}</strong></>
+                                                )}
+                                                {activeSearchQuery && filterStatus !== 'All' && <span className="mx-2 text-secondary">&bull;</span>}
+                                                {filterStatus !== 'All' && (
+                                                    <>Status: <strong className="bg-white px-2 py-0.5 rounded border border-primary-subtle">{filterStatus}</strong></>
+                                                )}
+                                                <span className="text-secondary ms-2">({sortedProtocols.length} protocol{sortedProtocols.length !== 1 ? 's' : ''} matched)</span>
+                                            </span>
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs"
+                                            style={{ fontSize: '0.75rem', minHeight: '30px' }}
+                                            onClick={handleClearFilters}
+                                            title="Clear all active filters and display complete protocol registry"
+                                        >
+                                            <i className="bi bi-x-circle"></i>
+                                            <span>Clear Filter</span>
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Set Height for Research Protocol Area w/ vertical scrollbar */}
                                 <div className='pe-2' style={{ height: '700px', overflowY: 'auto', overflowX: 'auto' }}>
