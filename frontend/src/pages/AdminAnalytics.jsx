@@ -613,20 +613,24 @@ function AdminAnalytics() {
                     <div className='card-body p-3 p-md-4'>
                         <div className='d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3'>
                             {/* Page & Active Scope Identity */}
-                            <div>
+                            <div className='min-w-0 flex-grow-1'>
                                 <div className='d-flex align-items-center gap-2 mb-1 flex-wrap'>
-                                    <h4 className='fw-bold mb-0 text-dark'>Analytics & Reporting</h4>
-                                    <span className={`badge ${reportMode === 'yearly' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-info-subtle text-info-emphasis border border-info-subtle'} rounded-pill px-3 py-1 fw-semibold`}>
+                                    <h4 className='fw-bold mb-0 text-dark text-nowrap'>Analytics & Reporting</h4>
+                                    <span className={`badge ${reportMode === 'yearly' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-info-subtle text-info-emphasis border border-info-subtle'} rounded-pill px-3 py-1 fw-semibold text-nowrap`}>
                                         <i className={`bi ${reportMode === 'yearly' ? 'bi-calendar-check' : 'bi-calendar3'} me-1`}></i>
                                         {reportMode === 'yearly' ? 'Annual Scope' : 'Monthly Scope'}
                                     </span>
                                     {selectedCollege !== 'ALL' && (
-                                        <span className='badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1'>
-                                            <i className='bi bi-funnel-fill text-warning'></i>
-                                            Focus: {activeCollegeObject?.name || selectedCollege}
+                                        <span 
+                                            className='badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 text-truncate'
+                                            style={{ maxWidth: '240px' }}
+                                            title={activeCollegeObject?.name || selectedCollege}
+                                        >
+                                            <i className='bi bi-funnel-fill text-warning flex-shrink-0'></i>
+                                            <span className='text-truncate'>Focus: {activeCollegeObject?.name || selectedCollege}</span>
                                             <button 
                                                 type='button' 
-                                                className='btn-close ms-1' 
+                                                className='btn-close ms-1 flex-shrink-0' 
                                                 style={{ fontSize: '0.65rem' }} 
                                                 aria-label='Clear college focus' 
                                                 onClick={() => setSelectedCollege('ALL')}
@@ -639,20 +643,20 @@ function AdminAnalytics() {
                                 </p>
                             </div>
 
-                            {/* Temporal Filter Controls */}
-                            <div className='d-flex flex-wrap align-items-center gap-2'>
+                            {/* Temporal Filter Controls & Actions */}
+                            <div className='d-flex flex-wrap flex-sm-nowrap align-items-center gap-2 flex-shrink-0'>
                                 {/* Segmented Mode Switcher */}
                                 <div className='btn-group shadow-xs' role='group' aria-label='Report Temporal Mode Switcher'>
                                     <button
                                         type='button'
-                                        className={`btn btn-sm px-3 fw-medium ${reportMode === 'monthly' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                        className={`btn btn-sm px-2 px-md-3 fw-medium ${reportMode === 'monthly' ? 'btn-primary' : 'btn-outline-secondary'}`}
                                         onClick={() => setReportMode('monthly')}
                                     >
                                         Monthly
                                     </button>
                                     <button
                                         type='button'
-                                        className={`btn btn-sm px-3 fw-medium ${reportMode === 'yearly' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                        className={`btn btn-sm px-2 px-md-3 fw-medium ${reportMode === 'yearly' ? 'btn-primary' : 'btn-outline-secondary'}`}
                                         onClick={() => setReportMode('yearly')}
                                     >
                                         Yearly
@@ -663,7 +667,7 @@ function AdminAnalytics() {
                                 {reportMode === 'monthly' && (
                                     <select
                                         className='form-select form-select-sm shadow-xs border-primary'
-                                        style={{ width: '135px' }}
+                                        style={{ width: '125px' }}
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(Number(e.target.value))}
                                         aria-label='Select Reporting Month'
@@ -679,7 +683,7 @@ function AdminAnalytics() {
                                 {/* Year Selector: Always visible */}
                                 <select
                                     className='form-select form-select-sm shadow-xs'
-                                    style={{ width: '105px' }}
+                                    style={{ width: '95px' }}
                                     value={selectedYear}
                                     onChange={(e) => setSelectedYear(Number(e.target.value))}
                                     aria-label='Select Reporting Year'
@@ -695,7 +699,7 @@ function AdminAnalytics() {
                                 <button
                                     type='button'
                                     onClick={() => window.print()}
-                                    className='btn btn-sm btn-primary d-flex align-items-center gap-2 rounded-pill px-3 shadow-xs d-print-none'
+                                    className='btn btn-sm btn-primary d-flex align-items-center justify-content-center gap-2 rounded-pill px-3 shadow-xs d-print-none text-nowrap w-100 w-sm-auto'
                                     title='Print or Export Official University PDF Report'
                                 >
                                     <i className='bi bi-printer-fill'></i>
