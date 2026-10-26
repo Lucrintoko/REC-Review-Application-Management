@@ -371,13 +371,17 @@ REC-Review-Application-Management/
 
 ## 🔐 Default Test Credentials
 
+> [!NOTE]
+> All pre-seeded administrative and applicant test accounts in the local development database share the unified default password: `password123`.
+
 | Role | Username / Email | Password | Access Scope |
 | :--- | :--- | :--- | :--- |
-| **Ethics Chair** | `chair@adzu.edu.ph` | `chair123` | Full Administrative & Deliberation Console |
-| **Secretariat** | `secretariat@adzu.edu.ph` | `admin123` | Intake, Payment Audit, Triage & Archiving |
-| **Primary Reviewer** | `reviewer1@adzu.edu.ph` | `reviewer123`| Form 11 / Form 12 Rubric Evaluations |
-| **Proponent (Internal)** | `applicant@adzu.edu.ph` | `applicant123` | Protocol Submission, OR Upload, Revisions |
-| **Proponent (External)**| `esantos@zcmc.doh.gov.ph`| `external123` | External Hospital Protocols & Appeals |
+| **Ethics Chair** | `chair@adzu.edu.ph` | `password123` | Full Administrative & Deliberation Console |
+| **Secretariat** | `secretariat@adzu.edu.ph` | `password123` | Intake, Payment Audit, Triage & Archiving |
+| **Primary Reviewer** | `primary@adzu.edu.ph` | `password123` | Form 11 / Form 12 Rubric Evaluations |
+| **Non-Primary Reviewer** | `nonprimary@adzu.edu.ph` | `password123` | Independent Review & Recommendation |
+| **Proponent (Internal)** | `applicant@adzu.edu.ph` | `password123` | Protocol Submission, OR Upload, Revisions |
+| **Proponent (External)** | `esantos@zcmc.doh.gov.ph` | `password123` | External Hospital Protocols & Appeals |
 
 ---
 
