@@ -14,7 +14,7 @@ function AdminSidebar() {
             {/* Top Side */}
             <div className='text-center mb-2 mt-3'>
                 <img src={adzuSeal} alt="AdZU Seal" style={{ width: '100px' }}/>
-                <h6 className='mt-3 fw-bold text-primary'>REC Management</h6>
+                <h6 className='mt-3 fw-bold text-primary'>Ethics Review Management System</h6>
             </div>
 
             <hr />
