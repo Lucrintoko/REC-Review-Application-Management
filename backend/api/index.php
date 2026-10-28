@@ -119,7 +119,7 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
                             SELECT json_build_object(
                                 'consolidation_id', ce.consolidation_id,
                                 'chair_id', ce.chair_id,
-                                'chair_name', COALESCE(adm.first_name || ' ' || adm.last_name, 'Ethics Committee Chair'),
+                                'chair_name', COALESCE(adm.first_name || ' ' || adm.last_name, 'Ethics Research Board Chair'),
                                 'cycle_number', ce.cycle_number,
                                 'status', ce.status,
                                 'consolidated_recommendation', ce.consolidated_recommendation,
@@ -224,6 +224,74 @@ if ($request_method === 'GET' && $isApplicationsEndpoint) {
             }
             $app['reviews_total'] = isset($app['reviews_total']) ? intval($app['reviews_total']) : 0;
             $app['reviews_completed'] = isset($app['reviews_completed']) ? intval($app['reviews_completed']) : 0;
+
+            // Self-Healing Auto-Promotion: If an application has Decision Letter Issued but its consolidated decision is Approved (0 revisions required), promote to Clearance Granted
+            if ($app['status'] === 'Decision Letter Issued' && isset($app['latest_consolidation']['consolidated_recommendation']) && $app['latest_consolidation']['consolidated_recommendation'] === 'Approved') {
+                $appId = (int)$app['application_id'];
+                $pCode = $app['protocol_code'];
+                $certNum = 'AdZU-REC-' . $pCode;
+                $vStart = date('Y-m-d');
+                $vEnd = date('Y-m-d', strtotime('+1 year -1 day'));
+
+                $autoClearanceDetails = [
+                    'certificate_number'         => $certNum,
+                    'validity_start'             => $vStart,
+                    'validity_end'               => $vEnd,
+                    'validity_period_years'      => 1,
+                    'issued_by_admin_id'         => 2,
+                    'chair_name'                 => 'Ethics Research Board Chair',
+                    'granted_at'                 => date('c'),
+                    'general_verification_notes' => 'Ethical clearance automatically granted upon unconditional committee approval with zero revisions required.',
+                    'verification_checklist'     => []
+                ];
+
+                $appFormData = [];
+                if (!empty($app['form_data'])) {
+                    $appFormData = is_string($app['form_data']) ? json_decode($app['form_data'], true) : $app['form_data'];
+                    if (!is_array($appFormData)) $appFormData = [];
+                }
+                $appFormData['clearance_details'] = $autoClearanceDetails;
+                if (!isset($appFormData['clearance_history']) || !is_array($appFormData['clearance_history'])) {
+                    $appFormData['clearance_history'] = [];
+                }
+                $appFormData['clearance_history'][] = $autoClearanceDetails;
+
+                $autoPromoteStmt = $db->prepare("
+                    UPDATE research_applications
+                    SET status = 'Clearance Granted'::status_enum,
+                        clearance_date = COALESCE(clearance_date, CURRENT_DATE),
+                        form_data = :form_data::jsonb,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE application_id = :aid
+                ");
+                $autoPromoteStmt->execute([
+                    ':form_data' => json_encode($appFormData),
+                    ':aid'       => $appId
+                ]);
+
+                // Ensure Clearance Granted is recorded in history if not present
+                $chkHist = $db->prepare("SELECT COUNT(*) FROM application_history WHERE application_id = :aid AND process_point = 'Clearance Granted'");
+                $chkHist->execute([':aid' => $appId]);
+                if ((int)$chkHist->fetchColumn() === 0) {
+                    $insHist = $db->prepare("
+                        INSERT INTO application_history (
+                            application_id, process_point, status, proponent_name, date_completed, notes, attempt_no, is_rejected
+                        ) VALUES (
+                            :aid, 'Clearance Granted'::process_point_enum, 'Completed'::history_status_enum,
+                            'Ethics Research Board Chair', CURRENT_TIMESTAMP, :notes, :attempt_no, FALSE
+                        )
+                    ");
+                    $insHist->execute([
+                        ':aid'        => $appId,
+                        ':notes'      => "Certificate of Ethical Clearance issued for Protocol {$pCode} (Certificate No: {$certNum}). Valid until " . date('F d, Y', strtotime($vEnd)) . ".",
+                        ':attempt_no' => (int)($app['current_cycle'] ?? 1)
+                    ]);
+                }
+
+                $app['status'] = 'Clearance Granted';
+                $app['clearance_date'] = $vStart;
+                $app['form_data'] = $appFormData;
+            }
         }
 
         echo json_encode([

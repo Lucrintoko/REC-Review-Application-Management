@@ -142,7 +142,7 @@ try {
         "chair_id"          => $existingConsol ? (int)$existingConsol['chair_id'] : null,
         "chair_name"        => $existingConsol && !empty($existingConsol['chair_first_name'])
             ? trim($existingConsol['chair_first_name'] . ' ' . $existingConsol['chair_last_name'])
-            : "Ethics Committee Chair",
+            : "Ethics Research Board Chair",
         "meeting_date"      => $existingConsol['meeting_date'] ?? null,
         "summary_notes"     => $existingConsol['summary_notes'] ?? "",
         "directives_for_revisions" => $existingConsol['directives_for_revisions'] ?? "",
@@ -231,7 +231,8 @@ try {
                 $smartDefaultRec = $rec;
             }
             if ($rec !== 'Approved' && !empty($r['general_comments'])) {
-                $recReasons[] = "{$name} ({$rec}): {$r['general_comments']}";
+                $revNum = count($reviewerRoster);
+                $recReasons[] = "Reviewer {$revNum} ({$rec}): {$r['general_comments']}";
             }
         }
     }
@@ -544,7 +545,9 @@ try {
                     $isFlagged = true;
                     $smartDefaultFinding = 'Requires Modification';
                     $smartDefaultRemarks = !empty($commentsList)
-                        ? "Reviewers divided. Revisions required: " . implode("; ", array_map(function($c) { return "{$c['reviewer_name']}: {$c['comment']}"; }, $commentsList))
+                        ? "Reviewers divided. Committee revisions required: " . implode("; ", array_map(function($c, $idx) { 
+                            return "Reviewer " . ($idx + 1) . ": {$c['comment']}"; 
+                        }, $commentsList, array_keys($commentsList)))
                         : 'Reviewers split on criteria. Committee clarification required.';
                 }
             }
@@ -555,8 +558,9 @@ try {
             $mergeComments = "";
             if (!empty($commentsList)) {
                 $mergeParts = [];
-                foreach ($commentsList as $cl) {
-                    $mergeParts[] = "[{$cl['reviewer_name']}]: {$cl['comment']}";
+                foreach ($commentsList as $idx => $cl) {
+                    $reviewerIndex = $idx + 1;
+                    $mergeParts[] = "• Reviewer {$reviewerIndex}: {$cl['comment']}";
                 }
                 $mergeComments = implode("\n", $mergeParts);
             }

@@ -15,7 +15,7 @@ export default function ConsolidatedDecisionLetterModal({
     directivesForRevisions = '',
     summaryNotes = '',
     meetingDate = '',
-    chairName = 'Ethics Committee Chair'
+    chairName = 'Ethics Research Board Chair'
 }) {
     // Top-level hooks strictly before early returns to preserve Hook Count Invariance
     const [viewFilter, setViewFilter] = useState('actionable');
@@ -93,7 +93,7 @@ export default function ConsolidatedDecisionLetterModal({
                     cardBorderClass: 'border-warning',
                     accentColor: '#d39e00',
                     icon: 'bi-pencil-square',
-                    guidelineText: 'The Research Ethics Committee has determined that minor ethical modifications or clarifications are required. The Principal Investigator must submit a point-by-point response matrix accompanied by tracked and clean copies of revised protocol documents within fourteen (14) calendar days of receiving this notice.'
+                    guidelineText: 'The Ethics Research Board has determined that minor ethical modifications or clarifications are required. The Principal Investigator must submit a point-by-point response matrix accompanied by tracked and clean copies of revised protocol documents within fourteen (14) calendar days of receiving this notice.'
                 };
             case 'Major Revisions':
             case 'Major Revision Required':
@@ -121,7 +121,7 @@ export default function ConsolidatedDecisionLetterModal({
                     cardBorderClass: 'border-primary',
                     accentColor: '#060297',
                     icon: 'bi-info-circle-fill',
-                    guidelineText: 'Please refer to the specific directives articulated by the Ethics Committee Chair below.'
+                    guidelineText: 'Please refer to the specific directives articulated by the Ethics Research Board Chair below.'
                 };
         }
     };
@@ -303,10 +303,10 @@ export default function ConsolidatedDecisionLetterModal({
                                         Ateneo de Zamboanga University
                                     </h6>
                                     <h5 className="fw-bolder mb-0 text-dark" style={{ letterSpacing: '0.02em', fontSize: '1.1rem' }}>
-                                        RESEARCH ETHICS COMMITTEE (AdZU-REC)
+                                        ETHICS RESEARCH BOARD (AdZU-REC)
                                     </h5>
                                     <p className="text-secondary mb-0 small" style={{ fontSize: '0.78rem' }}>
-                                        PHREB Level II Accredited Research Ethics Committee<br />
+                                        PHREB Level II Accredited Ethics Research Board<br />
                                         Fr. Eusebio Salvador SJ Campus, La Purisima St., Zamboanga City 7000, Philippines<br />
                                         Email: <span className="font-monospace text-dark">rec@adzu.edu.ph</span> • Web: <span className="font-monospace text-dark">www.adzu.edu.ph/rec</span>
                                     </p>
@@ -609,7 +609,7 @@ export default function ConsolidatedDecisionLetterModal({
                                             {chairName}
                                         </div>
                                         <div className="text-secondary small fw-semibold" style={{ fontSize: '0.75rem' }}>
-                                            Chair, Research Ethics Committee
+                                            Chair, Ethics Research Board
                                         </div>
                                         <div className="text-muted" style={{ fontSize: '0.68rem' }}>
                                             Ateneo de Zamboanga University

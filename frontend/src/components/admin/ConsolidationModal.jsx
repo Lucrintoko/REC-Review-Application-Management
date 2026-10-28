@@ -56,8 +56,24 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
     };
 
     // -------------------------------------------------------------------------
-    // 1. Fetch Consolidation Data from Backend API
+    // 1. Anonymization Helper & Fetch Consolidation Data
     // -------------------------------------------------------------------------
+    const anonymizeText = (text, roster = null) => {
+        if (!text || typeof text !== 'string') return text;
+        let sanitized = text;
+        const activeRoster = roster || consolidationData?.reviewer_roster || [];
+        activeRoster.forEach((rev, idx) => {
+            if (!rev.reviewer_name) return;
+            const name = rev.reviewer_name.trim();
+            if (!name) return;
+            const escaped = name.replace(/[.*+?^$\{\}()|[\]\\]/g, (m) => '\\' + m);
+            const replacement = `Reviewer ${idx + 1}`;
+            sanitized = sanitized.replace(new RegExp(`\\\[${escaped}\\\]:?`, 'gi'), `${replacement}:`);
+            sanitized = sanitized.replace(new RegExp(`\\b${escaped}\\b:?`, 'gi'), `${replacement}:`);
+        });
+        return sanitized;
+    };
+
     const fetchConsolidationData = async () => {
         if (!protocol?.application_id) return;
         setIsLoading(true);
@@ -82,9 +98,14 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
             ];
 
             allCriteria.forEach((item) => {
+                const smartRemarks = anonymizeText(item.smart_default_remarks || '', data.reviewer_roster);
+                const chairRemarks = item.chair_state?.remarks !== undefined 
+                    ? anonymizeText(item.chair_state.remarks, data.reviewer_roster)
+                    : smartRemarks;
+
                 initialFindings[item.question_id] = {
                     finding: item.chair_state?.finding || item.smart_default_finding || 'Satisfactory',
-                    remarks: item.chair_state?.remarks !== undefined ? item.chair_state.remarks : (item.smart_default_remarks || ''),
+                    remarks: chairRemarks,
                     is_modified: item.chair_state?.is_modified || false
                 };
             });
@@ -97,8 +118,8 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
                 data.synthesized_recommendation?.smart_default ||
                 'Minor Revisions'
             );
-            setDirectivesForRevisions(data.consolidation_meta?.directives_for_revisions || '');
-            setSummaryNotes(data.consolidation_meta?.summary_notes || '');
+            setDirectivesForRevisions(anonymizeText(data.consolidation_meta?.directives_for_revisions || '', data.reviewer_roster));
+            setSummaryNotes(anonymizeText(data.consolidation_meta?.summary_notes || '', data.reviewer_roster));
             if (data.consolidation_meta?.meeting_date) {
                 setMeetingDate(data.consolidation_meta.meeting_date);
             }
@@ -193,11 +214,12 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
 
     const applyAccelerator = (questionId, text) => {
         if (!text) return;
+        const cleanText = anonymizeText(text);
         setChairFindings(prev => ({
             ...prev,
             [questionId]: {
                 ...(prev[questionId] || {}),
-                remarks: text,
+                remarks: cleanText,
                 is_modified: true
             }
         }));
@@ -219,7 +241,7 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
             ...prev,
             [item.question_id]: {
                 finding: item.smart_default_finding,
-                remarks: item.smart_default_remarks,
+                remarks: anonymizeText(item.smart_default_remarks),
                 is_modified: false
             }
         }));
@@ -290,7 +312,72 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
     // -------------------------------------------------------------------------
     // 6. Finalize & Issue Decision Flow
     // -------------------------------------------------------------------------
+    const checkForReviewerNameLeaks = () => {
+        const roster = consolidationData?.reviewer_roster || [];
+        const leakedNames = new Set();
+
+        const checkString = (str) => {
+            if (!str) return;
+            roster.forEach(rev => {
+                if (rev.reviewer_name && rev.reviewer_name.trim()) {
+                    const nameLower = rev.reviewer_name.trim().toLowerCase();
+                    if (str.toLowerCase().includes(nameLower)) {
+                        leakedNames.add(rev.reviewer_name.trim());
+                    }
+                }
+            });
+        };
+
+        checkString(directivesForRevisions);
+        checkString(summaryNotes);
+        Object.values(chairFindings).forEach(item => checkString(item?.remarks));
+
+        return Array.from(leakedNames);
+    };
+
     const handleFinalizeDecision = () => {
+        const leaks = checkForReviewerNameLeaks();
+        if (leaks.length > 0) {
+            fireSwal({
+                icon: 'warning',
+                title: 'Reviewer Confidentiality Warning',
+                html: `
+                    <div class="text-start small">
+                        <p class="mb-2">The following reviewer names were detected in consolidated directives or remarks:</p>
+                        <ul class="text-danger ps-3 mb-2">
+                            ${leaks.map(name => `<li><strong>${name}</strong></li>`).join('')}
+                        </ul>
+                        <p class="mb-0 text-muted">Per REC Double-Blind review policy, reviewer identities must not be disclosed in decision notices.</p>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#060297',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="bi bi-shield-check me-1"></i> Auto-Scrub & Continue',
+                cancelButtonText: 'Edit Manually'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    setDirectivesForRevisions(prev => anonymizeText(prev));
+                    setSummaryNotes(prev => anonymizeText(prev));
+                    setChairFindings(prev => {
+                        const cleaned = {};
+                        Object.keys(prev).forEach(k => {
+                            cleaned[k] = { ...prev[k], remarks: anonymizeText(prev[k]?.remarks) };
+                        });
+                        return cleaned;
+                    });
+                    fireSwal({
+                        icon: 'success',
+                        title: 'Reviewer Names Anonymized',
+                        text: 'Reviewer names have been replaced with anonymous identifiers (Reviewer 1, Reviewer 2). Please click Finalize again to issue the decision.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+            return;
+        }
+
         const errors = [];
 
         if (!consolidatedRecommendation) {
@@ -343,9 +430,12 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
                             <span class="text-dark">${adminName}</span>
                         </div>
                     </div>
-                    <div class="alert alert-warning py-2 px-3 small mb-0 border-warning-subtle">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        Finalizing will lock all peer evaluations, update protocol status to <strong>'Decision Letter Issued'</strong>, and generate the formal notification letter for the proponent.
+                    <div class="alert ${consolidatedRecommendation === 'Approved' ? 'alert-success border-success-subtle' : 'alert-warning border-warning-subtle'} py-2 px-3 small mb-0">
+                        <i class="bi ${consolidatedRecommendation === 'Approved' ? 'bi-patch-check-fill text-success' : 'bi-exclamation-triangle-fill'} me-1"></i>
+                        ${consolidatedRecommendation === 'Approved'
+                            ? 'Finalizing will lock all peer evaluations and immediately grant official <strong>Ethical Clearance (Clearance Granted)</strong> with zero revisions required.'
+                            : 'Finalizing will lock all peer evaluations, update protocol status to <strong>\'Decision Letter Issued\'</strong>, and generate the formal notification letter for the proponent.'
+                        }
                     </div>
                 </div>
             `,
@@ -387,10 +477,13 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
             }
         }).then((result) => {
             if (result.isConfirmed) {
+                const isCleared = result.value?.new_app_status === 'Clearance Granted' || consolidatedRecommendation === 'Approved';
                 fireSwal({
                     icon: 'success',
-                    title: 'Decision Finalized!',
-                    text: 'Consolidated evaluation finalized. The protocol has progressed to Decision Letter Issued.',
+                    title: isCleared ? 'Clearance Granted!' : 'Decision Finalized!',
+                    text: isCleared 
+                        ? 'Consolidated evaluation finalized. Protocol has been approved with zero revisions and official Ethical Clearance is granted!'
+                        : 'Consolidated evaluation finalized. The protocol has progressed to Decision Letter Issued.',
                     confirmButtonColor: '#060297'
                 }).then(() => {
                     if (onRefresh) onRefresh();
@@ -852,12 +945,13 @@ export default function ConsolidationModal({ protocol, onClose, onRefresh }) {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => applyAccelerator(item.question_id, item.accelerators.merge_comments)}
-                                                                            className="btn btn-xs btn-theme-primary py-0 px-2 rounded-pill d-inline-flex align-items-center gap-1"
+                                                                            className="btn btn-xs btn-theme-primary py-0 px-2 rounded-pill d-inline-flex align-items-center gap-1 shadow-xs"
                                                                             style={{ fontSize: '0.7rem' }}
-                                                                            title="Merge all peer comments with attribution"
+                                                                            title="Merge peer comments into an anonymized bulleted synthesis"
+                                                                            aria-label="Merge peer comments anonymously"
                                                                         >
-                                                                            <i className="bi bi-stars text-warning"></i>
-                                                                            <span>Merge Comments</span>
+                                                                            <i className="bi bi-shield-check text-warning"></i>
+                                                                            <span>Merge Comments (Anonymized)</span>
                                                                         </button>
                                                                     )}
                                                                 </div>
