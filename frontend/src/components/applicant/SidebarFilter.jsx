@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { APPLICATION_TYPES } from "../../constants/applicationTypes";
 
 /**
@@ -10,8 +10,18 @@ function SidebarFilter({
   onSelectType,
   getTypeCount,
   types = APPLICATION_TYPES,
-  onBackHome,
 }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("applicantId");
+    localStorage.removeItem("applicantName");
+    localStorage.removeItem("applicantDepartment");
+    localStorage.removeItem("applicantEmail");
+    localStorage.removeItem("adzu_rec_application_draft_v1");
+    navigate("/applicant/login");
+  };
+
   return (
     <div className="card shadow-sm h-100">
       <div className="card-body d-flex flex-column">
@@ -63,19 +73,13 @@ function SidebarFilter({
         {/* Pinned to bottom to maintain height symmetry */}
         <div className="mt-auto pt-3">
           <hr className="my-2" />
-          {onBackHome ? (
-            <button
-              className="btn btn-outline-secondary w-100"
-              type="button"
-              onClick={onBackHome}
-            >
-              <i className="bi bi-house-door-fill me-2"></i>Back to Home
-            </button>
-          ) : (
-            <Link to="/" className="btn btn-outline-secondary w-100">
-              <i className="bi bi-house-door-fill me-2"></i>Back to Home
-            </Link>
-          )}
+          <button
+            className="btn btn-outline-danger w-100"
+            type="button"
+            onClick={handleLogout}
+          >
+            <i className="bi bi-box-arrow-right me-2"></i>Logout
+          </button>
         </div>
       </div>
     </div>

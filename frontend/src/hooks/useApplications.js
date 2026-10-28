@@ -13,7 +13,7 @@ function getLocalDraftApplication() {
 
     return {
       application_id: "local-draft",
-      protocol_code: parsedDraft.data.rec_code || "Draft",
+      protocol_code: "Draft",
       research_title: parsedDraft.data.study_title || "Untitled Draft",
       research_type: parsedDraft.data.study_type || "Undergraduate",
       status: "Draft",
@@ -40,7 +40,13 @@ export function useApplications() {
     setError(null);
 
     const applicantId = localStorage.getItem('applicantId');
-    const endpoint = applicantId ? `/applications?applicant_id=${applicantId}` : "/applications";
+    if (!applicantId) {
+      setApplications([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const endpoint = `/applications?applicant_id=${encodeURIComponent(applicantId)}`;
 
     try {
       const response = await apiClient.get(endpoint, { signal });

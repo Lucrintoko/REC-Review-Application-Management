@@ -33,9 +33,9 @@ function ApplicantDashboard({
   onNewApplication,
   onSelectApplication,
 }) {
-  const applicantName = localStorage.getItem('applicantName') || "Juan Dela Cruz";
-  const applicantDepartment = localStorage.getItem('applicantDepartment') || "Ateneo de Zamboanga University";
-  const applicantEmail = localStorage.getItem('applicantEmail') || "applicant@adzu.edu.ph";
+  const applicantName = localStorage.getItem('applicantName') || "Applicant";
+  const applicantDepartment = localStorage.getItem('applicantDepartment') || "";
+  const applicantEmail = localStorage.getItem('applicantEmail') || "";
   const [selectedOrApp, setSelectedOrApp] = useState(null);
   const [rejectionNoticeApp, setRejectionNoticeApp] = useState(null);
   const [revisionNoticeApp, setRevisionNoticeApp] = useState(null);
@@ -156,7 +156,6 @@ function ApplicantDashboard({
               onSelectType={setSelectedType}
               getTypeCount={getTypeCount}
               totalApplicationsCount={applications.length}
-              onBackHome={onNavigateHome}
             />
           </aside>
 

@@ -20,15 +20,15 @@ function DashboardHeader({
 
   // Fallback to active localStorage session data if props are omitted
   const displayName =
-    userName || localStorage.getItem("applicantName") || "Juan Dela Cruz";
+    userName || localStorage.getItem("applicantName") || "Applicant";
   const displayDepartment =
     userDepartment ||
     localStorage.getItem("applicantDepartment") ||
-    "Ateneo de Zamboanga University";
+    "";
   const displayEmail =
     userEmail ||
     localStorage.getItem("applicantEmail") ||
-    "applicant@adzu.edu.ph";
+    "";
 
   // Click-outside and keyboard accessibility dismissal
   useEffect(() => {
@@ -60,6 +60,7 @@ function DashboardHeader({
     localStorage.removeItem("applicantName");
     localStorage.removeItem("applicantDepartment");
     localStorage.removeItem("applicantEmail");
+    localStorage.removeItem("adzu_rec_application_draft_v1");
 
     if (onLogout) {
       onLogout();

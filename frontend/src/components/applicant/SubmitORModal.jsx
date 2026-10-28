@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 
 // Modal component for applicants to submit OR (Official Receipt) details
 // for their application when status is "Payment Pending".
@@ -59,6 +60,18 @@ function SubmitORModal({ application, show, onClose, onSuccess }) {
         throw new Error(responseData.message || "Failed to submit OR details.");
       }
 
+      await Swal.fire({
+        icon: "success",
+        title: isRejected ? "OR Resubmitted" : "OR Submitted",
+        text: "Your Official Receipt details were submitted successfully for verification.",
+        confirmButtonText: "Done",
+        confirmButtonColor: "#003366",
+        customClass: {
+          popup: "rounded-4 shadow-lg border-0",
+          confirmButton: "btn btn-primary px-4 py-2 rounded-pill fw-medium",
+        },
+        buttonsStyling: false,
+      });
       onSuccess && onSuccess(responseData);
     } catch (err) {
       setError(err.message);

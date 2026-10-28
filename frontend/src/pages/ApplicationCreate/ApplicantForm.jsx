@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import adzuSeal from "../../assets/AdZU Seal.png";
 import { apiClient } from "../../services/api";
 import DashboardFooter from "../../components/applicant/DashboardFooter";
+import Swal from "sweetalert2";
 
 // =============================================================================
 // REUSABLE SUB-COMPONENTS
@@ -85,7 +86,7 @@ export const INITIAL_FORM_DATA = {
 
   // 2. Full Study Title
   study_title: "",
-  rec_code: "REC-2026-0001",
+  rec_code: "",
   study_site: "",
   study_site_custom: "",
 
@@ -438,6 +439,10 @@ function ApplicantForm({ onBack }) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.data) {
           const merged = { ...INITIAL_FORM_DATA, ...parsed.data };
+          // Protocol numbers are assigned by the server only after submission.
+          if (merged.rec_code === "REC-2026-0001") {
+            merged.rec_code = "";
+          }
           // Normalize legacy description_study to description_objectives if needed
           if (!merged.description_objectives && merged.description_study) {
             merged.description_objectives = merged.description_study;
@@ -757,7 +762,6 @@ function ApplicantForm({ onBack }) {
 
   const handleSaveDraftAndContinue = async () => {
     setIsSavingDraft(true);
-    const generatedCode = formData.rec_code || `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const now = new Date();
 
     // Deep clone formData to avoid mutating state
@@ -774,7 +778,6 @@ function ApplicantForm({ onBack }) {
 
     const submissionPayload = {
       applicant_id: Number(localStorage.getItem("applicantId")) || 0,
-      protocol_code: generatedCode,
       research_title: formData.study_title,
       research_type: "Undergraduate",
       review_type: "Undetermined",
@@ -840,15 +843,23 @@ function ApplicantForm({ onBack }) {
         throw new Error(response?.message || "The server did not save the draft.");
       }
       setShowSubmitConfirmModal(false);
-      showToast("Application submitted successfully.", "success");
 
       // Clear draft since it was submitted
       localStorage.removeItem(DRAFT_STORAGE_KEY);
-      
-      // Redirect to dashboard after a short delay so user sees the success toast
-      setTimeout(() => {
-        navigate('/applicant/dashboard');
-      }, 1500);
+
+      await Swal.fire({
+        icon: "success",
+        title: "Application Submitted",
+        text: "Your application was submitted successfully and is now pending payment.",
+        confirmButtonText: "Continue to Dashboard",
+        confirmButtonColor: "#003366",
+        customClass: {
+          popup: "rounded-4 shadow-lg border-0",
+          confirmButton: "btn btn-primary px-4 py-2 rounded-pill fw-medium",
+        },
+        buttonsStyling: false,
+      });
+      navigate("/applicant/dashboard");
     } catch (err) {
       console.error("Draft save failed:", err);
       const syncError = err instanceof Error ? err.message : "Unknown server error.";
