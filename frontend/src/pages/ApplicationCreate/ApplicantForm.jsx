@@ -22,6 +22,10 @@ import { useNavigate } from "react-router-dom";
 import adzuSeal from "../../assets/AdZU Seal.png";
 import { apiClient } from "../../services/api";
 import DashboardFooter from "../../components/applicant/DashboardFooter";
+import Swal from "sweetalert2";
+import {
+  getApplicantDraftStorageKey,
+} from "../../utils/applicantDraftStorage";
 
 // =============================================================================
 // REUSABLE SUB-COMPONENTS
@@ -32,12 +36,11 @@ import FileUploadWidget from "../ApplicationCreate/components/FileUploadWidget.j
 import SectionCard from "../ApplicationCreate/components/SectionCard.jsx";
 import RadioCardGroup from "../ApplicationCreate/components/RadioCardGroup.jsx";
 import ResearcherManager from "../ApplicationCreate/components/ResearcherManager.jsx";
+import { INSTITUTION_OPTIONS } from "../../constants/institutionalUnits";
 
 // =============================================================================
 // STATIC CONFIGURATIONS & DEFINITIONS
 // =============================================================================
-
-export const DRAFT_STORAGE_KEY = "adzu_rec_application_draft_v1";
 
 export const FORM_SECTIONS = [
   { id: "general-information", number: 1, title: "General Information", shortTitle: "General Information", required: true, icon: "bi-card-list" },
@@ -84,7 +87,7 @@ export const INITIAL_FORM_DATA = {
 
   // 2. Full Study Title
   study_title: "",
-  rec_code: "REC-2026-0001",
+  rec_code: "",
   study_site: "",
   study_site_custom: "",
 
@@ -107,6 +110,7 @@ export const INITIAL_FORM_DATA = {
   // 5. Institution
   institution_name: "",
   institution_department: "",
+  institution_department_custom: "",
   institution_address: "",
 
   // 6. Contact Information
@@ -427,15 +431,20 @@ function evaluateFormStatusAndErrors(formData) {
 function ApplicantForm({ onBack }) {
   const navigate = useNavigate();
   const brandHeaderRef = useRef(null);
+  const draftStorageKey = getApplicantDraftStorageKey();
 
   // Primary State
   const [formData, setFormData] = useState(() => {
     try {
-      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      const saved = localStorage.getItem(getApplicantDraftStorageKey());
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.data) {
           const merged = { ...INITIAL_FORM_DATA, ...parsed.data };
+          // Protocol numbers are assigned by the server only after submission.
+          if (merged.rec_code === "REC-2026-0001") {
+            merged.rec_code = "";
+          }
           // Normalize legacy description_study to description_objectives if needed
           if (!merged.description_objectives && merged.description_study) {
             merged.description_objectives = merged.description_study;
@@ -447,14 +456,14 @@ function ApplicantForm({ onBack }) {
       }
     } catch (e) {
       console.warn("Saved draft is outdated or corrupted. Discarding to prevent errors.", e);
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(getApplicantDraftStorageKey());
     }
     return INITIAL_FORM_DATA;
   });
 
   const [activeSectionId, setActiveSectionId] = useState("general-information");
   const [toastMessage, setToastMessage] = useState(null);
-  const [hasDraftNotice, setHasDraftNotice] = useState(() => Boolean(localStorage.getItem(DRAFT_STORAGE_KEY)));
+  const [hasDraftNotice, setHasDraftNotice] = useState(() => Boolean(localStorage.getItem(getApplicantDraftStorageKey())));
   const [validationErrors, setValidationErrors] = useState({});
   const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -465,7 +474,7 @@ function ApplicantForm({ onBack }) {
 
   const [lastSavedTime, setLastSavedTime] = useState(() => {
     try {
-      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      const saved = localStorage.getItem(getApplicantDraftStorageKey());
       if (saved) {
         const parsed = JSON.parse(saved);
         return parsed.savedAt ? new Date(parsed.savedAt).toLocaleTimeString() : null;
@@ -564,7 +573,7 @@ function ApplicantForm({ onBack }) {
       try {
         const now = new Date();
         const payload = { data: formData, savedAt: now.toISOString() };
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+        localStorage.setItem(draftStorageKey, JSON.stringify(payload));
         setHasUnsavedChanges(false);
         const formattedTime = now.toLocaleTimeString();
         setLastSavedTime(formattedTime);
@@ -583,7 +592,7 @@ function ApplicantForm({ onBack }) {
   // Clear Draft
   const handleClearDraft = useCallback(() => {
     if (window.confirm("Are you sure you want to clear your current draft and reset all fields?")) {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(draftStorageKey);
       setFormData(INITIAL_FORM_DATA);
       setHasUnsavedChanges(false);
       setValidationErrors({});
@@ -755,7 +764,6 @@ function ApplicantForm({ onBack }) {
 
   const handleSaveDraftAndContinue = async () => {
     setIsSavingDraft(true);
-    const generatedCode = formData.rec_code || `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const now = new Date();
 
     // Deep clone formData to avoid mutating state
@@ -772,7 +780,6 @@ function ApplicantForm({ onBack }) {
 
     const submissionPayload = {
       applicant_id: Number(localStorage.getItem("applicantId")) || 0,
-      protocol_code: generatedCode,
       research_title: formData.study_title,
       research_type: "Undergraduate",
       review_type: "Undetermined",
@@ -784,7 +791,7 @@ function ApplicantForm({ onBack }) {
     let savedLocally = false;
     try {
       localStorage.setItem(
-        DRAFT_STORAGE_KEY,
+      draftStorageKey,
         JSON.stringify({ data: cleanFormData, savedAt: now.toISOString() })
       );
       savedLocally = true;
@@ -838,15 +845,23 @@ function ApplicantForm({ onBack }) {
         throw new Error(response?.message || "The server did not save the draft.");
       }
       setShowSubmitConfirmModal(false);
-      showToast("Application submitted successfully.", "success");
 
       // Clear draft since it was submitted
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
-      
-      // Redirect to dashboard after a short delay so user sees the success toast
-      setTimeout(() => {
-        navigate('/applicant/dashboard');
-      }, 1500);
+      localStorage.removeItem(draftStorageKey);
+
+      await Swal.fire({
+        icon: "success",
+        title: "Application Submitted",
+        text: "Your application was submitted successfully and is now pending payment.",
+        confirmButtonText: "Continue to Dashboard",
+        confirmButtonColor: "#003366",
+        customClass: {
+          popup: "rounded-4 shadow-lg border-0",
+          confirmButton: "btn btn-primary px-4 py-2 rounded-pill fw-medium",
+        },
+        buttonsStyling: false,
+      });
+      navigate("/applicant/dashboard");
     } catch (err) {
       console.error("Draft save failed:", err);
       const syncError = err instanceof Error ? err.message : "Unknown server error.";
@@ -1157,17 +1172,11 @@ function ApplicantForm({ onBack }) {
                   id="section-1"
                   number={10}
                   title="Research Review Questions"
+                  description="Answer both questions and attach the technical approval document when applicable."
                   isRequired={true}
                   isComplete={sectionStatus["section-1"]}
                   icon="bi-shield-check"
                 >
-                <div className="alert alert-info d-flex align-items-start gap-2 mb-4">
-                  <i className="bi bi-info-circle-fill fs-5"></i>
-                  <div>
-                    Review questions verify whether your study protocol has passed institutional technical review
-                    and whether it is currently active under any other ethics review committee.
-                  </div>
-                </div>
 
                 {/* Technical Review Question */}
                 <div className="mb-4 pb-3 border-bottom">
@@ -1337,6 +1346,7 @@ function ApplicantForm({ onBack }) {
                 id="section-2"
                 number={1}
                 title="Title of the Study"
+                description="Enter the formal study title and location. The REC Code is assigned by the system after submission."
                 isRequired={true}
                 isComplete={sectionStatus["section-2"]}
                 icon="bi-card-heading"
@@ -1381,7 +1391,7 @@ function ApplicantForm({ onBack }) {
                         readOnly
                       />
                     </div>
-                    <small className="text-muted">Assigned protocol code for submission tracking</small>
+                    <small className="text-muted">You do not need to enter anything here. The code is assigned after submission.</small>
                   </div>
 
                   <div className="col-12 col-md-6">
@@ -1411,6 +1421,7 @@ function ApplicantForm({ onBack }) {
                 id="section-3"
                 number={2}
                 title="Primary Researchers"
+                description="List the principal investigator and other primary investigators responsible for the study."
                 isRequired={true}
                 isComplete={sectionStatus["section-3"]}
                 icon="bi-people-fill"
@@ -1433,6 +1444,7 @@ function ApplicantForm({ onBack }) {
                 id="section-4"
                 number={3}
                 title="Co-researchers (if any)"
+                description="Add collaborators who will assist with the study. Leave this section empty if there are none."
                 isRequired={false}
                 isComplete={true}
                 icon="bi-person-plus"
@@ -1454,6 +1466,7 @@ function ApplicantForm({ onBack }) {
                 id="section-5"
                 number={4}
                 title="Institution"
+                description="Provide the applicant institution and select the matching department, school, or unit from the list."
                 isRequired={true}
                 isComplete={sectionStatus["section-5"]}
                 icon="bi-building"
@@ -1477,13 +1490,27 @@ function ApplicantForm({ onBack }) {
 
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold">Department / School / Unit:</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="e.g. College of Science and Information Technology"
+                    <select
+                      className="form-select"
                       value={formData.institution_department}
                       onChange={(e) => updateField("institution_department", e.target.value)}
-                    />
+                    >
+                      <option value="">Select school, college, or unit...</option>
+                      {INSTITUTION_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.institution_department === "External Entities & Partner Institutions (ZCMC, DOH, WMSU, etc.)" && (
+                      <input
+                        type="text"
+                        className="form-control mt-2"
+                        placeholder="Enter the external organization or unit"
+                        value={formData.institution_department_custom}
+                        onChange={(e) => updateField("institution_department_custom", e.target.value)}
+                      />
+                    )}
                   </div>
 
                   <div className="col-12">
@@ -1509,6 +1536,7 @@ function ApplicantForm({ onBack }) {
                 id="section-6"
                 number={5}
                 title="Contact Information"
+                description="Provide the person who should receive ERB correspondence. For studies with multiple researchers, use the primary contact who can coordinate communication for the group."
                 isRequired={true}
                 isComplete={sectionStatus["section-6"]}
                 icon="bi-telephone"
@@ -1584,6 +1612,7 @@ function ApplicantForm({ onBack }) {
                 id="section-8"
                 number={6}
                 title="Type of Study"
+                description="Choose the category that best describes the research protocol."
                 isRequired={true}
                 isComplete={sectionStatus["section-8"]}
                 icon="bi-ui-radios-grid"
@@ -1630,6 +1659,7 @@ function ApplicantForm({ onBack }) {
                 id="section-9"
                 number={7}
                 title="Site Classification"
+                description="Indicate whether the study will be conducted at one site or across multiple sites."
                 isRequired={true}
                 isComplete={sectionStatus["section-9"]}
                 icon="bi-geo-alt"
@@ -1659,6 +1689,7 @@ function ApplicantForm({ onBack }) {
                 id="section-10"
                 number={8}
                 title="Source of Funding"
+                description="Select the funding source and provide the requested details when the source requires clarification."
                 isRequired={true}
                 isComplete={sectionStatus["section-10"]}
                 icon="bi-cash-coin"
@@ -1747,6 +1778,7 @@ function ApplicantForm({ onBack }) {
                 id="section-11"
                 number={9}
                 title="Study Duration & Participants"
+                description="Enter the planned study period and describe the target participants."
                 isRequired={true}
                 isComplete={sectionStatus["section-11"]}
                 icon="bi-calendar-range"
@@ -1828,6 +1860,7 @@ function ApplicantForm({ onBack }) {
                   id="section-7"
                   number={11}
                   title="Brief Description of the Study"
+                  description="Summarize the study background, objectives, methods, participants, and expected benefits or risks in clear language."
                   isRequired={true}
                   isComplete={sectionStatus["section-7"]}
                   icon="bi-file-earmark-text"
@@ -1870,6 +1903,7 @@ function ApplicantForm({ onBack }) {
                 id="section-12"
                 number={12}
                 title="Basic Requirements"
+                description="Check each required document and upload the corresponding file. These documents are needed before the application can be submitted."
                 isRequired={true}
                 isComplete={sectionStatus["section-12"]}
                 icon="bi-paperclip"
@@ -2208,6 +2242,7 @@ function ApplicantForm({ onBack }) {
                 id="section-13"
                 number={13}
                 title="Supplementary Documents (if any)"
+                description="These documents are optional. Check an item only when it applies to your study, then upload the file or provide the requested details."
                 isRequired={false}
                 isComplete={true}
                 icon="bi-files"
@@ -2230,7 +2265,7 @@ function ApplicantForm({ onBack }) {
                         className="form-check-input"
                         type="checkbox"
                         id={`chk_${item.key}`}
-                        checked={formData.supplementary[item.key].checked || !!formData.supplementary[item.key].file || (formData.supplementary[item.key].files && formData.supplementary[item.key].files.length > 0)}
+                        checked={formData.supplementary[item.key].checked}
                         onChange={(e) => updateSupplementary(item.key, { checked: e.target.checked })}
                       />
                       <label className="form-check-label fw-bold" htmlFor={`chk_${item.key}`}>
@@ -2238,28 +2273,32 @@ function ApplicantForm({ onBack }) {
                       </label>
                     </div>
 
-                    {item.hasSpecify && (
-                      <input
-                        type="text"
-                        className="form-control form-control-sm mb-2"
-                        placeholder={item.placeholder}
-                        value={formData.supplementary[item.key].specify || ""}
-                        onChange={(e) =>
-                          updateSupplementary(item.key, {
-                            specify: e.target.value,
-                            checked: true,
-                          })
-                        }
-                      />
-                    )}
+                    {formData.supplementary[item.key].checked && (
+                      <>
+                        {item.hasSpecify && (
+                          <input
+                            type="text"
+                            className="form-control form-control-sm mb-2"
+                            placeholder={item.placeholder}
+                            value={formData.supplementary[item.key].specify || ""}
+                            onChange={(e) =>
+                              updateSupplementary(item.key, {
+                                specify: e.target.value,
+                                checked: true,
+                              })
+                            }
+                          />
+                        )}
 
-                    <FileUploadWidget
-                      label={`Upload ${item.label}`}
-                      file={formData.supplementary[item.key].file}
-                      files={formData.supplementary[item.key].files}
-                      onFileSelect={(f) => updateSupplementary(item.key, { file: f, checked: true })}
-                      onFileRemove={() => updateSupplementary(item.key, { file: null })}
-                    />
+                        <FileUploadWidget
+                          label={`Upload ${item.label}`}
+                          file={formData.supplementary[item.key].file}
+                          files={formData.supplementary[item.key].files}
+                          onFileSelect={(f) => updateSupplementary(item.key, { file: f, checked: true })}
+                          onFileRemove={() => updateSupplementary(item.key, { file: null })}
+                        />
+                      </>
+                    )}
                   </div>
                 ))}
               </SectionCard>
@@ -2269,6 +2308,7 @@ function ApplicantForm({ onBack }) {
                 id="section-14"
                 number={14}
                 title="Declaration and Signature"
+                description="Review the declarations, then confirm your agreement and provide the authorized signatory details."
                 isRequired={true}
                 isComplete={sectionStatus["section-14"]}
                 icon="bi-pen"

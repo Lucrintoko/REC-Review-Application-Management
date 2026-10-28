@@ -1,10 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "../services/api";
-
-const DRAFT_STORAGE_KEY = "adzu_rec_application_draft_v1";
+import {
+  getApplicantDraftStorageKey,
+  removeLegacyApplicantDraft,
+} from "../utils/applicantDraftStorage";
 
 function getLocalDraftApplication() {
-  const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+  const draftStorageKey = getApplicantDraftStorageKey();
+  if (!draftStorageKey) return null;
+
+  const savedDraft = localStorage.getItem(draftStorageKey);
   if (!savedDraft) return null;
 
   try {
@@ -13,7 +18,7 @@ function getLocalDraftApplication() {
 
     return {
       application_id: "local-draft",
-      protocol_code: parsedDraft.data.rec_code || "Draft",
+      protocol_code: "Draft",
       research_title: parsedDraft.data.study_title || "Untitled Draft",
       research_type: parsedDraft.data.study_type || "Undergraduate",
       status: "Draft",
@@ -21,7 +26,7 @@ function getLocalDraftApplication() {
       form_data: parsedDraft.data,
     };
   } catch {
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(draftStorageKey);
     return null;
   }
 }
@@ -40,7 +45,14 @@ export function useApplications() {
     setError(null);
 
     const applicantId = localStorage.getItem('applicantId');
-    const endpoint = applicantId ? `/applications?applicant_id=${applicantId}` : "/applications";
+    if (!applicantId) {
+      removeLegacyApplicantDraft();
+      setApplications([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const endpoint = `/applications?applicant_id=${encodeURIComponent(applicantId)}`;
 
     try {
       const response = await apiClient.get(endpoint, { signal });
@@ -86,7 +98,7 @@ export function useApplications() {
 
   const deleteApplication = useCallback(async (application) => {
     if (application.application_id === "local-draft") {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(getApplicantDraftStorageKey());
       await fetchApplications();
       return;
     }
@@ -96,7 +108,7 @@ export function useApplications() {
       application_id: application.application_id,
       applicant_id: applicantId,
     });
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(getApplicantDraftStorageKey());
     await fetchApplications();
   }, [fetchApplications]);
 

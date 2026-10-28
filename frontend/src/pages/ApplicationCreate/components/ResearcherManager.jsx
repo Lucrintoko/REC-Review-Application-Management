@@ -1,4 +1,5 @@
 import React from 'react';
+import { INSTITUTION_OPTIONS } from '../../../constants/institutionalUnits';
 /**
  * Reusable Researcher Entry Manager (Used in Sections 3 & 4)
  */
@@ -100,15 +101,36 @@ function ResearcherManager({
               <label className="form-label small fw-semibold">
                 Department / Institutional Affiliation: {isPrimary && <span className="text-danger">*</span>}
               </label>
-              <input
-                type="text"
-                className="form-control form-control-sm"
+              <select
+                className="form-select form-select-sm"
                 value={person.department || person.affiliation || ""}
                 onChange={(e) =>
                   onUpdate(person.id || index, isPrimary ? "department" : "affiliation", e.target.value)
                 }
-                placeholder="e.g. College of Science and Information Technology"
-              />
+              >
+                <option value="">Select school, college, or unit...</option>
+                {INSTITUTION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {(person.department || person.affiliation) ===
+                "External Entities & Partner Institutions (ZCMC, DOH, WMSU, etc.)" && (
+                <input
+                  type="text"
+                  className="form-control form-control-sm mt-2"
+                  placeholder="Enter the external organization or unit"
+                  value={person.department_custom || person.affiliation_custom || ""}
+                  onChange={(e) =>
+                    onUpdate(
+                      person.id || index,
+                      isPrimary ? "department_custom" : "affiliation_custom",
+                      e.target.value
+                    )
+                  }
+                />
+              )}
             </div>
 
             <div className="col-12 col-md-4">
@@ -153,4 +175,3 @@ function ResearcherManager({
 }
 
 export default ResearcherManager;
-

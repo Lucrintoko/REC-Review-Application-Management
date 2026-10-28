@@ -1,9 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adzuSeal from '../../assets/AdZU Seal.png'; 
+import backgroundOne from '../../assets/backgrounds/0x01.png';
+import backgroundTwo from '../../assets/backgrounds/0x02.png';
+import { removeLegacyApplicantDraft } from '../../utils/applicantDraftStorage';
+
+const LOGIN_BACKGROUND_INDEX_KEY = 'applicant_login_background_index';
 
 function ApplicantLogin() {
   const navigate = useNavigate();
+  const [backgroundImage] = useState(() => {
+    const backgrounds = [backgroundOne, backgroundTwo];
+    const previousIndex = Number(localStorage.getItem(LOGIN_BACKGROUND_INDEX_KEY));
+    const nextIndex = Number.isInteger(previousIndex)
+      ? (previousIndex + 1) % backgrounds.length
+      : Math.floor(Math.random() * backgrounds.length);
+
+    localStorage.setItem(LOGIN_BACKGROUND_INDEX_KEY, String(nextIndex));
+    return backgrounds[nextIndex];
+  });
 
   // Tracking of inputs
   const [email, setEmail] = useState('');
@@ -29,6 +44,7 @@ function ApplicantLogin() {
       const data = await response.json();
 
       if (data.status === 'success') {
+        removeLegacyApplicantDraft();
         localStorage.setItem('applicantName', data.user.first_name + ' ' + data.user.last_name);
         localStorage.setItem('applicantDepartment', data.user.department);
         localStorage.setItem('applicantId', data.user.applicant_id);
@@ -46,10 +62,23 @@ function ApplicantLogin() {
   }
 
   return (
-    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div
+      className="min-vh-100 d-flex align-items-center justify-content-center position-relative"
+      style={{
+        backgroundImage: `url("${backgroundImage}")`,
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover',
+      }}
+    >
+      <div
+        className="position-absolute top-0 start-0 w-100 h-100"
+        style={{ backgroundColor: 'rgba(0, 28, 71, 0.9)' }}
+        aria-hidden="true"
+      />
       
       {/* Log-in Box */}
-      <div className="container">
+      <div className="container position-relative" style={{ zIndex: 1 }}>
         <div className="row justify-content-center">
           
           {/* Phones take up whole screen; Other Viewports go to middle */}
@@ -101,6 +130,12 @@ function ApplicantLogin() {
 
                 <div className="text-center mt-4">
                   <a href="#" className="text-decoration-none small">Forgot password?</a>
+                  <div className="small text-muted mt-2">
+                    New applicant?{' '}
+                    <button type="button" className="btn btn-link p-0 align-baseline text-decoration-none" onClick={() => navigate('/applicant/signup')}>
+                      Create an account
+                    </button>
+                  </div>
                 </div>
 
               </div>
