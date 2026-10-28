@@ -257,13 +257,13 @@ try {
         ':attempt_no'     => $attemptNo
     ]);
 
-    // 8. Spawn 'Revisions Verification' as Pending for Ethics Committee Chair / Secretariat
+    // 8. Spawn 'Revisions Verification' as Pending for Ethics Research Board Chair / Secretariat
     $insertNextHist = "INSERT INTO application_history (
                         application_id, process_point, status, proponent_name, date_completed, notes, attempt_no, is_rejected
                       ) VALUES (
                         :application_id, 'Revisions Verification'::process_point_enum, 'Pending'::history_status_enum,
-                        'Ethics Committee Chair / Secretariat', NULL, 
-                        'Revised protocol documents and point-by-point compliance matrix submitted. Awaiting verification by Ethics Committee Chair.',
+                        'Ethics Research Board Chair / Secretariat', NULL, 
+                        'Revised protocol documents and point-by-point compliance matrix submitted. Awaiting verification by Ethics Research Board Chair.',
                         :attempt_no, FALSE
                       )";
     $stmtNextHist = $db->prepare($insertNextHist);

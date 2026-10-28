@@ -69,6 +69,28 @@ try {
         exit;
     }
 
+    // Guard against multiple passes / double-submission:
+    // Verify that an active revision is actually pending in application_history
+    $checkPendingRevision = "SELECT history_id FROM application_history 
+                             WHERE application_id = :application_id 
+                               AND process_point::text IN ('Protocol Revision', 'Proponent Revisions') 
+                               AND status = 'Pending' 
+                             ORDER BY history_id DESC LIMIT 1";
+    $stmtCheckRev = $db->prepare($checkPendingRevision);
+    $stmtCheckRev->execute([':application_id' => $application_id]);
+    $pendingHistoryId = $stmtCheckRev->fetchColumn();
+
+    if (!$pendingHistoryId) {
+        $db->rollBack();
+        http_response_code(409);
+        echo json_encode([
+            "status"  => "error",
+            "success" => false,
+            "message" => "Protocol revisions have already been submitted or are not currently pending for this application."
+        ]);
+        exit;
+    }
+
     $applicant_name = $appData['first_name'] . ' ' . $appData['last_name'];
     $formData = $appData['form_data'] ? json_decode($appData['form_data'], true) : [];
     if (!is_array($formData)) {
@@ -169,32 +191,18 @@ try {
     ]);
 
     // 5. Complete active Protocol Revision in application_history
-    $findPendingRevision = "SELECT history_id FROM application_history 
-                            WHERE application_id = :application_id 
-                              AND process_point::text IN ('Protocol Revision', 'Proponent Revisions') 
-                              AND status = 'Pending' 
-                            ORDER BY history_id DESC LIMIT 1";
-    $stmtFindRev = $db->prepare($findPendingRevision);
-    $stmtFindRev->execute([':application_id' => $application_id]);
-    $pendingHistoryId = $stmtFindRev->fetchColumn();
-
-    if ($pendingHistoryId) {
-        $updatePendingHist = "UPDATE application_history 
-                              SET status = 'Completed', 
-                                  date_completed = CURRENT_TIMESTAMP, 
-                                  proponent_name = :proponent_name, 
-                                  notes = :notes 
-                              WHERE history_id = :history_id";
-        $stmtUpHist = $db->prepare($updatePendingHist);
-        $stmtUpHist->execute([
-            ':proponent_name' => $applicant_name,
-            ':notes'          => $revision_notes,
-            ':history_id'     => $pendingHistoryId
-        ]);
-    } else {
-        // Fallback if no pending row found
-        recordHistory($db, $application_id, 'Protocol Revision', 'Completed', $applicant_name, $revision_notes, false);
-    }
+    $updatePendingHist = "UPDATE application_history 
+                          SET status = 'Completed', 
+                              date_completed = CURRENT_TIMESTAMP, 
+                              proponent_name = :proponent_name, 
+                              notes = :notes 
+                          WHERE history_id = :history_id";
+    $stmtUpHist = $db->prepare($updatePendingHist);
+    $stmtUpHist->execute([
+        ':proponent_name' => $applicant_name,
+        ':notes'          => $revision_notes,
+        ':history_id'     => $pendingHistoryId
+    ]);
 
     // 6. Spawn Attempt #2 (or sequential next) of 'Review Type Assessment' for Ethics Chair
     recordHistory($db, $application_id, 'Review Type Assessment', 'Pending', '', null, false);

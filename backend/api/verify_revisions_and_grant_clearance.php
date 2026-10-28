@@ -191,7 +191,7 @@ try {
                     $resolvedAdminId = (int)$chairRow['admin_id'];
                 }
             } else {
-                $resolvedChairName = "Ethics Committee Chair";
+                $resolvedChairName = "Ethics Research Board Chair";
             }
         }
     }
@@ -365,7 +365,7 @@ try {
         $stmtNextHist->execute([
             ':application_id' => $application_id,
             ':proponent_name' => $applicant_name,
-            ':notes'          => "Further protocol clarifications requested by Ethics Committee Chair: " . $rejectionNotes,
+            ':notes'          => "Further protocol clarifications requested by Ethics Research Board Chair: " . $rejectionNotes,
             ':attempt_no'     => $nextAttemptNo
         ]);
 
@@ -382,7 +382,7 @@ try {
         $stmtNotif->execute([
             ':application_id' => $application_id,
             ':recipient_id'   => $applicant_id,
-            ':message'        => "The Ethics Committee Chair has reviewed your revised protocol and requested further clarifications. Please review the updated directives."
+            ':message'        => "The Ethics Research Board Chair has reviewed your revised protocol and requested further clarifications. Please review the updated directives."
         ]);
 
         $responseMessage = "Revisions evaluated as deficient. Returned to proponent for round {$nextAttemptNo} clarification.";

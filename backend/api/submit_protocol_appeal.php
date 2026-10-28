@@ -109,7 +109,7 @@ try {
 
     $priorChairName = ($latestConsol && !empty($latestConsol['chair_first_name']))
         ? trim($latestConsol['chair_first_name'] . ' ' . $latestConsol['chair_last_name'])
-        : 'Ethics Committee Chair';
+        : 'Ethics Research Board Chair';
 
     $priorDisapprovalSnapshot = [
         'consolidation_id'           => $latestConsol ? (int)$latestConsol['consolidation_id'] : null,
@@ -264,7 +264,7 @@ try {
         $application_id,
         'Appeal Re-deliberation',
         'Pending',
-        'Ethics Committee Chair / Full Board',
+        'Ethics Research Board Chair / Full Board',
         "Cycle 2 Heightened Board Scrutiny initiated to verify resolution of prior fatal ethical flaws.",
         false
     );

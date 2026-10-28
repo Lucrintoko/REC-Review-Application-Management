@@ -43,12 +43,12 @@ const DOCUMENT_CATEGORIES = {
 
 /**
  * RevisionsVerificationModal
- * Stage 7 Admin Workspace UI for Ethics Committee Chair & Secretariat
+ * Stage 7 Admin Workspace UI for Ethics Research Board Chair & Secretariat
  * Dual-pane verification workbench for Stage 6 revised protocols.
  */
 export default function RevisionsVerificationModal({ protocol, onClose, onRefresh }) {
     const adminId = localStorage.getItem('adminId') || 1;
-    const adminName = localStorage.getItem('adminName') || "Ethics Committee Chair";
+    const adminName = localStorage.getItem('adminName') || "Ethics Research Board Chair";
 
     // 1. Safe parsing of form_data and extraction of revision submissions
     const parsedFormData = useMemo(() => {
@@ -187,69 +187,76 @@ export default function RevisionsVerificationModal({ protocol, onClose, onRefres
             return;
         }
 
-        const confirmResult = await fireSwal({
-            title: 'Grant Official Ethical Clearance?',
-            html: `
-                <div class="text-start small p-2">
-                    <p class="mb-2">You are issuing the official <strong>Certificate of Ethical Clearance</strong> for:</p>
-                    <div class="bg-light p-3 rounded-3 border mb-3">
-                        <div class="fw-bold text-primary">${protocol?.id || protocol?.protocol_code}</div>
-                        <div class="text-truncate">${protocol?.title || protocol?.research_title}</div>
+        setIsSubmitting(true);
+        try {
+            const confirmResult = await fireSwal({
+                title: 'Grant Official Ethical Clearance?',
+                html: `
+                    <div class="text-start small p-2">
+                        <p class="mb-2">You are issuing the official <strong>Certificate of Ethical Clearance</strong> for:</p>
+                        <div class="bg-light p-3 rounded-3 border mb-3">
+                            <div class="fw-bold text-primary">${protocol?.id || protocol?.protocol_code}</div>
+                            <div class="text-truncate">${protocol?.title || protocol?.research_title}</div>
+                        </div>
+                        <ul class="list-unstyled mb-2 text-secondary">
+                            <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>All <strong>${totalItems}</strong> directives verified and Satisfied.</li>
+                            <li class="mb-1"><i class="bi bi-calendar-check-fill text-primary me-2"></i>Validity: <strong>${validityYears} Year(s)</strong> (${validityDates.startFormatted} – ${validityDates.endFormatted})</li>
+                            <li><i class="bi bi-person-badge-fill text-dark me-2"></i>Sign-off Authority: <strong>${adminName}</strong></li>
+                        </ul>
+                        <p class="text-muted small mb-0 mt-3 border-top pt-2">
+                            This action will transition the application to <span class="badge bg-success">Clearance Granted</span>, generate the official clearance certificate record, and dispatch notification to the proponent.
+                        </p>
                     </div>
-                    <ul class="list-unstyled mb-2 text-secondary">
-                        <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>All <strong>${totalItems}</strong> directives verified and Satisfied.</li>
-                        <li class="mb-1"><i class="bi bi-calendar-check-fill text-primary me-2"></i>Validity: <strong>${validityYears} Year(s)</strong> (${validityDates.startFormatted} – ${validityDates.endFormatted})</li>
-                        <li><i class="bi bi-person-badge-fill text-dark me-2"></i>Sign-off Authority: <strong>${adminName}</strong></li>
-                    </ul>
-                    <p class="text-muted small mb-0 mt-3 border-top pt-2">
-                        This action will transition the application to <span class="badge bg-success">Clearance Granted</span>, generate the official clearance certificate record, and dispatch notification to the proponent.
-                    </p>
-                </div>
-            `,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#198754',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="bi bi-award-fill me-1"></i> Issue Ethical Clearance',
-            cancelButtonText: 'Review Further',
-            showLoaderOnConfirm: true,
-            preConfirm: async () => {
-                const payload = {
-                    application_id: protocol.application_id || protocol.id,
-                    admin_id: parseInt(adminId, 10),
-                    chair_name: adminName,
-                    action: 'grant_clearance',
-                    verification_checklist: checklistState,
-                    general_verification_notes: generalNotes.trim(),
-                    validity_period_years: parseInt(validityYears, 10)
-                };
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="bi bi-award-fill me-1"></i> Issue Ethical Clearance',
+                cancelButtonText: 'Review Further',
+                showLoaderOnConfirm: true,
+                preConfirm: async () => {
+                    const payload = {
+                        application_id: protocol.application_id || protocol.id,
+                        admin_id: parseInt(adminId, 10),
+                        chair_name: adminName,
+                        action: 'grant_clearance',
+                        verification_checklist: checklistState,
+                        general_verification_notes: generalNotes.trim(),
+                        validity_period_years: parseInt(validityYears, 10)
+                    };
 
-                try {
-                    const res = await fetch('http://localhost/REC-Review-Application-Management/backend/api/verify_revisions_and_grant_clearance.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (!res.ok || json.status !== 'success') {
-                        throw new Error(json.message || 'Failed to grant clearance.');
+                    try {
+                        const res = await fetch('http://localhost/REC-Review-Application-Management/backend/api/verify_revisions_and_grant_clearance.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const json = await res.json();
+                        if (!res.ok || json.status !== 'success') {
+                            throw new Error(json.message || 'Failed to grant clearance.');
+                        }
+                        return json;
+                    } catch (err) {
+                        Swal.showValidationMessage(`Operation Failed: ${err.message}`);
                     }
-                    return json;
-                } catch (err) {
-                    Swal.showValidationMessage(`Operation Failed: ${err.message}`);
                 }
-            }
-        });
-
-        if (confirmResult.isConfirmed) {
-            await fireSwal({
-                icon: 'success',
-                title: 'Ethical Clearance Granted!',
-                text: `Protocol ${protocol?.id || protocol?.protocol_code} has been granted official ethical clearance.`,
-                confirmButtonColor: '#003366'
             });
-            if (onRefresh) onRefresh();
-            onClose();
+
+            if (confirmResult.isConfirmed) {
+                // Immediately close modal and refresh dashboard to prevent multiple passes
+                onClose();
+                if (onRefresh) onRefresh();
+
+                await fireSwal({
+                    icon: 'success',
+                    title: 'Ethical Clearance Granted!',
+                    text: `Protocol ${protocol?.id || protocol?.protocol_code} has been granted official ethical clearance.`,
+                    confirmButtonColor: '#003366'
+                });
+            }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -271,66 +278,73 @@ export default function RevisionsVerificationModal({ protocol, onClose, onRefres
             }
         }
 
-        const confirmResult = await fireSwal({
-            title: 'Request Further Clarifications?',
-            html: `
-                <div class="text-start small p-2">
-                    <p class="mb-2">You are returning protocol <strong>${protocol?.id || protocol?.protocol_code}</strong> to the applicant for additional revisions.</p>
-                    <div class="alert alert-warning border-warning d-flex align-items-center gap-2 mb-3">
-                        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0"></i>
-                        <div>
-                            Application status will return to <strong>Decision Letter Issued</strong> for <strong>Attempt #${attemptNo + 1}</strong>.
+        setIsSubmitting(true);
+        try {
+            const confirmResult = await fireSwal({
+                title: 'Request Further Clarifications?',
+                html: `
+                    <div class="text-start small p-2">
+                        <p class="mb-2">You are returning protocol <strong>${protocol?.id || protocol?.protocol_code}</strong> to the applicant for additional revisions.</p>
+                        <div class="alert alert-warning border-warning d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0"></i>
+                            <div>
+                                Application status will return to <strong>Decision Letter Issued</strong> for <strong>Attempt #${attemptNo + 1}</strong>.
+                            </div>
                         </div>
+                        <ul class="text-secondary mb-0">
+                            <li><strong>Deficient Directives:</strong> ${deficientCount}</li>
+                            <li><strong>Next Iteration:</strong> Proponent Revisions (Attempt #${attemptNo + 1})</li>
+                        </ul>
                     </div>
-                    <ul class="text-secondary mb-0">
-                        <li><strong>Deficient Directives:</strong> ${deficientCount}</li>
-                        <li><strong>Next Iteration:</strong> Proponent Revisions (Attempt #${attemptNo + 1})</li>
-                    </ul>
-                </div>
-            `,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="bi bi-arrow-counterclockwise me-1"></i> Send Back to Proponent',
-            cancelButtonText: 'Cancel',
-            showLoaderOnConfirm: true,
-            preConfirm: async () => {
-                const payload = {
-                    application_id: protocol.application_id || protocol.id,
-                    admin_id: parseInt(adminId, 10),
-                    chair_name: adminName,
-                    action: 'request_clarification',
-                    verification_checklist: checklistState,
-                    general_verification_notes: generalNotes.trim()
-                };
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="bi bi-arrow-counterclockwise me-1"></i> Send Back to Proponent',
+                cancelButtonText: 'Cancel',
+                showLoaderOnConfirm: true,
+                preConfirm: async () => {
+                    const payload = {
+                        application_id: protocol.application_id || protocol.id,
+                        admin_id: parseInt(adminId, 10),
+                        chair_name: adminName,
+                        action: 'request_clarification',
+                        verification_checklist: checklistState,
+                        general_verification_notes: generalNotes.trim()
+                    };
 
-                try {
-                    const res = await fetch('http://localhost/REC-Review-Application-Management/backend/api/verify_revisions_and_grant_clearance.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (!res.ok || json.status !== 'success') {
-                        throw new Error(json.message || 'Failed to request clarifications.');
+                    try {
+                        const res = await fetch('http://localhost/REC-Review-Application-Management/backend/api/verify_revisions_and_grant_clearance.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const json = await res.json();
+                        if (!res.ok || json.status !== 'success') {
+                            throw new Error(json.message || 'Failed to request clarifications.');
+                        }
+                        return json;
+                    } catch (err) {
+                        Swal.showValidationMessage(`Operation Failed: ${err.message}`);
                     }
-                    return json;
-                } catch (err) {
-                    Swal.showValidationMessage(`Operation Failed: ${err.message}`);
                 }
-            }
-        });
-
-        if (confirmResult.isConfirmed) {
-            await fireSwal({
-                icon: 'info',
-                title: 'Clarifications Requested',
-                text: `Protocol returned to Decision Letter Issued (Attempt #${attemptNo + 1}). Proponent notified.`,
-                confirmButtonColor: '#003366'
             });
-            if (onRefresh) onRefresh();
-            onClose();
+
+            if (confirmResult.isConfirmed) {
+                // Immediately close modal and refresh dashboard to prevent multiple passes
+                onClose();
+                if (onRefresh) onRefresh();
+
+                await fireSwal({
+                    icon: 'info',
+                    title: 'Clarifications Requested',
+                    text: `Protocol returned to Decision Letter Issued (Attempt #${attemptNo + 1}). Proponent notified.`,
+                    confirmButtonColor: '#003366'
+                });
+            }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 

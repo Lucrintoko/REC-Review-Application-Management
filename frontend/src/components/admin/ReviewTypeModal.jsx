@@ -215,10 +215,10 @@ function ReviewTypeModal({ protocol, onClose }) {
 
     const previousChairDirectives = previousChairStep?.notes 
         || protocol?.revision_notes
-        || "The Ethics Review Committee Chair returned this protocol requesting modifications and clarifications prior to review type classification.";
+        || "The Ethics Research Board Chair returned this protocol requesting modifications and clarifications prior to review type classification.";
     const chairProponentName = previousChairStep?.proponentName 
         || protocol?.chair_proponent_name 
-        || "Ethics Review Committee Chair";
+        || "Ethics Research Board Chair";
     const chairDateIssued = previousChairStep?.dateCompleted 
         || (protocol?.revision_requested_at ? formatDate(protocol.revision_requested_at) : "Previous Assessment Cycle");
 
@@ -298,7 +298,7 @@ function ReviewTypeModal({ protocol, onClose }) {
         // Dynamic SweetAlert Confirmation Summary
         let assignmentSummary = '';
         if (reviewType === 'Exempted') {
-            assignmentSummary = 'The Ethics Committee Chair will be assigned as the autonomous sole evaluator.';
+            assignmentSummary = 'The Ethics Research Board Chair will be assigned as the autonomous sole evaluator.';
         } else if (reviewType === 'Expedited') {
             const p1 = reviewersData.primary.find(r => r.admin_id.toString() === primaryReviewer1);
             const p2 = reviewersData.primary.find(r => r.admin_id.toString() === primaryReviewer2);
@@ -997,21 +997,21 @@ function ReviewTypeModal({ protocol, onClose }) {
                                                                 <div className="flex-grow-1">
                                                                     <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
                                                                         <h6 className="fw-bold text-success-emphasis mb-0">
-                                                                            Autonomous Fast-Track: Ethics Committee Chair
+                                                                            Autonomous Fast-Track: Ethics Research Board Chair
                                                                         </h6>
                                                                         <span className="badge bg-success text-white px-2 py-1 small">
                                                                             Sole Evaluator & Signatory
                                                                         </span>
                                                                     </div>
                                                                     <p className="text-dark small mb-2 lh-base">
-                                                                        Under AdZU REC Standard Operating Procedures, protocols categorized as <strong>Exempted</strong> (&lt; minimal risk) qualify for autonomous fast-track evaluation directly conducted by the Ethics Committee Chair. 
+                                                                        Under AdZU REC Standard Operating Procedures, protocols categorized as <strong>Exempted</strong> (&lt; minimal risk) qualify for autonomous fast-track evaluation directly conducted by the Ethics Research Board Chair. 
                                                                         <strong> No external or secondary committee reviewers are required.</strong>
                                                                     </p>
                                                                     <div className="p-2 px-3 bg-white border border-success-subtle rounded-2 d-inline-flex align-items-center gap-2">
                                                                         <i className="bi bi-person-badge-fill text-success fs-5"></i>
                                                                         <div className="small">
                                                                             <span className="fw-bold text-dark d-block">
-                                                                                {reviewersData.chair?.[0] ? `${reviewersData.chair[0].first_name} ${reviewersData.chair[0].last_name}` : 'Ethics Committee Chair'}
+                                                                                {reviewersData.chair?.[0] ? `${reviewersData.chair[0].first_name} ${reviewersData.chair[0].last_name}` : 'Ethics Research Board Chair'}
                                                                             </span>
                                                                             <span className="text-muted" style={{ fontSize: '0.75rem' }}>
                                                                                 Autonomous Ethical Reviewer & Executive Signatory

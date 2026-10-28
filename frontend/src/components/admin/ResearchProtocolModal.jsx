@@ -51,6 +51,96 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
         ? protocol.researchers
         : (protocol?.researchers ? [String(protocol.researchers)] : ['N/A']);
 
+    // Status Categorization & Action Availability Guards
+    const statusUpper = (protocol?.status || '').trim().toUpperCase();
+    const isAwaitingPayment = ['PROTOCOLS SUBMITTED', 'PAYMENT PENDING'].includes(statusUpper);
+    const isPaymentReady = ['PAYMENT SUBMITTED', 'PAYMENT VERIFIED', 'PAYMENT VERIFICATION'].includes(statusUpper);
+    const isReviewType = ['TYPE OF REVIEW', 'DETERMINING REVIEW TYPE'].includes(statusUpper);
+    const isOngoingReview = statusUpper === 'ONGOING REVIEW';
+    const isConsolidation = statusUpper === 'CONSOLIDATION OF EVALUATION';
+    const isRevisions = statusUpper === 'REVISIONS SUBMITTED';
+    const isDecisionIssued = ['DECISION LETTER ISSUED', 'DECISION ISSUED'].includes(statusUpper);
+
+    // Button is disabled ONLY for non-actionable intake/unpaid states and terminal completed states.
+    // 'PAYMENT SUBMITTED' / 'PAYMENT VERIFIED' remains ENABLED for Secretariat to confirm/verify payment.
+    const isActionDisabled = isTerminal || isAwaitingPayment || isDecisionIssued;
+
+    const buttonClass = isActionDisabled
+        ? "btn btn-secondary text-white opacity-75 fw-bold"
+        : "btn btn-theme-tertiary text-light text-uppercase fw-bold";
+
+    const buttonTooltip = isAwaitingPayment
+        ? "Awaiting Official Receipt submission by proponent before review can begin"
+        : isDecisionIssued
+            ? "Decision letter issued. Awaiting revised protocol submission by proponent."
+            : isPaymentReady
+            ? "Official receipt submitted. Click to inspect and verify payment."
+            : isTerminal
+                ? "Protocol review lifecycle is completed"
+                : "Click to advance protocol workflow status";
+
+    const getButtonContent = () => {
+        if (isAwaitingPayment) {
+            return (
+                <>
+                    <i className="bi bi-clock-history me-1"></i>
+                    Awaiting Payment
+                </>
+            );
+        }
+        if (isDecisionIssued) {
+            return (
+                <>
+                    <i className="bi bi-hourglass-split me-1"></i>
+                    Awaiting Revisions
+                </>
+            );
+        }
+        if (isPaymentReady) {
+            return (
+                <>
+                    <i className="bi bi-shield-check me-1"></i>
+                    Verify Payment
+                </>
+            );
+        }
+        if (isOngoingReview) {
+            return (
+                <>
+                    <i className="bi bi-search me-1"></i>
+                    {isReviewerRole
+                        ? 'Evaluate Protocol'
+                        : `Monitor Reviews (${protocol.reviews_completed || 0}/${protocol.reviews_total || 0})`}
+                </>
+            );
+        }
+        if (isConsolidation) {
+            return (
+                <>
+                    <i className="bi bi-diagram-3-fill me-1"></i>
+                    Consolidate Reviews
+                </>
+            );
+        }
+        if (isRevisions) {
+            return (
+                <>
+                    <i className="bi bi-patch-check-fill me-1"></i>
+                    Verify Revisions
+                </>
+            );
+        }
+        if (isTerminal) {
+            return (
+                <>
+                    <i className="bi bi-lock-fill me-1"></i>
+                    Protocol Concluded
+                </>
+            );
+        }
+        return 'Update Status';
+    };
+
     return (
         <>
             <div className="modal-backdrop show" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}></div>
@@ -101,30 +191,33 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
                                 <h2 className="fw-bold mb-0 text-theme-primary">{protocol.status}</h2>
                                 <button 
                                     type="button" 
-                                    className="btn btn-theme-tertiary text-light text-uppercase fw-bold"
-                                    style={{ letterSpacing: '1px', fontSize: '1rem' }}
+                                    className={buttonClass}
+                                    title={buttonTooltip}
+                                    disabled={isActionDisabled}
+                                    aria-disabled={isActionDisabled}
+                                    style={{ 
+                                        letterSpacing: '1px', 
+                                        fontSize: '0.95rem',
+                                        cursor: isActionDisabled ? 'not-allowed' : 'pointer'
+                                    }}
                                     onClick={() => {
                                         // Checks if status is for Payment Verification, if yes open PaymentVerificationModal
-                                        if (protocol.status === 'PAYMENT VERIFIED' || protocol.status === 'PAYMENT VERIFICATION') {
+                                        if (isActionDisabled) return;
+
+                                        if (isPaymentReady) {
                                             setShowPaymentModal(true);
-                                        } else if (protocol.status === 'TYPE OF REVIEW' || protocol.status === 'DETERMINING REVIEW TYPE') {
+                                        } else if (isReviewType) {
                                             setShowReviewTypeModal(true);
-                                        } else if (protocol.status === 'ONGOING REVIEW') {
+                                        } else if (isOngoingReview) {
                                             setShowOngoingReviewModal(true);
-                                        } else if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
+                                        } else if (isConsolidation) {
                                             setShowConsolidationModal(true);
-                                        } else if (protocol.status === 'REVISIONS SUBMITTED') {
+                                        } else if (isRevisions) {
                                             setShowVerificationModal(true);
                                         }
                                     }}
                                 >
-                                    {protocol.status === 'ONGOING REVIEW'
-                                        ? (isReviewerRole ? 'Evaluate Protocol' : `Monitor Reviews (${protocol.reviews_completed || 0}/${protocol.reviews_total || 0})`)
-                                        : protocol.status === 'CONSOLIDATION OF EVALUATION'
-                                            ? 'Consolidate Reviews'
-                                            : protocol.status === 'REVISIONS SUBMITTED'
-                                                ? 'Verify Revisions'
-                                                : 'Update Status'}
+                                    {getButtonContent()}
                                 </button>
                             </div>
 
