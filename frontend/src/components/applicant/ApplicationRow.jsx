@@ -2,8 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "./StatusBadge";
 import { formatDate } from "../../utils/formatters";
-
-const DRAFT_STORAGE_KEY = "adzu_rec_application_draft_v1";
+import { getApplicantDraftStorageKey } from "../../utils/applicantDraftStorage";
 
 /**
  * Renders an individual application row inside the applications table.
@@ -95,7 +94,7 @@ function ApplicationRow({
     if (application.form_data) {
       try {
         localStorage.setItem(
-          DRAFT_STORAGE_KEY,
+          getApplicantDraftStorageKey(),
           JSON.stringify({
             data: application.form_data,
             savedAt: application.updated_at || application.submission_date || new Date().toISOString(),

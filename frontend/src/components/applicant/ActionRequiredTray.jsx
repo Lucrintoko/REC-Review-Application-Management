@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const DRAFT_STORAGE_KEY = "adzu_rec_application_draft_v1";
+import { getApplicantDraftStorageKey } from "../../utils/applicantDraftStorage";
 
 const PRIORITY_ORDER = {
   STAGE5_REVISION: 1,
@@ -112,7 +112,7 @@ function ActionRequiredTray({
               if (app.form_data) {
                 try {
                   localStorage.setItem(
-                    DRAFT_STORAGE_KEY,
+                    getApplicantDraftStorageKey(),
                     JSON.stringify({
                       data: app.form_data,
                       savedAt: app.updated_at || app.submission_date || new Date().toISOString(),

@@ -7,6 +7,7 @@ import AdminHome from './pages/AdminHome';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AdminLayout from './components/AdminLayout';
 import ApplicantLogin from './pages/Auth/ApplicantLogin';
+import ApplicantSignup from './pages/Auth/ApplicantSignup';
 import ApplicantDashboard from './pages/ApplicantDashboard';
 import ApplicantForm from './pages/ApplicationCreate/ApplicantForm';
 
@@ -63,6 +64,7 @@ function App() {
         {/* Testing .jsx files and checking formats */}
         {/* For Applicant Form */}
         <Route path="/applicant/login" element={<ApplicantLogin />} /> 
+        <Route path="/applicant/signup" element={<ApplicantSignup />} />
 
         <Route
           path="/applicant/form"

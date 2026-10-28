@@ -1,10 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "../services/api";
-
-const DRAFT_STORAGE_KEY = "adzu_rec_application_draft_v1";
+import {
+  getApplicantDraftStorageKey,
+  removeLegacyApplicantDraft,
+} from "../utils/applicantDraftStorage";
 
 function getLocalDraftApplication() {
-  const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+  const draftStorageKey = getApplicantDraftStorageKey();
+  if (!draftStorageKey) return null;
+
+  const savedDraft = localStorage.getItem(draftStorageKey);
   if (!savedDraft) return null;
 
   try {
@@ -21,7 +26,7 @@ function getLocalDraftApplication() {
       form_data: parsedDraft.data,
     };
   } catch {
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(draftStorageKey);
     return null;
   }
 }
@@ -41,6 +46,7 @@ export function useApplications() {
 
     const applicantId = localStorage.getItem('applicantId');
     if (!applicantId) {
+      removeLegacyApplicantDraft();
       setApplications([]);
       setIsLoading(false);
       return;
@@ -92,7 +98,7 @@ export function useApplications() {
 
   const deleteApplication = useCallback(async (application) => {
     if (application.application_id === "local-draft") {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(getApplicantDraftStorageKey());
       await fetchApplications();
       return;
     }
@@ -102,7 +108,7 @@ export function useApplications() {
       application_id: application.application_id,
       applicant_id: applicantId,
     });
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(getApplicantDraftStorageKey());
     await fetchApplications();
   }, [fetchApplications]);
 

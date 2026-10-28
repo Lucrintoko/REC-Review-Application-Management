@@ -23,6 +23,9 @@ import adzuSeal from "../../assets/AdZU Seal.png";
 import { apiClient } from "../../services/api";
 import DashboardFooter from "../../components/applicant/DashboardFooter";
 import Swal from "sweetalert2";
+import {
+  getApplicantDraftStorageKey,
+} from "../../utils/applicantDraftStorage";
 
 // =============================================================================
 // REUSABLE SUB-COMPONENTS
@@ -38,8 +41,6 @@ import { INSTITUTION_OPTIONS } from "../../constants/institutionalUnits";
 // =============================================================================
 // STATIC CONFIGURATIONS & DEFINITIONS
 // =============================================================================
-
-export const DRAFT_STORAGE_KEY = "adzu_rec_application_draft_v1";
 
 export const FORM_SECTIONS = [
   { id: "general-information", number: 1, title: "General Information", shortTitle: "General Information", required: true, icon: "bi-card-list" },
@@ -430,11 +431,12 @@ function evaluateFormStatusAndErrors(formData) {
 function ApplicantForm({ onBack }) {
   const navigate = useNavigate();
   const brandHeaderRef = useRef(null);
+  const draftStorageKey = getApplicantDraftStorageKey();
 
   // Primary State
   const [formData, setFormData] = useState(() => {
     try {
-      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      const saved = localStorage.getItem(getApplicantDraftStorageKey());
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.data) {
@@ -454,14 +456,14 @@ function ApplicantForm({ onBack }) {
       }
     } catch (e) {
       console.warn("Saved draft is outdated or corrupted. Discarding to prevent errors.", e);
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(getApplicantDraftStorageKey());
     }
     return INITIAL_FORM_DATA;
   });
 
   const [activeSectionId, setActiveSectionId] = useState("general-information");
   const [toastMessage, setToastMessage] = useState(null);
-  const [hasDraftNotice, setHasDraftNotice] = useState(() => Boolean(localStorage.getItem(DRAFT_STORAGE_KEY)));
+  const [hasDraftNotice, setHasDraftNotice] = useState(() => Boolean(localStorage.getItem(getApplicantDraftStorageKey())));
   const [validationErrors, setValidationErrors] = useState({});
   const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -472,7 +474,7 @@ function ApplicantForm({ onBack }) {
 
   const [lastSavedTime, setLastSavedTime] = useState(() => {
     try {
-      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      const saved = localStorage.getItem(getApplicantDraftStorageKey());
       if (saved) {
         const parsed = JSON.parse(saved);
         return parsed.savedAt ? new Date(parsed.savedAt).toLocaleTimeString() : null;
@@ -571,7 +573,7 @@ function ApplicantForm({ onBack }) {
       try {
         const now = new Date();
         const payload = { data: formData, savedAt: now.toISOString() };
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+        localStorage.setItem(draftStorageKey, JSON.stringify(payload));
         setHasUnsavedChanges(false);
         const formattedTime = now.toLocaleTimeString();
         setLastSavedTime(formattedTime);
@@ -590,7 +592,7 @@ function ApplicantForm({ onBack }) {
   // Clear Draft
   const handleClearDraft = useCallback(() => {
     if (window.confirm("Are you sure you want to clear your current draft and reset all fields?")) {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(draftStorageKey);
       setFormData(INITIAL_FORM_DATA);
       setHasUnsavedChanges(false);
       setValidationErrors({});
@@ -789,7 +791,7 @@ function ApplicantForm({ onBack }) {
     let savedLocally = false;
     try {
       localStorage.setItem(
-        DRAFT_STORAGE_KEY,
+      draftStorageKey,
         JSON.stringify({ data: cleanFormData, savedAt: now.toISOString() })
       );
       savedLocally = true;
@@ -845,7 +847,7 @@ function ApplicantForm({ onBack }) {
       setShowSubmitConfirmModal(false);
 
       // Clear draft since it was submitted
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(draftStorageKey);
 
       await Swal.fire({
         icon: "success",

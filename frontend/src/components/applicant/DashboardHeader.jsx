@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import adzuSeal from "../../assets/AdZU Seal.png";
+import {
+  removeApplicantDraft,
+  removeLegacyApplicantDraft,
+} from "../../utils/applicantDraftStorage";
 
 /**
  * DashboardHeader
@@ -60,7 +64,8 @@ function DashboardHeader({
     localStorage.removeItem("applicantName");
     localStorage.removeItem("applicantDepartment");
     localStorage.removeItem("applicantEmail");
-    localStorage.removeItem("adzu_rec_application_draft_v1");
+    removeApplicantDraft();
+    removeLegacyApplicantDraft();
 
     if (onLogout) {
       onLogout();

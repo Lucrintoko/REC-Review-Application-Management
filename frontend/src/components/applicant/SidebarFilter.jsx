@@ -1,6 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { APPLICATION_TYPES } from "../../constants/applicationTypes";
+import {
+  removeApplicantDraft,
+  removeLegacyApplicantDraft,
+} from "../../utils/applicantDraftStorage";
 
 /**
  * Sidebar filter component for toggling application categories and viewing counts.
@@ -18,7 +22,8 @@ function SidebarFilter({
     localStorage.removeItem("applicantName");
     localStorage.removeItem("applicantDepartment");
     localStorage.removeItem("applicantEmail");
-    localStorage.removeItem("adzu_rec_application_draft_v1");
+    removeApplicantDraft();
+    removeLegacyApplicantDraft();
     navigate("/applicant/login");
   };
 
