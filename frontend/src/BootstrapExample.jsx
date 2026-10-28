@@ -34,7 +34,7 @@ function App() {
                   <i className="bi bi-shield-check me-2"></i>Ethics Review Portal
                 </h3>
                 <p className="card-text text-secondary">
-                  Welcome to the centralized digital repository and workflow management system for the AdZU Research Ethics Review Committee.
+                  Welcome to the centralized digital repository and workflow management system for the AdZU Ethics Research Board.
                 </p>
                 <div className="alert alert-info d-flex align-items-center mb-4" role="alert">
                   <i className="bi bi-info-circle-fill me-2 fs-5"></i>

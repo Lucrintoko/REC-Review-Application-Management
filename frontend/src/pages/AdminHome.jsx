@@ -317,7 +317,7 @@ function AdminHome() {
                                 </span>
                             </div>
                             <small className="text-light opacity-75 d-block mt-1">
-                                Ateneo Research Ethics Committee • Executive Administration & Review Portal
+                                Ateneo Ethics Research Board • Executive Administration & Review Portal
                             </small>
                         </div>
                     </div>

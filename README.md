@@ -1,6 +1,6 @@
 # Research Ethics Review Application and Management System
 
-**Client Institution:** Research Ethics Committee (REC) — Ateneo de Zamboanga University (AdZU)  
+**Client Institution:** Ethics Research Board (ERB) — Ateneo de Zamboanga University (AdZU)  
 **Course:** Web Systems and Technologies (WEBSYSTECH - B)  
 **Development Team:** Team HASA (September – October 2026)  
 **System Status:** Production-Grade / Active Operation
@@ -24,12 +24,12 @@
 
 ## 🏛️ System Overview & Institutional Context
 
-The **Research Ethics Review Application and Management System** is a secure, institutional web platform engineered for the **Ateneo de Zamboanga University Research Ethics Committee (AdZU REC)**. It digitizes, accelerates, and audits the entire research ethics review process for human participant studies in accordance with the standards of the **Philippine Health Research Ethics Board (PHREB)**.
+The **Research Ethics Review Application and Management System** is a secure, institutional web platform engineered for the **Ateneo de Zamboanga University Ethics Research Board (AdZU REC/ERB)**. It digitizes, accelerates, and audits the entire research ethics review process for human participant studies in accordance with the standards of the **Philippine Health Research Ethics Board (PHREB)**.
 
 ### User Roles & Operational Boundaries
 - **Research Proponents (Internal & External):** Undergraduate students, graduate scholars, university faculty, and external health/institutional researchers (e.g., ZCMC, DOH, WMSU). Proponents submit protocol dossiers, upload Official Receipts, address committee revisions via clarification matrices, track review cycles, and download official Clearance Certificates.
 - **REC Secretariat:** Administrative operational gatekeeper. Manages intake verification, audits financial Official Receipts (OR), monitors turnaround time SLAs (30-day compliance benchmark), manages multi-reviewer assignment schedules, logs immutable audit trails (`application_history`), and issues formal decision correspondence.
-- **Ethics Committee Chair:** Senior academic decision-maker. Triages risk levels (`Exempted`, `Expedited`, `Full Board`), presides over committee deliberations, synthesizes multi-reviewer Form 11 / Form 12 evaluations into consolidated rulings, formulates actionable directives, signs decision notices, and grants final ethical clearance.
+- **Ethics Research Board Chair:** Senior academic decision-maker. Triages risk levels (`Exempted`, `Expedited`, `Full Board`), presides over board deliberations, synthesizes multi-reviewer Form 11 / Form 12 evaluations into consolidated rulings, formulates actionable directives, signs decision notices, and grants final ethical clearance.
 - **Primary & Non-Primary Reviewers:** Subject-matter and methodology experts. Conduct independent peer evaluations, grade rubric criteria across protocol validity and informed consent, provide qualitative feedback, and submit evaluative recommendations (`Approved`, `Minor Revisions`, `Major Revisions`, `Disapproved`).
 
 ---
@@ -387,4 +387,4 @@ REC-Review-Application-Management/
 
 ## 📄 License & Institutional Compliance
 
-Developed exclusively for the **Ateneo de Zamboanga University Research Ethics Committee (AdZU REC)**. All rights reserved. Complies with the **National Ethical Guidelines for Health and Health-Related Research (NEGHHR)** and the **Philippine Data Privacy Act of 2012 (RA 10173)**.
+Developed exclusively for the **Ateneo de Zamboanga University Ethics Research Board (AdZU REC/ERB)**. All rights reserved. Complies with the **National Ethical Guidelines for Health and Health-Related Research (NEGHHR)** and the **Philippine Data Privacy Act of 2012 (RA 10173)**.

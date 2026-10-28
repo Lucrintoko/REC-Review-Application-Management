@@ -490,10 +490,10 @@ function AdminAnalytics() {
                                 Ateneo de Zamboanga University
                             </h6>
                             <h5 className='fw-bolder mb-0 text-dark' style={{ letterSpacing: '0.5px' }}>
-                                RESEARCH ETHICS COMMITTEE
+                                ETHICS RESEARCH BOARD
                             </h5>
                             <small className='text-secondary d-block'>
-                                Office of the University Research Ethics Committee • Fr. Eusebio G. Salvador SJ Campus, La Purisima St., Zamboanga City 7000
+                                Office of the University Ethics Research Board • Fr. Eusebio G. Salvador SJ Campus, La Purisima St., Zamboanga City 7000
                             </small>
                         </div>
                     </div>
@@ -1048,7 +1048,7 @@ function AdminAnalytics() {
                 {/* OFFICIAL SIGNATURE BLOCK */}
                 <div className='d-none d-print-block signature-block mt-5 pt-4' style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                     <p className='small text-secondary fst-italic mb-4'>
-                        I hereby certify that the statistics, clearance yields, and turnaround summaries outlined in this report represent the verified official records of the Ateneo de Zamboanga University Research Ethics Committee as of {new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}.
+                        I hereby certify that the statistics, clearance yields, and turnaround summaries outlined in this report represent the verified official records of the Ateneo de Zamboanga University Ethics Research Board as of {new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}.
                     </p>
 
                     <div className='row mt-4 pt-2'>
@@ -1065,8 +1065,8 @@ function AdminAnalytics() {
                         <div className='col-6 ps-4'>
                             <span className='small text-muted text-uppercase fw-semibold d-block mb-4'>Noted & Attested by:</span>
                             <div className='border-bottom border-dark border-1 mb-2' style={{ height: '40px' }}></div>
-                            <strong className='d-block text-dark text-uppercase'>Ethics Review Committee Chair</strong>
-                            <span className='small text-secondary d-block'>Chairperson, AdZU Research Ethics Committee</span>
+                            <strong className='d-block text-dark text-uppercase'>Ethics Research Board Chair</strong>
+                            <span className='small text-secondary d-block'>Chairperson, AdZU Ethics Research Board</span>
                             <span className='small text-muted d-block'>Date: ________________________</span>
                         </div>
                     </div>
