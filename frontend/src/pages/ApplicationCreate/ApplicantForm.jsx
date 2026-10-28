@@ -1261,7 +1261,7 @@ function ApplicantForm({ onBack }) {
                 {/* Another ERC Question */}
                 <div>
                   <label className="form-label fw-semibold d-block">
-                    Has the research been submitted to another Research Ethics Committee (REC)? <span className="text-danger">*</span>
+                    Has the research been submitted to another Ethics Research Board (REC/ERB)? <span className="text-danger">*</span>
                     <InfoTooltip
                       title="Prior ERC Submission"
                       text="Disclose if this research was previously evaluated or is concurrently undergoing review at another hospital, university, or national board."
@@ -1867,7 +1867,7 @@ function ApplicantForm({ onBack }) {
                 >
                   <div className="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
                     <i className="bi bi-lightbulb-fill text-warning me-1"></i>
-                    Summarize your research in clear, understandable language for multidisciplinary ethics committee members who may not be experts in your exact field.
+                    Summarize your research in clear, understandable language for multidisciplinary ethics research board members who may not be experts in your exact field.
                   </div>
 
                   <div className="mb-2">

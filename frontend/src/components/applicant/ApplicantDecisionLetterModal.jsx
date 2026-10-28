@@ -4,14 +4,8 @@ import { formatDate } from "../../utils/formatters";
 import { printIsolatedElement } from "../../utils/printHelper";
 
 /**
- * ApplicantDecisionLetterModal.jsx
- * Stage 5 - Phase 4: Applicant Portal Directives View & Offline PDF Download
- * 
- * Provides applicants with an executive summary and the official Ateneo de Zamboanga
- * University Research Ethics Committee Notice (ADZU-REC Form 13: Notice of Committee Action & Directives Matrix).
- * 
  * Features:
- * - Dual view modes: Executive Overview vs. Formal ADZU-REC Form 13 Document
+ * - Dual view modes: Executive Overview vs. Formal ADZU-ERB Form 13 Document
  * - Offline PDF vector print engine (@media print)
  * - Zero Fee Guarantee banner
  * - Direct transition to ReviseProtocolModal when revisions are required
@@ -73,8 +67,8 @@ export default function ApplicantDecisionLetterModal({
   if (!show || !application) return null;
 
   // Metadata Extraction with safe string coercion
-  const rawProtocolCode = application.protocol_code || application.protocol_no || application.id || "REC-2026-XXXX";
-  const protocolCode = typeof rawProtocolCode === "string" ? rawProtocolCode : String(rawProtocolCode || "REC-2026-XXXX");
+  const rawProtocolCode = application.protocol_code || application.protocol_no || application.id || "ERB-2026-XXXX";
+  const protocolCode = typeof rawProtocolCode === "string" ? rawProtocolCode : String(rawProtocolCode || "ERB-2026-XXXX");
   const rawTitle = application.research_title || application.title || "Untitled Research Study";
   const researchTitle = typeof rawTitle === "string" ? rawTitle : String(rawTitle || "Untitled Research Study");
   const reviewType = typeof application.review_type === "string" ? application.review_type : (application.type || "Expedited Review");
@@ -93,7 +87,7 @@ export default function ApplicantDecisionLetterModal({
     ? consolidation.chair_name
     : (typeof consolidationDetails?.consolidation_meta?.chair_name === "string"
         ? consolidationDetails.consolidation_meta.chair_name
-        : "Ethics Committee Chair");
+        : "Ethics Research Board Chair");
 
   const cycleNumber = Number(consolidation.cycle_number || consolidationDetails?.consolidation_meta?.cycle_number) || 1;
 
@@ -166,7 +160,7 @@ export default function ApplicantDecisionLetterModal({
     ? parsedFormData.clearance_details
     : ((typeof application?.clearance_details === "object" && application?.clearance_details !== null) ? application.clearance_details : {});
 
-  const certificateNumber = clearanceDetails.certificate_number || application?.certificate_number || `AdZU-REC-${protocolCode.replace(/^REC-?/i, "")}`;
+  const certificateNumber = clearanceDetails.certificate_number || application?.certificate_number || `AdZU-ERB-${protocolCode.replace(/^(REC|ERB)-?/i, "")}`;
   const validityStart = clearanceDetails.validity_start ? formatDate(clearanceDetails.validity_start) : meetingDate;
   const validityEnd = clearanceDetails.validity_end ? formatDate(clearanceDetails.validity_end) : "1 Year Post-Approval";
   const validityPeriodYears = Number(clearanceDetails.validity_period_years) || 1;
@@ -180,7 +174,7 @@ export default function ApplicantDecisionLetterModal({
     setIsPrinting(true);
     setTimeout(async () => {
       try {
-        await printIsolatedElement("printable-form13-notice", `ADZU-REC Form 13 - ${protocolCode}`);
+        await printIsolatedElement("printable-form13-notice", `ADZU-ERB Form 13 - ${protocolCode}`);
       } catch (err) {
         console.error("Error invoking isolated print:", err);
       } finally {
@@ -198,7 +192,7 @@ export default function ApplicantDecisionLetterModal({
         borderClass: "border-success",
         accentColor: "#198754",
         icon: "bi-patch-check-fill",
-        leadText: "The AdZU Research Ethics Committee has formally granted ethical clearance for your study protocol.",
+        leadText: "The AdZU Ethics Research Board has formally granted ethical clearance for your study protocol.",
         guidelineText: `The protocol satisfies all ethical standards for human participant protection. Ethical clearance is effective for ${validityPeriodYears} calendar year(s) (${validityStart} to ${validityEnd}). An annual progress report or final completion report must be submitted prior to study expiration.`,
       };
     }
@@ -209,7 +203,7 @@ export default function ApplicantDecisionLetterModal({
         borderClass: "border-warning",
         accentColor: "#d39e00",
         icon: "bi-pencil-square",
-        leadText: "Minor clarifications or document amendments are requested by the Committee.",
+        leadText: "Minor clarifications or document amendments are requested by the Board.",
         guidelineText:
           "Please prepare a Point-by-Point Clarification Matrix addressing each directive below, alongside clean and tracked-change copies of your revised protocol. Resubmit within fourteen (14) calendar days.",
       };
@@ -223,7 +217,7 @@ export default function ApplicantDecisionLetterModal({
         icon: "bi-exclamation-triangle-fill",
         leadText: "Substantial ethical, methodological, or participant safety concerns require restructuring.",
         guidelineText:
-          "The protocol requires extensive revision before re-deliberation by the full committee. Please address each directive in your point-by-point matrix within thirty (30) calendar days.",
+          "The protocol requires extensive revision before re-deliberation by the full board. Please address each directive in your point-by-point matrix within thirty (30) calendar days.",
       };
     }
     return {
@@ -347,7 +341,7 @@ export default function ApplicantDecisionLetterModal({
                 <div>
                   <div className="d-flex align-items-center gap-2 flex-wrap">
                     <h5 className="modal-title fw-bold text-white mb-0" id="applicantDecisionModalTitle">
-                      {isApproved ? "Formal Ethical Clearance Notice" : "Committee Decision Notice"}
+                      {isApproved ? "Formal Ethical Clearance Notice" : "Board Decision Notice"}
                     </h5>
                     <span className="badge bg-secondary font-monospace px-2 py-1">
                       {protocolCode}
@@ -357,7 +351,7 @@ export default function ApplicantDecisionLetterModal({
                     </span>
                   </div>
                   <small className="text-secondary fw-medium">
-                    Ateneo de Zamboanga University • Research Ethics Committee (AdZU-REC)
+                    Ateneo de Zamboanga University • Ethics Research Board (AdZU-ERB)
                   </small>
                 </div>
               </div>
@@ -442,8 +436,8 @@ export default function ApplicantDecisionLetterModal({
                             </span>
                           </div>
                           <p className="small text-secondary mb-3">
-                            Congratulations! Your research protocol has successfully passed comprehensive ethical evaluation and committee verification. 
-                            The signed institutional Certificate of Ethical Clearance is officially registered with the University REC Secretariat.
+                            Congratulations! Your research protocol has successfully passed comprehensive ethical evaluation and board verification. 
+                            The signed institutional Certificate of Ethical Clearance is officially registered with the University ERB Secretariat.
                           </p>
 
                           {/* Certificate Details Credential Grid */}
@@ -482,7 +476,7 @@ export default function ApplicantDecisionLetterModal({
                             <ul className="small text-secondary mb-0 ps-3">
                               <li>Clearance Validity: <strong>{validityPeriodYears} Calendar Year(s)</strong> (Valid through {validityEnd}).</li>
                               <li>Continuing Review: Submit an annual progress report 30 days prior to protocol expiry.</li>
-                              <li>Mandatory Amendments: Any prospective protocol alterations must receive prior REC approval.</li>
+                              <li>Mandatory Amendments: Any prospective protocol alterations must receive prior ERB approval.</li>
                               <li>Adverse Event Reporting: Serious adverse events must be reported within 48 hours.</li>
                             </ul>
                           </div>
@@ -500,7 +494,7 @@ export default function ApplicantDecisionLetterModal({
                           <h6 className="fw-bold text-info-emphasis mb-1">Revisions Under Verification</h6>
                           <p className="small text-secondary mb-0">
                             Your point-by-point clarification matrix and revised protocol documents have been successfully submitted 
-                            and are currently being verified by the Ethics Committee Chair and Secretariat. You will be notified once 
+                            and are currently being verified by the Ethics Research Board Chair and Secretariat. You will be notified once 
                             formal ethical clearance is signed off or if any further clarification is needed.
                           </p>
                         </div>
@@ -537,7 +531,7 @@ export default function ApplicantDecisionLetterModal({
                             <span className="badge bg-danger text-white">Approach A Active</span>
                           </div>
                           <p className="small text-secondary mb-2">
-                            Under AdZU-REC Standard Operating Procedures, you are entitled to file a <strong>Formal Appeal &amp; Request for Reconsideration</strong> under this same protocol without initiating a duplicate application. Submitting corrective safeguards and specialist endorsements will advance this protocol to <strong>Cycle 2 Review under Heightened Board Scrutiny</strong>.
+                            Under AdZU-ERB Standard Operating Procedures, you are entitled to file a <strong>Formal Appeal &amp; Request for Reconsideration</strong> under this same protocol without initiating a duplicate application. Submitting corrective safeguards and specialist endorsements will advance this protocol to <strong>Cycle 2 Review under Heightened Board Scrutiny</strong>.
                           </p>
                           {onProceedToAppeal && (
                             <button
@@ -564,14 +558,14 @@ export default function ApplicantDecisionLetterModal({
                         <div>
                           <h6 className="fw-bold text-primary mb-1">Formal Appeal Submitted (Cycle 2 Re-Deliberation)</h6>
                           <p className="small text-secondary mb-0">
-                            Your formal appeal and corrective protocol documentation have been received and logged under <strong>Doc Ref: {protocolCode}-APL2</strong>. The protocol is scheduled for comprehensive re-evaluation under <strong>Heightened Board Scrutiny</strong>. You will be notified once the full committee convenes.
+                            Your formal appeal and corrective protocol documentation have been received and logged under <strong>Doc Ref: {protocolCode}-APL2</strong>. The protocol is scheduled for comprehensive re-evaluation under <strong>Heightened Board Scrutiny</strong>. You will be notified once the full board convenes.
                           </p>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Ethics Committee Directives for Applicant */}
+                  {/* Ethics Research Board Directives for Applicant */}
                   {directivesForRevisions && (
                     <div className="card border-0 shadow-sm p-3 bg-white rounded-3">
                       <div className="d-flex align-items-center justify-content-between mb-2">
@@ -633,7 +627,7 @@ export default function ApplicantDecisionLetterModal({
                         </h6>
                         <ol className="mb-0 small text-secondary ps-3 d-flex flex-column gap-1">
                           <li>
-                            Download or print the <strong>ADZU-REC Form 13</strong> notice for complete itemization.
+                            Download or print the <strong>ADZU-ERB Form 13</strong> notice for complete itemization.
                           </li>
                           <li>
                             Draft a <strong>Point-by-Point Clarification Matrix</strong> addressing each directive above.
@@ -651,7 +645,7 @@ export default function ApplicantDecisionLetterModal({
                 </div>
               )}
 
-              {/* TAB 2: OFFICIAL ADZU-REC FORM 13 DOCUMENT (SCREEN & PRINT) */}
+              {/* TAB 2: OFFICIAL ADZU-ERB FORM 13 DOCUMENT (SCREEN & PRINT) */}
               {activeTab === "form13" && (
                 <div className="decision-form13-sheet p-4 p-md-5 bg-white rounded shadow-sm" id="printable-form13-notice">
                   
@@ -668,18 +662,18 @@ export default function ApplicantDecisionLetterModal({
                           Ateneo de Zamboanga University
                         </h6>
                         <h5 className="fw-bolder mb-0 text-dark" style={{ letterSpacing: "0.02em", fontSize: "1.05rem" }}>
-                          RESEARCH ETHICS COMMITTEE (AdZU-REC)
+                          ETHICS RESEARCH BOARD (AdZU-ERB)
                         </h5>
                         <p className="text-secondary mb-0 small" style={{ fontSize: "0.78rem" }}>
-                          PHREB Level II Accredited Research Ethics Committee<br />
+                          PHREB Level II Accredited Ethics Research Board<br />
                           Fr. Eusebio Salvador SJ Campus, La Purisima St., Zamboanga City 7000, Philippines<br />
-                          Email: <span className="font-monospace text-dark">rec@adzu.edu.ph</span>
+                          Email: <span className="font-monospace text-dark">erb@adzu.edu.ph</span>
                         </p>
                       </div>
                     </div>
 
                     <div className="text-end border p-2 rounded bg-light" style={{ minWidth: "150px" }}>
-                      <div className="fw-bold font-monospace text-primary small">ADZU-REC Form 13</div>
+                      <div className="fw-bold font-monospace text-primary small">ERB Decision Letter</div>
                       <div className="text-uppercase fw-semibold text-secondary" style={{ fontSize: "0.68rem" }}>
                         {isApproved ? "Clearance Notice" : "Decision Notice"}
                       </div>
@@ -696,7 +690,7 @@ export default function ApplicantDecisionLetterModal({
                   {/* Document Title Banner */}
                   <div className="text-center mb-4 page-break-avoid">
                     <h5 className="fw-bold text-uppercase mb-1" style={{ letterSpacing: "0.04em", color: "#060297" }}>
-                      {isApproved ? "Official Certificate of Ethical Clearance & Approval Notice" : "Formal Notice of Committee Action & Actionable Directives"}
+                      {isApproved ? "Official Certificate of Ethical Clearance & Approval Notice" : "Formal Notice of Board Action & Actionable Directives"}
                     </h5>
                     <p className="text-muted small mb-0">
                       {isApproved ? "Institutional Research Ethics Review Certification" : "Synthesis of Protocol & Informed Consent Ethical Evaluation"}
@@ -732,7 +726,7 @@ export default function ApplicantDecisionLetterModal({
                         <i className={`bi ${decisionConfig.icon} fs-4`} style={{ color: decisionConfig.accentColor }}></i>
                         <div>
                           <span className="text-muted text-uppercase small fw-bold d-block" style={{ fontSize: "0.68rem" }}>
-                            Official Committee Action:
+                            Official Board Action:
                           </span>
                           <h6 className="mb-0 fw-bold" style={{ color: decisionConfig.accentColor }}>
                             {decisionConfig.title}
@@ -752,7 +746,7 @@ export default function ApplicantDecisionLetterModal({
                   {directivesForRevisions && (
                     <div className="mb-4 page-break-avoid">
                       <h6 className="fw-bold text-dark text-uppercase small mb-2">
-                        Committee Directives for Applicant:
+                        Board Directives for Applicant:
                       </h6>
                       <div className="p-3 bg-light border rounded small" style={{ fontSize: "0.825rem", whiteSpace: "pre-line", lineHeight: "1.5" }}>
                         {directivesForRevisions}
@@ -786,7 +780,7 @@ export default function ApplicantDecisionLetterModal({
                   {/* Part I: Form 11 Criteria Table */}
                   <div className="mb-4">
                     <div className="bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold small text-uppercase mb-2 rounded page-break-avoid d-flex justify-content-between">
-                      <span>Part I: Protocol Ethical Evaluation (ADZU-REC Form 11)</span>
+                      <span>Part I: Protocol Ethical Evaluation (ADZU-ERB Form 11)</span>
                       <span>{displayForm11.length} Items Listed</span>
                     </div>
 
@@ -800,7 +794,7 @@ export default function ApplicantDecisionLetterModal({
                         <thead className="table-light">
                           <tr>
                             <th style={{ width: "32%" }}>Criterion & Ethical Requirement</th>
-                            <th style={{ width: "18%" }} className="text-center">Committee Assessment</th>
+                            <th style={{ width: "18%" }} className="text-center">Board Assessment</th>
                             <th style={{ width: "35%" }}>Specific Directive / Required Action</th>
                             <th style={{ width: "15%" }} className="text-center">Proponent Action</th>
                           </tr>
@@ -852,7 +846,7 @@ export default function ApplicantDecisionLetterModal({
                   {/* Part II: Form 12 Criteria Table */}
                   <div className="mb-4">
                     <div className="bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold small text-uppercase mb-2 rounded page-break-avoid d-flex justify-content-between">
-                      <span>Part II: Informed Consent Process & Documentation (ADZU-REC Form 12)</span>
+                      <span>Part II: Informed Consent Process & Documentation (ADZU-ERB Form 12)</span>
                       <span>{displayForm12.length} Items Listed</span>
                     </div>
 
@@ -866,7 +860,7 @@ export default function ApplicantDecisionLetterModal({
                         <thead className="table-light">
                           <tr>
                             <th style={{ width: "32%" }}>Consent Element & Standard</th>
-                            <th style={{ width: "18%" }} className="text-center">Committee Assessment</th>
+                            <th style={{ width: "18%" }} className="text-center">Board Assessment</th>
                             <th style={{ width: "35%" }}>Specific Directive / Required Action</th>
                             <th style={{ width: "15%" }} className="text-center">Proponent Action</th>
                           </tr>
@@ -923,7 +917,7 @@ export default function ApplicantDecisionLetterModal({
                     </h6>
                     <ol className="mb-0 text-secondary ps-3 small" style={{ fontSize: "0.78rem", lineHeight: "1.5" }}>
                       <li>
-                        <strong>Point-by-Point Clarification Matrix:</strong> Tabulate each committee directive above with exact protocol page/section citations.
+                        <strong>Point-by-Point Clarification Matrix:</strong> Tabulate each board directive above with exact protocol page/section citations.
                       </li>
                       <li>
                         <strong>Clean & Tracked Copies:</strong> Upload both clean and tracked versions of all amended documents.
@@ -958,7 +952,7 @@ export default function ApplicantDecisionLetterModal({
                             {chairName}
                           </div>
                           <div className="text-secondary small fw-semibold" style={{ fontSize: "0.75rem" }}>
-                            Chair, Research Ethics Committee
+                            Chair, Ethics Research Board
                           </div>
                           <div className="text-muted" style={{ fontSize: "0.68rem" }}>
                             Ateneo de Zamboanga University

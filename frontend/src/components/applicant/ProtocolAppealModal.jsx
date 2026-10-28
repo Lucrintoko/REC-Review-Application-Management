@@ -96,7 +96,7 @@ export default function ProtocolAppealModal({
   const protocolCode = application.protocol_code || application.protocol_no || application.id || "2026-0088";
   const researchTitle = application.research_title || application.title || "Untitled Research Study";
   const consolidation = application.latest_consolidation || {};
-  const chairName = consolidation.chair_name || application.chair_proponent_name || "Ethics Committee Chair";
+  const chairName = consolidation.chair_name || application.chair_proponent_name || "Ethics Research Board Chair";
   const disapprovalDate = consolidation.meeting_date
     ? formatDate(consolidation.meeting_date)
     : application.submission_date
@@ -307,7 +307,7 @@ export default function ProtocolAppealModal({
                   </span>
                 </div>
                 <small className="text-secondary fw-medium">
-                  Ateneo de Zamboanga University • Research Ethics Committee (Approach A Engine)
+                  Ateneo de Zamboanga University • Ethics Research Board (Approach A Engine)
                 </small>
               </div>
             </div>
@@ -355,7 +355,7 @@ export default function ProtocolAppealModal({
                       "{disapprovalReason}"
                     </p>
                     <div className="small text-muted">
-                      Evaluated by: <strong className="text-dark">{chairName}</strong> (Ethics Committee)
+                      Evaluated by: <strong className="text-dark">{chairName}</strong> (Ethics Research Board)
                     </div>
                   </div>
                 </div>
@@ -561,7 +561,7 @@ export default function ProtocolAppealModal({
                     className="form-check-label small text-dark fw-medium"
                     style={{ cursor: "pointer", lineHeight: "1.5" }}
                   >
-                    I hereby formally petition the AdZU Research Ethics Committee for reconsideration of 
+                    I hereby formally petition the AdZU Ethics Research Board for reconsideration of 
                     Protocol <strong>[{protocolCode}]</strong>. I affirm that the submitted corrective safeguards address all prior grounds for disapproval and understand that this submission initiates Cycle 2 review under <strong>Heightened Board Scrutiny</strong>.
                   </label>
                 </div>

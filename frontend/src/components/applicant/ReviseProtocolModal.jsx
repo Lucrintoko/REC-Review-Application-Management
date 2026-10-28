@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
+import Swal from "sweetalert2";
 import { formatDate } from "../../utils/formatters";
 import adzuSeal from "../../assets/AdZU Seal.png";
 
@@ -166,7 +167,7 @@ function ReviseProtocolModal({ show, application, onClose, onSuccess }) {
           form_type: "general",
           criterion_key: "general",
           criterion_label: "Consolidated Directives for Revisions",
-          section_title: "Ethics Committee Action Matrix",
+          section_title: "Ethics Research Board Action Matrix",
           directive_text: metaDirectives.trim()
         }
       ];
@@ -195,14 +196,14 @@ function ReviseProtocolModal({ show, application, onClose, onSuccess }) {
   const deliberationDate = consolidation.meeting_date
     ? formatDate(consolidation.meeting_date)
     : formatDate(new Date().toISOString());
-  const chairName = consolidation.chair_name || "Ethics Committee Chair";
+  const chairName = consolidation.chair_name || "Ethics Research Board Chair";
 
   // Stage 3 specific variables
   const attemptNo = application.revision_attempt_no || 1;
   const nextAttemptNo = attemptNo + 1;
   const stage3Directives =
     application.revision_notes ||
-    "The Ethics Review Committee Chair has returned this application for protocol modifications or clarification of review type requirements.";
+    "The Ethics Research Board Chair has returned this application for protocol modifications or clarification of review type requirements.";
   const stage3RequestedDate = application.revision_requested_at
     ? formatDate(application.revision_requested_at)
     : "Recently";
@@ -410,10 +411,22 @@ function ReviseProtocolModal({ show, application, onClose, onSuccess }) {
         throw new Error(result.message || "Failed to submit protocol revision.");
       }
 
+      // Close modal and trigger parent dashboard refresh immediately to prevent multiple passes
+      onClose();
       if (onSuccess) {
         onSuccess(result);
       }
-      onClose();
+
+      await Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Revisions Submitted Successfully",
+        text: "Your revised protocol documents have been submitted for evaluation.",
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true,
+      });
     } catch (err) {
       setErrorMessage(err.message || "An unexpected network error occurred.");
     } finally {
@@ -481,7 +494,7 @@ function ReviseProtocolModal({ show, application, onClose, onSuccess }) {
                   )}
                 </div>
                 <small className={isStage6DecisionRevision ? "text-secondary fw-medium d-block" : "text-dark-50 fw-medium d-block"}>
-                  Ateneo de Zamboanga University • Research Ethics Committee (AdZU-REC)
+                  Ateneo de Zamboanga University • Ethics Research Board (AdZU-REC)
                 </small>
               </div>
             </div>

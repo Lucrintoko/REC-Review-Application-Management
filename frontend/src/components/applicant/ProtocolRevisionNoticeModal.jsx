@@ -17,8 +17,8 @@ function ProtocolRevisionNoticeModal({
   const attemptNo = application.revision_attempt_no || 1;
   const directives =
     application.revision_notes ||
-    "The Ethics Review Committee Chair has returned this application for protocol modifications or clarification of review type requirements. Please review the directives below.";
-  const chairName = application.chair_proponent_name || "Ethics Review Committee Chair";
+    "The Ethics Research Board Chair has returned this application for protocol modifications or clarification of review type requirements. Please review the directives below.";
+  const chairName = application.chair_proponent_name || "Ethics Research Board Chair";
   const requestedDate = application.revision_requested_at
     ? formatDate(application.revision_requested_at)
     : "Recently";

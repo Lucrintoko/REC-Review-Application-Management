@@ -79,8 +79,7 @@ function ActionRequiredTray({
         app.has_active_revision === true ||
         app.has_active_revision === 1 ||
         app.has_active_revision === "true" ||
-        app.has_active_revision === "1" ||
-        (statusStr === "type of review" && Boolean(app.revision_notes))
+        app.has_active_revision === "1"
       );
 
       const rawTitle = app.research_title || app.title || "";
@@ -302,7 +301,7 @@ function ActionRequiredTray({
           badgeClass: "bg-warning-subtle text-warning-emphasis border-warning-subtle",
           borderClass: "border-start border-4 border-warning",
           icon: "bi-pencil-square text-warning",
-          description: "Pre-assessment directives issued by Ethics Review Committee. Document modifications required.",
+          description: "Pre-assessment directives issued by Ethics Research Board. Document modifications required.",
           primaryAction: {
             label: "View Directives & Revise",
             icon: "bi-pencil-square",
