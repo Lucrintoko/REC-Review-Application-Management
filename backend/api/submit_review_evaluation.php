@@ -80,7 +80,7 @@ try {
 
     // 1. Verify that the reviewer is assigned to this protocol for the active cycle
     $checkReviewerStmt = $db->prepare("
-        SELECT review_id, reviewer_role, review_status 
+        SELECT review_id, reviewer_id, reviewer_role, review_status 
         FROM protocol_reviews 
         WHERE application_id = :app_id AND reviewer_id = :rev_id AND cycle_number = :cycle_number
     ");
@@ -90,6 +90,45 @@ try {
         ':cycle_number' => $current_cycle
     ]);
     $existingReview = $checkReviewerStmt->fetch(PDO::FETCH_ASSOC);
+
+    // Fallback & Self-Healing: If not matched by reviewer_id, check if submitting user is an Ethics Chair evaluating an assigned Chair review
+    if (!$existingReview) {
+        $stmtAdminRole = $db->prepare("SELECT role FROM admins WHERE admin_id = :aid");
+        $stmtAdminRole->execute([':aid' => $reviewer_id]);
+        $submittingRole = $stmtAdminRole->fetchColumn();
+
+        if (in_array($submittingRole, ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'])) {
+            $stmtChairReview = $db->prepare("
+                SELECT review_id, reviewer_id, reviewer_role, review_status 
+                FROM protocol_reviews 
+                WHERE application_id = :app_id 
+                  AND cycle_number = :cycle_number 
+                  AND reviewer_role IN ('Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair')
+                ORDER BY review_id ASC 
+                LIMIT 1
+            ");
+            $stmtChairReview->execute([
+                ':app_id'       => $application_id,
+                ':cycle_number' => $current_cycle
+            ]);
+            $chairReviewMatch = $stmtChairReview->fetch(PDO::FETCH_ASSOC);
+
+            if ($chairReviewMatch) {
+                $existingReview = $chairReviewMatch;
+                if ($existingReview['reviewer_id'] != $reviewer_id) {
+                    $fixReviewerStmt = $db->prepare("
+                        UPDATE protocol_reviews 
+                        SET reviewer_id = :real_chair_id 
+                        WHERE review_id = :rid
+                    ");
+                    $fixReviewerStmt->execute([
+                        ':real_chair_id' => $reviewer_id,
+                        ':rid'           => $existingReview['review_id']
+                    ]);
+                }
+            }
+        }
+    }
 
     if (!$existingReview) {
         $db->rollBack();
@@ -106,16 +145,14 @@ try {
             recommendation = :recommendation::recommendation_enum,
             comments = :comments,
             form_data = :form_data
-        WHERE application_id = :app_id AND reviewer_id = :rev_id AND cycle_number = :cycle_number
+        WHERE review_id = :review_id
     ");
 
     $updateReviewStmt->execute([
         ':recommendation' => $mappedRecommendation,
         ':comments'       => $comments,
         ':form_data'      => json_encode($formData),
-        ':app_id'         => $application_id,
-        ':rev_id'         => $reviewer_id,
-        ':cycle_number'   => $current_cycle
+        ':review_id'      => $existingReview['review_id']
     ]);
 
     // 3. Check committee completion condition for active cycle
@@ -175,7 +212,7 @@ try {
             $application_id,
             'Consolidation of Review',
             'Pending',
-            'Ethics Committee Chair',
+            'Ethics Research Board Chair',
             ($current_cycle > 1 ? "Cycle {$current_cycle} " : "") . 'All committee reviews completed. Awaiting Chair consolidation synthesis.',
             false
         );

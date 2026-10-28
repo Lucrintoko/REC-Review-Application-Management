@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Swal from 'sweetalert2';
 
 // Standardized AdZU REC Document Taxonomy & Visual Badging
@@ -100,7 +100,7 @@ const buildInitialForm11 = (protocol, reviewerName, isPrimary = "Yes") => ({
         titleOfStudy: protocol?.title || protocol?.research_title || "",
         recCode: protocol?.id || protocol?.protocol_code || "",
         typeOfReview: protocol?.type || protocol?.review_type || "",
-        projectLeader: protocol?.researchers?.join(', ') || "N/A",
+        projectLeader: Array.isArray(protocol?.researchers) ? protocol.researchers.join(', ') : (protocol?.researchers || "N/A"),
         institution: protocol?.form_data?.institution || "Ateneo de Zamboanga University",
         reviewer: reviewerName || "",
         primaryReviewer: isPrimary
@@ -109,105 +109,105 @@ const buildInitialForm11 = (protocol, reviewerName, isPrimary = "Yes") => ({
         socialValue: {
             label: "Does the study have social value?",
             helperText: "(e.g. scientific value, relevance to national / community needs)",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         studyBackgroundAdequate: {
             label: "Is the study background adequate?",
             helperText: "Clear theoretical rationale and contextual background",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         researchQuestionsSupportedByLiterature: {
             label: "Are the research questions supported by the Review of Literature?",
             helperText: "Literature review is directly aligned with stated questions",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         studyObjectivesSmart: {
             label: "Are the study objectives Specific, Measurable, Attainable, Realistic, and Time-bound?",
             helperText: "SMART framework compliance",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         researchDesignAppropriate: {
             label: "Is the research design appropriate?",
             populationIdentifiedAndDefined: {
                 label: "Is the population identified and defined?",
-                response: "Unable To Assess"
+                response: ""
             },
             selectionOfParticipantsDescribed: {
                 label: "Is the selection of study participants described?",
-                response: "Unable To Assess"
+                response: ""
             },
             sampleSizeJustified: {
                 label: "Is the sample size justified?",
-                response: "Unable To Assess"
+                response: ""
             },
             dataAnalysisPlanAndDummyTables: {
                 label: "Is the plan for data analysis described and are there dummy tables?",
-                response: "Unable To Assess"
+                response: ""
             },
             comment: ""
         },
         humanParticipantsRequired: {
             label: "Does the research need to be carried out with human participants?",
             helperText: "Justification for involving human subjects instead of non-human models",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         vulnerabilityIssue: {
             label: "Does the study involve vulnerable groups?",
             helperText: "Minors, pregnant women, indigenous persons, prisoners, or economically disadvantaged",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         vulnerabilityMechanismsInPlace: {
             label: "Are appropriate mechanisms/interventions in place to address the vulnerability issue/s?",
             helperText: "Safeguards against undue coercion and exploitation",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         risksToParticipants: {
             label: "Are there risks / probable harms to the human participants in the study?",
             helperText: "Physical, psychological, social, legal, or economic risks",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         riskMitigationMeasures: {
             label: "Are there measures to mitigate the risks?",
             helperText: "Safety protocols, referral mechanisms, and confidentiality measures",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         informedConsentAdequate: {
             label: "Is the informed consent procedure / form adequate and culturally appropriate?",
             helperText: "Comprehensible translation and voluntary participation safeguards",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         investigatorsAdequatelyTrained: {
             label: "Is/are the investigator/s adequately trained and do they have sufficient experience?",
             helperText: "GCP certifications, ethics training, and technical expertise",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         conflictOfInterestDisclosure: {
             label: "Is there a disclosure of conflict of interest?",
             helperText: "Financial, institutional, or personal COI statements",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         researchFacilitiesAdequate: {
             label: "Are the research facilities adequate?",
             helperText: "Laboratories, interview venues, secure data storage systems",
-            response: "Unable To Assess",
+            response: "",
             comment: ""
         },
         otherConcernsComment: ""
     },
     recommendations: {
-        decision: "Approved",
+        decision: "",
         minorRevisionsComments: "",
         majorRevisionComments: "",
         disapprovedReasons: ""
@@ -224,7 +224,7 @@ const buildInitialForm12 = (protocol, reviewerName, isPrimary = "Yes") => ({
         titleOfStudy: protocol?.title || protocol?.research_title || "",
         recCode: protocol?.id || protocol?.protocol_code || "",
         typeOfReview: protocol?.type || protocol?.review_type || "",
-        projectLeader: protocol?.researchers?.join(', ') || "N/A",
+        projectLeader: Array.isArray(protocol?.researchers) ? protocol.researchers.join(', ') : (protocol?.researchers || "N/A"),
         institution: protocol?.form_data?.institution || "Ateneo de Zamboanga University",
         reviewer: reviewerName || "",
         primaryReviewer: isPrimary
@@ -232,34 +232,298 @@ const buildInitialForm12 = (protocol, reviewerName, isPrimary = "Yes") => ({
     guideQuestions: {
         informedConsentNecessity: {
             label: "Is it necessary to seek the informed consent of the participants?",
-            necessaryToSeekConsent: "Yes",
+            necessaryToSeekConsent: "",
             ifNoExplanation: ""
         },
         sufficientInformationChecklist: {
-            purposeOfStudy: "Yes",
-            expectedDurationOfParticipation: "Yes",
-            proceduresToBeCarriedOut: "Yes",
-            discomfortsAndInconveniences: "Yes",
-            risksIncludingDiscrimination: "Yes",
-            randomAssignmentToTrialTreatments: "Not Applicable",
-            benefitsToParticipants: "Yes",
-            alternativeTreatmentsOrProcedures: "Not Applicable",
-            compensationOrMedicalTreatmentsForInjury: "Yes",
-            contactPersonForQuestionsAndInjuryAssistance: "Yes",
-            refusalOrDiscontinuanceWithoutPenalty: "Yes",
-            extentOfConfidentiality: "Yes",
-            writtenInSimpleUnderstandableLanguage: "Yes",
-            adequateProcessForVoluntaryConsent: "Yes",
+            purposeOfStudy: "",
+            expectedDurationOfParticipation: "",
+            proceduresToBeCarriedOut: "",
+            discomfortsAndInconveniences: "",
+            risksIncludingDiscrimination: "",
+            randomAssignmentToTrialTreatments: "",
+            benefitsToParticipants: "",
+            alternativeTreatmentsOrProcedures: "",
+            compensationOrMedicalTreatmentsForInjury: "",
+            contactPersonForQuestionsAndInjuryAssistance: "",
+            refusalOrDiscontinuanceWithoutPenalty: "",
+            extentOfConfidentiality: "",
+            writtenInSimpleUnderstandableLanguage: "",
+            adequateProcessForVoluntaryConsent: "",
             otherConcernsComments: ""
         }
     },
     recommendations: {
-        decision: "Approved",
+        decision: "",
         minorRevisionsComments: "",
         majorRevisionComments: "",
         disapprovedReasons: ""
     }
 });
+
+
+/**
+ * Normalizes any incoming Form 11 data (canonical nested, flat legacy, partial, or null)
+ * into the strictly compliant canonical structure expected by OngoingReviewModal.
+ */
+export const normalizeForm11Data = (rawF11, protocol = null, reviewerName = "", isPrimary = "Yes", reviewRecord = null) => {
+    const canonical = buildInitialForm11(protocol, reviewerName, isPrimary);
+    
+    let src = rawF11;
+    if (typeof src === 'string') {
+        try { src = JSON.parse(src); } catch (e) { src = {}; }
+    }
+    if (!src || typeof src !== 'object') src = {};
+
+    if (src.form11 && typeof src.form11 === 'object') {
+        src = src.form11;
+    }
+
+    const gq = (src.guideQuestions && typeof src.guideQuestions === 'object') ? src.guideQuestions : {};
+
+    const extractQuestion = (canonicalItem, key, commentAliases = []) => {
+        const nestedItem = gq[key];
+        const flatVal = src[key];
+
+        let response = "";
+        let comment = "";
+
+        if (nestedItem && typeof nestedItem === 'object') {
+            response = nestedItem.response !== undefined ? nestedItem.response : "";
+            comment = nestedItem.comment !== undefined ? nestedItem.comment : "";
+        } else if (typeof nestedItem === 'string') {
+            response = nestedItem;
+        } else if (typeof flatVal === 'string') {
+            response = flatVal;
+        } else if (flatVal && typeof flatVal === 'object') {
+            response = flatVal.response !== undefined ? flatVal.response : "";
+            comment = flatVal.comment !== undefined ? flatVal.comment : "";
+        }
+
+        if (!comment) {
+            for (const alias of commentAliases) {
+                if (src[alias] && typeof src[alias] === 'string') {
+                    comment = src[alias];
+                    break;
+                }
+                if (gq[alias] && typeof gq[alias] === 'string') {
+                    comment = gq[alias];
+                    break;
+                }
+            }
+        }
+
+        return {
+            ...canonicalItem,
+            response: response || "",
+            comment: comment || ""
+        };
+    };
+
+    const rawRdaNested = gq.researchDesignAppropriate;
+    const rawRdaFlat = src.researchDesignAppropriate;
+    const rdaObj = (rawRdaNested && typeof rawRdaNested === 'object') 
+        ? rawRdaNested 
+        : (rawRdaFlat && typeof rawRdaFlat === 'object') 
+            ? rawRdaFlat 
+            : {};
+
+    const extractSubitem = (subKey, canonicalSub) => {
+        let resp = "";
+        if (rdaObj[subKey] && typeof rdaObj[subKey] === 'object') {
+            resp = rdaObj[subKey].response || "";
+        } else if (typeof rdaObj[subKey] === 'string') {
+            resp = rdaObj[subKey];
+        } else if (typeof src[subKey] === 'string') {
+            resp = src[subKey];
+        } else if (src[subKey] && typeof src[subKey] === 'object') {
+            resp = src[subKey].response || "";
+        } else if (typeof rawRdaFlat === 'string') {
+            resp = rawRdaFlat;
+        }
+        return {
+            ...canonicalSub,
+            response: resp || ""
+        };
+    };
+
+    const rdaComment = rdaObj.comment || src.researchDesignComments || src.researchDesignAppropriateComments || gq.researchDesignAppropriateComments || "";
+    const otherConcerns = gq.otherConcernsComment || src.otherConcernsComment || src.otherConcerns || src.otherComments || src.generalComments || "";
+
+    const rawRec = (src.recommendations && typeof src.recommendations === 'object') ? src.recommendations : {};
+    const rawDec = rawRec.decision || src.decision || src.recommendation || reviewRecord?.recommendation || "";
+    const normalizedDec = rawDec.includes('Minor') ? 'Minor Revisions Required'
+        : rawDec.includes('Major') ? 'Major Revision Required'
+        : rawDec;
+
+    const minorComments = rawRec.minorRevisionsComments || src.minorRevisionsComments || src.minorComments 
+        || (normalizedDec === 'Minor Revisions Required' ? (src.comments || reviewRecord?.comments || '') : '');
+    const majorComments = rawRec.majorRevisionComments || src.majorRevisionComments || src.majorComments 
+        || (normalizedDec === 'Major Revision Required' ? (src.comments || reviewRecord?.comments || '') : '');
+    const disReasons = rawRec.disapprovedReasons || src.disapprovedReasons || src.disapprovedComments 
+        || (normalizedDec === 'Disapproved' ? (src.comments || reviewRecord?.comments || '') : '');
+
+    return {
+        metadata: {
+            ...canonical.metadata,
+            ...(src.metadata || {})
+        },
+        protocolInformation: {
+            ...canonical.protocolInformation,
+            ...(src.protocolInformation || {}),
+            reviewer: src.protocolInformation?.reviewer || reviewerName || canonical.protocolInformation.reviewer,
+            primaryReviewer: src.protocolInformation?.primaryReviewer || isPrimary
+        },
+        guideQuestions: {
+            socialValue: extractQuestion(canonical.guideQuestions.socialValue, 'socialValue', ['socialValueComments', 'socialValueComment']),
+            studyBackgroundAdequate: extractQuestion(canonical.guideQuestions.studyBackgroundAdequate, 'studyBackgroundAdequate', ['studyBackgroundAdequateComments', 'studyBackgroundComments', 'backgroundComments']),
+            researchQuestionsSupportedByLiterature: extractQuestion(canonical.guideQuestions.researchQuestionsSupportedByLiterature, 'researchQuestionsSupportedByLiterature', ['researchQuestionsSupportedComments', 'literatureComments']),
+            studyObjectivesSmart: extractQuestion(canonical.guideQuestions.studyObjectivesSmart, 'studyObjectivesSmart', ['studyObjectivesSmartComments', 'objectivesComments']),
+            researchDesignAppropriate: {
+                ...canonical.guideQuestions.researchDesignAppropriate,
+                populationIdentifiedAndDefined: extractSubitem('populationIdentifiedAndDefined', canonical.guideQuestions.researchDesignAppropriate.populationIdentifiedAndDefined),
+                selectionOfParticipantsDescribed: extractSubitem('selectionOfParticipantsDescribed', canonical.guideQuestions.researchDesignAppropriate.selectionOfParticipantsDescribed),
+                sampleSizeJustified: extractSubitem('sampleSizeJustified', canonical.guideQuestions.researchDesignAppropriate.sampleSizeJustified),
+                dataAnalysisPlanAndDummyTables: extractSubitem('dataAnalysisPlanAndDummyTables', canonical.guideQuestions.researchDesignAppropriate.dataAnalysisPlanAndDummyTables),
+                comment: rdaComment
+            },
+            humanParticipantsRequired: extractQuestion(canonical.guideQuestions.humanParticipantsRequired, 'humanParticipantsRequired', ['humanParticipantsComments', 'humanSubjectsComments']),
+            vulnerabilityIssue: extractQuestion(canonical.guideQuestions.vulnerabilityIssue, 'vulnerabilityIssue', ['vulnerabilityIssueComments', 'vulnerableGroupsComments']),
+            vulnerabilityMechanismsInPlace: extractQuestion(canonical.guideQuestions.vulnerabilityMechanismsInPlace, 'vulnerabilityMechanismsInPlace', ['vulnerabilityMechanismsComments', 'vulnerabilitySafeguardsComments']),
+            risksToParticipants: extractQuestion(canonical.guideQuestions.risksToParticipants, 'risksToParticipants', ['risksComments', 'risksComment', 'participantRisksComments']),
+            riskMitigationMeasures: extractQuestion(canonical.guideQuestions.riskMitigationMeasures, 'riskMitigationMeasures', ['riskMitigationComments', 'mitigationComments']),
+            informedConsentAdequate: extractQuestion(canonical.guideQuestions.informedConsentAdequate, 'informedConsentAdequate', ['informedConsentComments', 'consentAdequateComments']),
+            investigatorsAdequatelyTrained: extractQuestion(canonical.guideQuestions.investigatorsAdequatelyTrained, 'investigatorsAdequatelyTrained', ['investigatorsTrainedComments', 'investigatorQualificationsComments']),
+            conflictOfInterestDisclosure: extractQuestion(canonical.guideQuestions.conflictOfInterestDisclosure, 'conflictOfInterestDisclosure', ['conflictOfInterestComments', 'coiComments']),
+            researchFacilitiesAdequate: extractQuestion(canonical.guideQuestions.researchFacilitiesAdequate, 'researchFacilitiesAdequate', ['researchFacilitiesComments', 'facilitiesComments']),
+            otherConcernsComment: otherConcerns
+        },
+        recommendations: {
+            decision: normalizedDec,
+            minorRevisionsComments: minorComments,
+            majorRevisionComments: majorComments,
+            disapprovedReasons: disReasons
+        }
+    };
+};
+
+/**
+ * Normalizes any incoming Form 12 data (canonical nested, flat legacy, partial, or null)
+ * into the strictly compliant canonical structure expected by OngoingReviewModal.
+ */
+export const normalizeForm12Data = (rawF12, protocol = null, reviewerName = "", isPrimary = "Yes", reviewRecord = null) => {
+    const canonical = buildInitialForm12(protocol, reviewerName, isPrimary);
+    
+    let src = rawF12;
+    if (typeof src === 'string') {
+        try { src = JSON.parse(src); } catch (e) { src = {}; }
+    }
+    if (!src || typeof src !== 'object') src = {};
+
+    if (src.form12 && typeof src.form12 === 'object') {
+        src = src.form12;
+    }
+
+    const gq = (src.guideQuestions && typeof src.guideQuestions === 'object') ? src.guideQuestions : {};
+
+    const rawIcnNested = gq.informedConsentNecessity;
+    const rawIcnFlat = src.informedConsentNecessity;
+    const icnObj = (rawIcnNested && typeof rawIcnNested === 'object')
+        ? rawIcnNested
+        : (rawIcnFlat && typeof rawIcnFlat === 'object')
+            ? rawIcnFlat
+            : {};
+
+    const necessaryToSeekConsent = icnObj.necessaryToSeekConsent 
+        || (typeof rawIcnNested === 'string' ? rawIcnNested : '')
+        || (typeof rawIcnFlat === 'string' ? rawIcnFlat : '')
+        || src.necessaryToSeekConsent 
+        || "";
+
+    const ifNoExplanation = icnObj.ifNoExplanation 
+        || src.ifNoExplanation 
+        || src.waiverExplanation 
+        || "";
+
+    const rawSicNested = gq.sufficientInformationChecklist;
+    const rawSicFlat = src.sufficientInformationChecklist;
+    const sicObj = (rawSicNested && typeof rawSicNested === 'object')
+        ? rawSicNested
+        : (rawSicFlat && typeof rawSicFlat === 'object')
+            ? rawSicFlat
+            : {};
+
+    const checklistKeys = [
+        'purposeOfStudy', 'expectedDurationOfParticipation', 'proceduresToBeCarriedOut',
+        'discomfortsAndInconveniences', 'risksIncludingDiscrimination', 'randomAssignmentToTrialTreatments',
+        'benefitsToParticipants', 'alternativeTreatmentsOrProcedures', 'compensationOrMedicalTreatmentsForInjury',
+        'contactPersonForQuestionsAndInjuryAssistance', 'refusalOrDiscontinuanceWithoutPenalty',
+        'extentOfConfidentiality', 'writtenInSimpleUnderstandableLanguage', 'adequateProcessForVoluntaryConsent'
+    ];
+
+    const normalizedChecklist = {};
+    checklistKeys.forEach(k => {
+        let val = "";
+        if (sicObj[k] !== undefined && sicObj[k] !== null) {
+            val = sicObj[k];
+        } else if (src[k] !== undefined && src[k] !== null) {
+            val = src[k];
+        } else if (gq[k] !== undefined && gq[k] !== null) {
+            val = gq[k];
+        }
+        normalizedChecklist[k] = typeof val === 'string' ? val : "";
+    });
+
+    const otherConsentComments = sicObj.otherConcernsComments 
+        || src.otherConcernsComments 
+        || src.consentFormComments 
+        || src.consentComments 
+        || gq.otherConcernsComments 
+        || src.otherComments 
+        || "";
+
+    normalizedChecklist.otherConcernsComments = otherConsentComments;
+
+    const rawRec = (src.recommendations && typeof src.recommendations === 'object') ? src.recommendations : {};
+    const rawDec = rawRec.decision || src.decision || src.recommendation || reviewRecord?.recommendation || "";
+    const normalizedDec = rawDec.includes('Minor') ? 'Minor Revisions Required'
+        : rawDec.includes('Major') ? 'Major Revision Required'
+        : rawDec;
+
+    const minorComments = rawRec.minorRevisionsComments || src.minorRevisionsComments || src.minorComments 
+        || (normalizedDec === 'Minor Revisions Required' ? (src.comments || reviewRecord?.comments || '') : '');
+    const majorComments = rawRec.majorRevisionComments || src.majorRevisionComments || src.majorComments 
+        || (normalizedDec === 'Major Revision Required' ? (src.comments || reviewRecord?.comments || '') : '');
+    const disReasons = rawRec.disapprovedReasons || src.disapprovedReasons || src.disapprovedComments 
+        || (normalizedDec === 'Disapproved' ? (src.comments || reviewRecord?.comments || '') : '');
+
+    return {
+        metadata: {
+            ...canonical.metadata,
+            ...(src.metadata || {})
+        },
+        protocolInformation: {
+            ...canonical.protocolInformation,
+            ...(src.protocolInformation || {}),
+            reviewer: src.protocolInformation?.reviewer || reviewerName || canonical.protocolInformation.reviewer,
+            primaryReviewer: src.protocolInformation?.primaryReviewer || isPrimary
+        },
+        guideQuestions: {
+            informedConsentNecessity: {
+                ...canonical.guideQuestions.informedConsentNecessity,
+                necessaryToSeekConsent: necessaryToSeekConsent,
+                ifNoExplanation: ifNoExplanation
+            },
+            sufficientInformationChecklist: normalizedChecklist
+        },
+        recommendations: {
+            decision: normalizedDec,
+            minorRevisionsComments: minorComments,
+            majorRevisionComments: majorComments,
+            disapprovedReasons: disReasons
+        }
+    };
+};
 
 function OngoingReviewModal({ protocol, onClose, onRefresh }) {
     const adminName = localStorage.getItem('adminName') || "Reviewer";
@@ -269,9 +533,12 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
     // Role Matrix Variables
     const isPrimaryReviewer = role === 'Primary Reviewer';
     const isNonPrimaryReviewer = role === 'Non-Primary Reviewer';
-    const isChair = role === 'Ethics Chair' || role === 'Ethics Committee Chair';
+    const isChair = role === 'Ethics Chair' || role === 'Ethics Committee Chair' || role === 'Ethics Research Board Chair';
     const isSecretariat = role === 'Secretariat';
-    const isExemptedChairAutonomous = isChair && (protocol?.type === 'EXEMPTED' || protocol?.review_type === 'Exempted');
+    const isExemptedChairAutonomous = isChair && (
+        (protocol?.type || '').toUpperCase() === 'EXEMPTED' || 
+        (protocol?.review_type || '').toUpperCase() === 'EXEMPTED'
+    );
     
     // Evaluation View Mode:
     // If Chair/Secretariat (and not autonomous Exempted), oversight mode is active.
@@ -298,8 +565,11 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         if (isOversightMode) {
             return assignedReviewers.find(r => String(r.reviewer_id) === String(selectedReviewerId)) || assignedReviewers[0] || null;
         }
-        return assignedReviewers.find(r => String(r.reviewer_id) === String(adminId)) || null;
-    }, [assignedReviewers, isOversightMode, selectedReviewerId, adminId]);
+        return assignedReviewers.find(r => 
+            String(r.reviewer_id) === String(adminId) ||
+            (isChair && ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(r.reviewer_role))
+        ) || null;
+    }, [assignedReviewers, isOversightMode, selectedReviewerId, adminId, isChair]);
 
     // Determine target reviewer role for UI switching (Primary gets Form 11 + 12; Non-Primary gets Form 12 only)
     const activeTargetRole = useMemo(() => {
@@ -323,12 +593,14 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         }
     }, [activeCanViewForm11, activeFormTab]);
 
-    // Read-Only Enforcement: True if oversight mode OR reviewer already submitted evaluation
+    // Read-Only Enforcement: True if oversight mode OR reviewer already submitted evaluation OR protocol is past ongoing review
     const isReadOnly = useMemo(() => {
         if (isOversightMode) return true;
         if (activeReviewRecord?.review_status === 'Completed') return true;
+        const statusUpper = (protocol?.status || '').toUpperCase();
+        if (statusUpper && statusUpper !== 'ONGOING REVIEW') return true;
         return false;
-    }, [isOversightMode, activeReviewRecord]);
+    }, [isOversightMode, activeReviewRecord, protocol?.status]);
 
     // Appeal & Multi-Cycle Re-deliberation Context
     const parsedFormData = useMemo(() => {
@@ -468,7 +740,9 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
     const [form11Data, setForm11Data] = useState(() => {
         const cached = localStorage.getItem(localStorageKeyForm11);
         if (cached) {
-            try { return JSON.parse(cached); } catch (e) { /* fallback */ }
+            try { 
+                return normalizeForm11Data(JSON.parse(cached), protocol, adminName, isPrimaryReviewer ? "Yes" : "No"); 
+            } catch (e) { /* fallback */ }
         }
         return buildInitialForm11(protocol, adminName, isPrimaryReviewer ? "Yes" : "No");
     });
@@ -476,7 +750,9 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
     const [form12Data, setForm12Data] = useState(() => {
         const cached = localStorage.getItem(localStorageKeyForm12);
         if (cached) {
-            try { return JSON.parse(cached); } catch (e) { /* fallback */ }
+            try { 
+                return normalizeForm12Data(JSON.parse(cached), protocol, adminName, isPrimaryReviewer ? "Yes" : "No"); 
+            } catch (e) { /* fallback */ }
         }
         return buildInitialForm12(protocol, adminName, isPrimaryReviewer ? "Yes" : "No");
     });
@@ -484,50 +760,103 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
     const [lastSavedTime, setLastSavedTime] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // State Synchronization Effect upon selecting reviewers or loading records
-    useEffect(() => {
-        if (!selectedReviewerId) return;
+        // Guard against clobbering in-memory state on re-renders or tab switches
+    const lastHydratedReviewerRef = useRef(null);
 
-        const currentReview = assignedReviewers.find(r => String(r.reviewer_id) === String(selectedReviewerId));
+    // State Synchronization Effect: ONLY runs when switching selected reviewer or protocol
+    useEffect(() => {
+        if (!selectedReviewerId || !protocol?.application_id) return;
+
+        const currentHydrationKey = `${protocol.application_id}_${selectedReviewerId}`;
+        if (lastHydratedReviewerRef.current === currentHydrationKey) {
+            return; // Already hydrated for this protocol and reviewer; preserve active edits!
+        }
+        lastHydratedReviewerRef.current = currentHydrationKey;
+
+        const currentReview = assignedReviewers.find(r => 
+            String(r.reviewer_id) === String(selectedReviewerId) ||
+            (isChair && !isOversightMode && ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(r.reviewer_role))
+        );
         const targetRole = isOversightMode && currentReview ? currentReview.reviewer_role : role;
         const targetCanViewF11 = targetRole === 'Primary Reviewer' || isExemptedChairAutonomous;
 
-        if (!targetCanViewF11 && activeFormTab === 'form11') {
-            setActiveFormTab('form12');
-        }
-
-        // Hydrate from database submission if present
-        let f11 = null;
-        let f12 = null;
+        // 1. Ingest Raw Submissions from DB Record
+        let f11Raw = null;
+        let f12Raw = null;
 
         if (currentReview?.form_data) {
             try {
                 const parsed = typeof currentReview.form_data === 'string' 
                     ? JSON.parse(currentReview.form_data) 
                     : currentReview.form_data;
-                if (parsed.form11) f11 = parsed.form11;
-                if (parsed.form12) f12 = parsed.form12;
+
+                if (parsed.form11) f11Raw = parsed.form11;
+                if (parsed.form12) f12Raw = parsed.form12;
+
+                // Fallback for flat root payloads lacking form11/form12 keys
+                if (!f11Raw && !f12Raw && typeof parsed === 'object') {
+                    if (parsed.socialValue !== undefined || parsed.researchDesignAppropriate !== undefined || parsed.risksToParticipants !== undefined) {
+                        f11Raw = parsed;
+                    }
+                    if (parsed.writtenInSimpleUnderstandableLanguage !== undefined || parsed.necessaryToSeekConsent !== undefined || parsed.consentFormComments !== undefined) {
+                        f12Raw = parsed;
+                    }
+                }
             } catch (e) {
                 console.error("Failed to parse form_data:", e);
             }
         }
 
-        // Hydrate from localStorage draft if not in DB
-        const cacheKey11 = `rec_eval_${protocol?.application_id}_f11_${selectedReviewerId}`;
-        const cacheKey12 = `rec_eval_${protocol?.application_id}_f12_${selectedReviewerId}`;
-        if (!f11) {
+        // 2. Fallback to localStorage drafts if no DB submission exists
+        const cacheKey11 = `rec_eval_${protocol.application_id}_f11_${selectedReviewerId}`;
+        const cacheKey12 = `rec_eval_${protocol.application_id}_f12_${selectedReviewerId}`;
+        if (!f11Raw) {
             const cached11 = localStorage.getItem(cacheKey11);
-            if (cached11) { try { f11 = JSON.parse(cached11); } catch (e) {} }
+            if (cached11) { try { f11Raw = JSON.parse(cached11); } catch (e) {} }
         }
-        if (!f12) {
+        if (!f12Raw) {
             const cached12 = localStorage.getItem(cacheKey12);
-            if (cached12) { try { f12 = JSON.parse(cached12); } catch (e) {} }
+            if (cached12) { try { f12Raw = JSON.parse(cached12); } catch (e) {} }
         }
 
         const revName = currentReview?.reviewer_name || adminName;
-        setForm11Data(f11 || buildInitialForm11(protocol, revName, targetCanViewF11 ? "Yes" : "No"));
-        setForm12Data(f12 || buildInitialForm12(protocol, revName, targetCanViewF11 ? "Yes" : "No"));
-    }, [selectedReviewerId, protocol?.application_id, assignedReviewers, isOversightMode, isExemptedChairAutonomous, role, adminName, activeFormTab]);
+
+        // 3. Deep Normalize Both Forms (guarantees complete object structure for rendering)
+        const normF11 = normalizeForm11Data(f11Raw, protocol, revName, targetCanViewF11 ? "Yes" : "No", currentReview);
+        const normF12 = normalizeForm12Data(f12Raw, protocol, revName, targetCanViewF11 ? "Yes" : "No", currentReview);
+
+        // 4. Bidirectional Cross-Tab Synchronization for Primary Reviewers
+        if (targetCanViewF11) {
+            if (normF11.recommendations.decision && !normF12.recommendations.decision) {
+                normF12.recommendations.decision = normF11.recommendations.decision;
+                normF12.recommendations.minorRevisionsComments = normF11.recommendations.minorRevisionsComments;
+                normF12.recommendations.majorRevisionComments = normF11.recommendations.majorRevisionComments;
+                normF12.recommendations.disapprovedReasons = normF11.recommendations.disapprovedReasons;
+            } else if (!normF11.recommendations.decision && normF12.recommendations.decision) {
+                normF11.recommendations.decision = normF12.recommendations.decision;
+                normF11.recommendations.minorRevisionsComments = normF12.recommendations.minorRevisionsComments;
+                normF11.recommendations.majorRevisionComments = normF12.recommendations.majorRevisionComments;
+                normF11.recommendations.disapprovedReasons = normF12.recommendations.disapprovedReasons;
+            }
+        }
+
+        setForm11Data(normF11);
+        setForm12Data(normF12);
+    }, [selectedReviewerId, protocol?.application_id, assignedReviewers, isOversightMode, isExemptedChairAutonomous, role, adminName]);
+
+    // Continuous Auto-Save Effect: Persists in-memory inputs across tab switches & browser reloads
+    useEffect(() => {
+        if (isReadOnly || !protocol?.application_id || !adminId) return;
+
+        const timer = setTimeout(() => {
+            localStorage.setItem(`rec_eval_${protocol.application_id}_f11_${adminId}`, JSON.stringify(form11Data));
+            localStorage.setItem(`rec_eval_${protocol.application_id}_f12_${adminId}`, JSON.stringify(form12Data));
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            setLastSavedTime(now);
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, [form11Data, form12Data, isReadOnly, protocol?.application_id, adminId]);
 
     // SweetAlert Modal Overlay Helper to guarantee dialog is layered in front of modal
     const fireSwal = (options) => {
@@ -560,19 +889,75 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         }
     };
 
-    // Submit Completed Evaluation Action
+    // Submit Completed Evaluation Action with complete questionnaire validation
     const handleSubmitEvaluation = () => {
         if (isReadOnly) return;
 
         const errors = [];
-        const activeDecision = activeCanViewForm11 ? form11Data.recommendations.decision : form12Data.recommendations.decision;
+
+        // 1. Validate Form 12 (Required for all assigned reviewers)
+        const consentNecessity = form12Data.guideQuestions.informedConsentNecessity?.necessaryToSeekConsent;
+        if (!consentNecessity) {
+            errors.push("Form 12 (Item 1): Necessity of informed consent must be evaluated (Yes / No / Unable To Assess).");
+        } else if (consentNecessity === 'No' && !form12Data.guideQuestions.informedConsentNecessity?.ifNoExplanation?.trim()) {
+            errors.push("Form 12 (Item 1): Please provide an explanation justifying waiver of consent.");
+        }
+
+        const f12Checklist = form12Data.guideQuestions.sufficientInformationChecklist || {};
+        const f12RequiredKeys = [
+            'purposeOfStudy', 'expectedDurationOfParticipation', 'proceduresToBeCarriedOut',
+            'discomfortsAndInconveniences', 'risksIncludingDiscrimination', 'randomAssignmentToTrialTreatments',
+            'benefitsToParticipants', 'alternativeTreatmentsOrProcedures', 'compensationOrMedicalTreatmentsForInjury',
+            'contactPersonForQuestionsAndInjuryAssistance', 'refusalOrDiscontinuanceWithoutPenalty',
+            'extentOfConfidentiality', 'writtenInSimpleUnderstandableLanguage', 'adequateProcessForVoluntaryConsent'
+        ];
+        const unselectedF12 = f12RequiredKeys.filter(key => !f12Checklist[key]);
+        if (unselectedF12.length > 0) {
+            errors.push(`Form 12 (Item 2 Checklist): ${unselectedF12.length} consent disclosure item(s) have not been evaluated.`);
+        }
+
+        // 2. Validate Form 11 (If Primary Reviewer or Exempted Chair)
+        if (activeCanViewForm11) {
+            const f11Items = [
+                { key: 'socialValue', label: '1. Social Value' },
+                { key: 'studyBackgroundAdequate', label: '2. Study Background' },
+                { key: 'researchQuestionsSupportedByLiterature', label: '3. Literature Alignment' },
+                { key: 'studyObjectivesSmart', label: '4. SMART Objectives' },
+                { key: 'humanParticipantsRequired', label: '6. Human Participants Justification' },
+                { key: 'vulnerabilityIssue', label: '7. Vulnerability Assessment' },
+                { key: 'vulnerabilityMechanismsInPlace', label: '8. Vulnerability Safeguards' },
+                { key: 'risksToParticipants', label: '9. Participant Risks' },
+                { key: 'riskMitigationMeasures', label: '10. Risk Mitigation Measures' },
+                { key: 'informedConsentAdequate', label: '11. Informed Consent Adequacy' },
+                { key: 'investigatorsAdequatelyTrained', label: '12. Investigator Qualifications' },
+                { key: 'conflictOfInterestDisclosure', label: '13. Conflict of Interest' },
+                { key: 'researchFacilitiesAdequate', label: '14. Research Facilities' }
+            ];
+
+            const unselectedF11 = f11Items.filter(item => !form11Data.guideQuestions?.[item.key]?.response);
+            if (unselectedF11.length > 0) {
+                errors.push(`Form 11 (Guide Questions): ${unselectedF11.length} core assessment item(s) have not been evaluated.`);
+            }
+
+            const designSub = form11Data.guideQuestions?.researchDesignAppropriate || {};
+            const designSubResponses = [
+                designSub.populationIdentifiedAndDefined?.response,
+                designSub.selectionOfParticipantsDescribed?.response,
+                designSub.sampleSizeJustified?.response,
+                designSub.dataAnalysisPlanAndDummyTables?.response
+            ];
+            if (designSubResponses.some(resp => !resp)) {
+                errors.push("Form 11 (Question 5): All research methodology sub-items (a-d) must be evaluated.");
+            }
+        }
+
+        // 3. Recommendation Decision
+        const activeDecision = activeCanViewForm11 ? form11Data?.recommendations?.decision : form12Data?.recommendations?.decision;
+        let comments = "";
 
         if (!activeDecision) {
             errors.push("An overall recommendation decision must be selected.");
-        }
-
-        let comments = "";
-        if (activeDecision.includes('Minor')) {
+        } else if (activeDecision.includes('Minor')) {
             comments = activeCanViewForm11 ? form11Data.recommendations.minorRevisionsComments : form12Data.recommendations.minorRevisionsComments;
             if (!comments || !comments.trim()) {
                 errors.push("Comments specifying the required Minor Revisions must be provided.");
@@ -592,10 +977,10 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         if (errors.length > 0) {
             fireSwal({
                 icon: 'warning',
-                title: 'Submission Requirements Incomplete',
+                title: 'Evaluation Incomplete',
                 html: `
                     <div class="text-start small">
-                        <p class="mb-2">Please resolve the following required fields before finalizing your review:</p>
+                        <p class="mb-2">Please complete the following required evaluation items before submitting:</p>
                         <ul class="text-danger ps-3 mb-0">
                             ${errors.map(err => `<li>${err}</li>`).join('')}
                         </ul>
@@ -1330,47 +1715,77 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                             </div>
                                         )}
 
-                                        {/* Form Navigation Tabs */}
-                                        <div className="d-flex justify-content-between align-items-center">
-                                            <ul className="nav nav-pills gap-2" role="tablist">
+                                        {/* Form Navigation Tabs & Draft Status Sub-bar */}
+                                        <div className="d-flex flex-column gap-2">
+                                            {/* Row 1: Form Tabs - Guaranteed Single Row (flex-nowrap & flex-fill) */}
+                                            <ul className="nav nav-pills flex-nowrap w-100 gap-2" role="tablist">
                                                 {activeCanViewForm11 && (
-                                                    <li className="nav-item">
+                                                    <li className="nav-item flex-fill">
                                                         <button
                                                             type="button"
-                                                            className={`nav-link btn-sm rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 ${
+                                                            className={`nav-link w-100 btn-sm rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-2 ${
                                                                 activeFormTab === 'form11' 
                                                                     ? 'active bg-theme-primary text-white shadow-sm' 
                                                                     : 'text-secondary bg-light'
                                                             }`}
                                                             onClick={() => setActiveFormTab('form11')}
                                                         >
-                                                            <i className="bi bi-file-earmark-ruled"></i>
-                                                            Form 11 (Protocol Evaluation)
+                                                            <i className="bi bi-file-earmark-ruled flex-shrink-0"></i>
+                                                            <span className="text-truncate">
+                                                                Form 11 <span className="fw-normal opacity-75 d-none d-md-inline">(Protocol Evaluation)</span>
+                                                            </span>
                                                         </button>
                                                     </li>
                                                 )}
 
-                                                <li className="nav-item">
+                                                <li className="nav-item flex-fill">
                                                     <button
                                                         type="button"
-                                                        className={`nav-link btn-sm rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-2 ${
+                                                        className={`nav-link w-100 btn-sm rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center justify-content-center gap-2 ${
                                                             activeFormTab === 'form12' 
                                                                 ? 'active bg-theme-primary text-white shadow-sm' 
                                                                 : 'text-secondary bg-light'
                                                         }`}
                                                         onClick={() => setActiveFormTab('form12')}
                                                     >
-                                                        <i className="bi bi-card-checklist"></i>
-                                                        Form 12 (Informed Consent)
+                                                        <i className="bi bi-card-checklist flex-shrink-0"></i>
+                                                        <span className="text-truncate">
+                                                            Form 12 <span className="fw-normal opacity-75 d-none d-md-inline">(Informed Consent)</span>
+                                                        </span>
                                                     </button>
                                                 </li>
                                             </ul>
 
-                                            {lastSavedTime && (
-                                                <small className="text-muted fst-italic d-none d-sm-inline">
-                                                    Draft saved {lastSavedTime}
-                                                </small>
-                                            )}
+                                            {/* Row 2: Form Draft Status Strip (Positioned BELOW tabs for superior visual hierarchy) */}
+                                            <div className="d-flex justify-content-between align-items-center px-1">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <span className="badge bg-light text-secondary border small fw-semibold">
+                                                        {activeFormTab === 'form11' ? 'Form 11 Worksheet' : 'Form 12 Worksheet'}
+                                                    </span>
+                                                    <span className="text-secondary small d-none d-sm-inline" style={{ fontSize: '0.78rem' }}>
+                                                        {activeFormTab === 'form11' ? 'Protocol Ethics Evaluation' : 'Informed Consent Checklist'}
+                                                    </span>
+                                                </div>
+
+                                                <div className="d-flex align-items-center gap-2">
+                                                    {lastSavedTime ? (
+                                                        <span className="badge bg-success-subtle text-success-emphasis border border-success-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
+                                                            <i className="bi bi-cloud-check-fill"></i>
+                                                            <span>Draft saved {lastSavedTime}</span>
+                                                        </span>
+                                                    ) : !isReadOnly ? (
+                                                        <span className="text-muted small d-inline-flex align-items-center gap-1" style={{ fontSize: '0.78rem' }}>
+                                                            <i className="bi bi-cloud-arrow-up text-secondary"></i>
+                                                            <span className="d-none d-sm-inline">Auto-save enabled</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
+                                                            <i className="bi bi-lock-fill"></i>
+                                                            <span>Locked</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1432,7 +1847,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('socialValue', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.socialValue.response === opt
+                                                                            form11Data?.guideQuestions?.socialValue?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1446,7 +1861,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Add reviewer comments or observations for social value..."
-                                                                value={form11Data.guideQuestions.socialValue.comment}
+                                                                value={(form11Data?.guideQuestions?.socialValue?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('socialValue', e.target.value)}
                                                             />
                                                         </div>
@@ -1464,7 +1879,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('studyBackgroundAdequate', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.studyBackgroundAdequate.response === opt
+                                                                            form11Data?.guideQuestions?.studyBackgroundAdequate?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1478,7 +1893,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Reviewer comments on background and theoretical rationale..."
-                                                                value={form11Data.guideQuestions.studyBackgroundAdequate.comment}
+                                                                value={(form11Data?.guideQuestions?.studyBackgroundAdequate?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('studyBackgroundAdequate', e.target.value)}
                                                             />
                                                         </div>
@@ -1496,7 +1911,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('researchQuestionsSupportedByLiterature', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.researchQuestionsSupportedByLiterature.response === opt
+                                                                            form11Data?.guideQuestions?.researchQuestionsSupportedByLiterature?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1510,7 +1925,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Reviewer comments..."
-                                                                value={form11Data.guideQuestions.researchQuestionsSupportedByLiterature.comment}
+                                                                value={(form11Data?.guideQuestions?.researchQuestionsSupportedByLiterature?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('researchQuestionsSupportedByLiterature', e.target.value)}
                                                             />
                                                         </div>
@@ -1528,7 +1943,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('studyObjectivesSmart', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.studyObjectivesSmart.response === opt
+                                                                            form11Data?.guideQuestions?.studyObjectivesSmart?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1542,7 +1957,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Reviewer comments on SMART objectives..."
-                                                                value={form11Data.guideQuestions.studyObjectivesSmart.comment}
+                                                                value={(form11Data?.guideQuestions?.studyObjectivesSmart?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('studyObjectivesSmart', e.target.value)}
                                                             />
                                                         </div>
@@ -1570,7 +1985,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                                     disabled={isReadOnly}
                                                                                     onClick={() => handleForm11CompositeChange(sub.key, opt)}
                                                                                     className={`btn btn-sm ${
-                                                                                        form11Data.guideQuestions.researchDesignAppropriate[sub.key]?.response === opt
+                                                                                        form11Data?.guideQuestions?.researchDesignAppropriate?.[sub.key]?.response === opt
                                                                                             ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                             : 'btn-outline-secondary'
                                                                                     }`}
@@ -1588,7 +2003,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Overall research methodology comments..."
-                                                                value={form11Data.guideQuestions.researchDesignAppropriate.comment}
+                                                                value={(form11Data?.guideQuestions?.researchDesignAppropriate?.comment || "")}
                                                                 onChange={(e) => {
                                                                     const val = e.target.value;
                                                                     setForm11Data(prev => ({
@@ -1618,7 +2033,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('humanParticipantsRequired', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.humanParticipantsRequired.response === opt
+                                                                            form11Data?.guideQuestions?.humanParticipantsRequired?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1632,7 +2047,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Reviewer comments..."
-                                                                value={form11Data.guideQuestions.humanParticipantsRequired.comment}
+                                                                value={(form11Data?.guideQuestions?.humanParticipantsRequired?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('humanParticipantsRequired', e.target.value)}
                                                             />
                                                         </div>
@@ -1650,7 +2065,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('vulnerabilityIssue', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.vulnerabilityIssue.response === opt
+                                                                            form11Data?.guideQuestions?.vulnerabilityIssue?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1664,7 +2079,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Reviewer comments on vulnerable groups..."
-                                                                value={form11Data.guideQuestions.vulnerabilityIssue.comment}
+                                                                value={(form11Data?.guideQuestions?.vulnerabilityIssue?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('vulnerabilityIssue', e.target.value)}
                                                             />
                                                         </div>
@@ -1682,7 +2097,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('vulnerabilityMechanismsInPlace', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.vulnerabilityMechanismsInPlace.response === opt
+                                                                            form11Data?.guideQuestions?.vulnerabilityMechanismsInPlace?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1696,7 +2111,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Reviewer comments on vulnerability protections..."
-                                                                value={form11Data.guideQuestions.vulnerabilityMechanismsInPlace.comment}
+                                                                value={(form11Data?.guideQuestions?.vulnerabilityMechanismsInPlace?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('vulnerabilityMechanismsInPlace', e.target.value)}
                                                             />
                                                         </div>
@@ -1714,7 +2129,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('risksToParticipants', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.risksToParticipants.response === opt
+                                                                            form11Data?.guideQuestions?.risksToParticipants?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1728,7 +2143,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm mb-3"
                                                                 placeholder="Comments on risks and probable harms..."
-                                                                value={form11Data.guideQuestions.risksToParticipants.comment}
+                                                                value={(form11Data?.guideQuestions?.risksToParticipants?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('risksToParticipants', e.target.value)}
                                                             />
 
@@ -1743,7 +2158,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('riskMitigationMeasures', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.riskMitigationMeasures.response === opt
+                                                                            form11Data?.guideQuestions?.riskMitigationMeasures?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1757,7 +2172,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Comments on risk mitigation and management..."
-                                                                value={form11Data.guideQuestions.riskMitigationMeasures.comment}
+                                                                value={(form11Data?.guideQuestions?.riskMitigationMeasures?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('riskMitigationMeasures', e.target.value)}
                                                             />
                                                         </div>
@@ -1775,7 +2190,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('informedConsentAdequate', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.informedConsentAdequate.response === opt
+                                                                            form11Data?.guideQuestions?.informedConsentAdequate?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1789,7 +2204,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Reviewer comments..."
-                                                                value={form11Data.guideQuestions.informedConsentAdequate.comment}
+                                                                value={(form11Data?.guideQuestions?.informedConsentAdequate?.comment || "")}
                                                                 onChange={(e) => handleForm11CommentChange('informedConsentAdequate', e.target.value)}
                                                             />
                                                         </div>
@@ -1807,7 +2222,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('investigatorsAdequatelyTrained', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.investigatorsAdequatelyTrained.response === opt
+                                                                            form11Data?.guideQuestions?.investigatorsAdequatelyTrained?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1828,7 +2243,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('conflictOfInterestDisclosure', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.conflictOfInterestDisclosure.response === opt
+                                                                            form11Data?.guideQuestions?.conflictOfInterestDisclosure?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1849,7 +2264,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                         disabled={isReadOnly}
                                                                         onClick={() => handleForm11QuestionChange('researchFacilitiesAdequate', opt)}
                                                                         className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                            form11Data.guideQuestions.researchFacilitiesAdequate.response === opt
+                                                                            form11Data?.guideQuestions?.researchFacilitiesAdequate?.response === opt
                                                                                 ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                                 : 'btn-outline-secondary'
                                                                         }`}
@@ -1870,7 +2285,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Enter any additional concerns or remarks..."
-                                                                value={form11Data.guideQuestions.otherConcernsComment}
+                                                                value={(form11Data?.guideQuestions?.otherConcernsComment || "")}
                                                                 onChange={(e) => {
                                                                     const val = e.target.value;
                                                                     setForm11Data(prev => ({
@@ -1899,7 +2314,11 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         <select
                                                             className="form-select"
                                                             disabled={isReadOnly}
-                                                            value={form11Data.recommendations.decision}
+                                                            value={
+                                                                form11Data?.recommendations?.decision?.includes('Minor') ? 'Minor Revisions Required' :
+                                                                form11Data?.recommendations?.decision?.includes('Major') ? 'Major Revision Required' :
+                                                                form11Data?.recommendations?.decision || ''
+                                                            }
                                                             onChange={(e) => {
                                                                 const val = e.target.value;
                                                                 setForm11Data(prev => ({
@@ -1908,6 +2327,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 }));
                                                             }}
                                                         >
+                                                            <option value="">-- Select Recommendation Decision --</option>
                                                             <option value="Approved">Approved (No ethical changes required)</option>
                                                             <option value="Minor Revisions Required">Minor Revisions Required</option>
                                                             <option value="Major Revision Required">Major Revision Required</option>
@@ -1915,7 +2335,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         </select>
                                                     </div>
 
-                                                    {form11Data.recommendations.decision === 'Minor Revisions Required' && (
+                                                    {(form11Data?.recommendations?.decision === 'Minor Revisions Required' || form11Data?.recommendations?.decision?.includes('Minor')) && (
                                                         <div className="mb-2">
                                                             <label className="small fw-semibold text-warning-emphasis">Minor Revisions Directives:</label>
                                                             <textarea
@@ -1935,7 +2355,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         </div>
                                                     )}
 
-                                                    {form11Data.recommendations.decision === 'Major Revision Required' && (
+                                                    {(form11Data?.recommendations?.decision === 'Major Revision Required' || form11Data?.recommendations?.decision?.includes('Major')) && (
                                                         <div className="mb-2">
                                                             <label className="small fw-semibold text-warning-emphasis">Major Revision Directives:</label>
                                                             <textarea
@@ -1955,7 +2375,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         </div>
                                                     )}
 
-                                                    {form11Data.recommendations.decision === 'Disapproved' && (
+                                                    {form11Data?.recommendations?.decision === 'Disapproved' && (
                                                         <div className="mb-2">
                                                             <label className="small fw-semibold text-danger">Reasons for Disapproval:</label>
                                                             <textarea
@@ -2030,7 +2450,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                     }));
                                                                 }}
                                                                 className={`btn btn-sm px-3 rounded-pill fw-semibold ${
-                                                                    form12Data.guideQuestions.informedConsentNecessity.necessaryToSeekConsent === opt
+                                                                    form12Data?.guideQuestions?.informedConsentNecessity?.necessaryToSeekConsent === opt
                                                                         ? (opt === 'Yes' ? 'btn-success' : opt === 'No' ? 'btn-danger' : 'btn-secondary')
                                                                         : 'btn-outline-secondary'
                                                                 }`}
@@ -2039,7 +2459,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                             </button>
                                                         ))}
                                                     </div>
-                                                    {form12Data.guideQuestions.informedConsentNecessity.necessaryToSeekConsent === 'No' && (
+                                                    {form12Data?.guideQuestions?.informedConsentNecessity?.necessaryToSeekConsent === 'No' && (
                                                         <div className="mt-2">
                                                             <label className="small text-danger fw-semibold">If NO, please explain grounds for waiver of consent:</label>
                                                             <textarea
@@ -2047,7 +2467,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 disabled={isReadOnly}
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Explain why waiver or alteration of consent is justified..."
-                                                                value={form12Data.guideQuestions.informedConsentNecessity.ifNoExplanation}
+                                                                value={(form12Data?.guideQuestions?.informedConsentNecessity?.ifNoExplanation || "")}
                                                                 onChange={(e) => {
                                                                     const val = e.target.value;
                                                                     setForm12Data(prev => ({
@@ -2092,7 +2512,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                             { key: 'writtenInSimpleUnderstandableLanguage', title: 'Written or presented in simple, understandable language?', type: 'yesNo' },
                                                             { key: 'adequateProcessForVoluntaryConsent', title: 'Adequate process for ensuring consent is truly voluntary?', type: 'yesNo' }
                                                         ].map((item, idx) => {
-                                                            const currentVal = form12Data.guideQuestions.sufficientInformationChecklist[item.key];
+                                                            const currentVal = form12Data?.guideQuestions?.sufficientInformationChecklist?.[item.key];
                                                             const options = item.type === 'yesNoNa' ? ['Not Applicable', 'Yes', 'No'] : ['Yes', 'No'];
                                                             return (
                                                                 <div key={item.key} className="d-flex justify-content-between align-items-center flex-wrap gap-2 p-2 bg-light rounded-2 border">
@@ -2130,7 +2550,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                             disabled={isReadOnly}
                                                             className="form-control form-control-sm"
                                                             placeholder="Note any translation errors, complex jargon, or missing assent forms..."
-                                                            value={form12Data.guideQuestions.sufficientInformationChecklist.otherConcernsComments}
+                                                            value={(form12Data?.guideQuestions?.sufficientInformationChecklist?.otherConcernsComments || "")}
                                                             onChange={(e) => handleForm12ChecklistChange('otherConcernsComments', e.target.value)}
                                                         />
                                                     </div>
@@ -2148,7 +2568,11 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         <select
                                                             className="form-select"
                                                             disabled={isReadOnly}
-                                                            value={form12Data.recommendations.decision}
+                                                            value={
+                                                                form12Data?.recommendations?.decision?.includes('Minor') ? 'Minor Revisions Required' :
+                                                                form12Data?.recommendations?.decision?.includes('Major') ? 'Major Revision Required' :
+                                                                form12Data?.recommendations?.decision || ''
+                                                            }
                                                             onChange={(e) => {
                                                                 const val = e.target.value;
                                                                 setForm12Data(prev => ({
@@ -2157,6 +2581,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 }));
                                                             }}
                                                         >
+                                                            <option value="">-- Select Recommendation Decision --</option>
                                                             <option value="Approved">Approved (Informed consent is adequate)</option>
                                                             <option value="Minor Revisions Required">Minor Revisions Required</option>
                                                             <option value="Major Revision Required">Major Revision Required</option>
@@ -2164,7 +2589,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         </select>
                                                     </div>
 
-                                                    {form12Data.recommendations.decision === 'Minor Revisions Required' && (
+                                                    {(form12Data?.recommendations?.decision === 'Minor Revisions Required' || form12Data?.recommendations?.decision?.includes('Minor')) && (
                                                         <textarea
                                                             rows="2"
                                                             disabled={isReadOnly}
@@ -2181,7 +2606,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         />
                                                     )}
 
-                                                    {form12Data.recommendations.decision === 'Major Revision Required' && (
+                                                    {(form12Data?.recommendations?.decision === 'Major Revision Required' || form12Data?.recommendations?.decision?.includes('Major')) && (
                                                         <textarea
                                                             rows="2"
                                                             disabled={isReadOnly}
@@ -2198,7 +2623,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         />
                                                     )}
 
-                                                    {form12Data.recommendations.decision === 'Disapproved' && (
+                                                    {form12Data?.recommendations?.decision === 'Disapproved' && (
                                                         <textarea
                                                             rows="2"
                                                             disabled={isReadOnly}

@@ -148,12 +148,12 @@ function AdminDashboard() {
 
             if (found) {
                 hasAutoOpenedRef.current = true;
-                if (found.status === 'CONSOLIDATION OF EVALUATION') {
+                if (isReviewerRole) {
+                    setOngoingReviewProtocol(found);
+                } else if (found.status === 'CONSOLIDATION OF EVALUATION') {
                     setConsolidationProtocol(found);
                 } else if (found.status === 'REVISIONS SUBMITTED') {
                     setVerificationProtocol(found);
-                } else if (isReviewerRole && found.status === 'ONGOING REVIEW') {
-                    setOngoingReviewProtocol(found);
                 } else {
                     setSelectedProtocol(found);
                 }
@@ -196,10 +196,17 @@ function AdminDashboard() {
             const hiddenStatuses = ['DRAFT', 'SUBMITTED'];
             hasAccess = !hiddenStatuses.includes(protocol.status);
         } else if (isReviewerRole) {
-            // Reviewers ONLY see protocols assigned to them under Ongoing Review
+            // Reviewers see protocols assigned to them under Ongoing Review and subsequent evaluation phases
             const isAssigned = Array.isArray(protocol.assigned_reviewers) &&
                 protocol.assigned_reviewers.some(rev => String(rev.reviewer_id) === String(adminId));
-            hasAccess = protocol.status === 'ONGOING REVIEW' && isAssigned;
+            const reviewerAccessibleStatuses = [
+                'ONGOING REVIEW', 
+                'CONSOLIDATION OF EVALUATION', 
+                'DECISION LETTER ISSUED', 
+                'REVISIONS SUBMITTED', 
+                'CLEARANCE GRANTED'
+            ];
+            hasAccess = reviewerAccessibleStatuses.includes(protocol.status) && isAssigned;
         }
 
         if (!hasAccess) return false;
@@ -232,7 +239,7 @@ function AdminDashboard() {
     });
 
     // Sorting of Protocols
-    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'AMENDMENTS', 'PAYMENT PENDING'];
+    const terminalStatuses = ['CLEARANCE GRANTED', 'REJECTED', 'WITHDRAWN', 'AMENDMENTS', 'PAYMENT PENDING', 'PROTOCOLS SUBMITTED'];
 
     // Add new terminalStatus to push the item down if the admin just needs to see it but not access (Role Based )
     if (role === 'Secretariat') {
@@ -275,12 +282,12 @@ function AdminDashboard() {
             { value: 'AMENDMENTS', label: 'Amendments' }
         ],
         'Primary Reviewer' : [
-            { value: 'All', label: 'All Assigned (Ongoing Review)' },
+            { value: 'All', label: 'All Assigned Protocols' },
             { value: 'PENDING_EVALUATION', label: 'Evaluation Pending' },
             { value: 'SUBMITTED_EVALUATION', label: 'Evaluation Submitted' },
         ],
         'Non-Primary Reviewer' : [
-            { value: 'All', label: 'All Assigned (Ongoing Review)' },
+            { value: 'All', label: 'All Assigned Protocols' },
             { value: 'PENDING_EVALUATION', label: 'Evaluation Pending' },
             { value: 'SUBMITTED_EVALUATION', label: 'Evaluation Submitted' },
         ],
@@ -315,7 +322,7 @@ function AdminDashboard() {
                         {/* Welcome Message */}
                         <div>
                             <h4 className='mb-0 fw-bold'>Welcome, {adminName}</h4>
-                            <small className='text-light opacity-50 d-none d-md-block'>AdZU Research Ethics Committee {role}</small>
+                            <small className='text-light opacity-50 d-none d-md-block'>AdZU Ethics Research Board {role}</small>
                         </div>
                     </div>
                 </div>
@@ -475,12 +482,12 @@ function AdminDashboard() {
                                                         <div 
                                                             className={`card h-100 border-0 shadow-sm rounded-4 overflow-hidden ${terminalStatuses.includes(protocol.status) ? 'opacity-50' : ''}`} 
                                                             onClick={() => {
-                                                                if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
+                                                                if (isReviewerRole) {
+                                                                    setOngoingReviewProtocol(protocol);
+                                                                } else if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
                                                                     setConsolidationProtocol(protocol);
                                                                 } else if (protocol.status === 'REVISIONS SUBMITTED') {
                                                                     setVerificationProtocol(protocol);
-                                                                } else if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
-                                                                    setOngoingReviewProtocol(protocol);
                                                                 } else {
                                                                     setSelectedProtocol(protocol);
                                                                 }
@@ -534,12 +541,16 @@ function AdminDashboard() {
                                                             <div className='brand-header text-white p-2 d-flex justify-content-between align-items-center' style={{ fontSize: '0.75rem' }}>
                                                                 <span className='fw-bold ps-2'>{protocol.date}</span>
                                                                 <span className='pe-2 text-white opacity-75'>
-                                                                    {protocol.status === 'CONSOLIDATION OF EVALUATION' ? (
+                                                                    {isReviewerRole ? (
+                                                                        myRev?.review_status === 'Completed' ? (
+                                                                            <><i className="bi bi-eye-fill me-1"></i>View Evaluation</>
+                                                                        ) : (
+                                                                            <><i className="bi bi-pencil-square me-1"></i>Evaluate</>
+                                                                        )
+                                                                    ) : protocol.status === 'CONSOLIDATION OF EVALUATION' ? (
                                                                         <><i className="bi bi-diagram-3-fill me-1"></i>Consolidate</>
                                                                     ) : protocol.status === 'REVISIONS SUBMITTED' ? (
                                                                         <><i className="bi bi-patch-check-fill me-1"></i>Verify</>
-                                                                    ) : isReviewerRole ? (
-                                                                        <><i className="bi bi-pencil-square me-1"></i>Evaluate</>
                                                                     ) : (
                                                                         <><i className="bi bi-eye me-1"></i>Details</>
                                                                     )}
@@ -612,12 +623,12 @@ function AdminDashboard() {
                                                             <tr
                                                                 key={index}
                                                                 onClick={() => {
-                                                                    if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
+                                                                    if (isReviewerRole) {
+                                                                        setOngoingReviewProtocol(protocol);
+                                                                    } else if (protocol.status === 'CONSOLIDATION OF EVALUATION') {
                                                                         setConsolidationProtocol(protocol);
                                                                     } else if (protocol.status === 'REVISIONS SUBMITTED') {
                                                                         setVerificationProtocol(protocol);
-                                                                    } else if (isReviewerRole && protocol.status === 'ONGOING REVIEW') {
-                                                                        setOngoingReviewProtocol(protocol);
                                                                     } else {
                                                                         setSelectedProtocol(protocol);
                                                                     }
@@ -692,17 +703,21 @@ function AdminDashboard() {
                                                                     {isReviewerRole ? (
                                                                         <button 
                                                                             type="button" 
-                                                                            className="btn btn-sm btn-primary fw-bold text-nowrap px-3 shadow-xs"
+                                                                            className={`btn btn-sm fw-bold text-nowrap px-3 shadow-xs ${
+                                                                                myRev?.review_status === 'Completed' 
+                                                                                    ? 'btn-outline-primary' 
+                                                                                    : 'btn-primary'
+                                                                            }`}
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                if (protocol.status === 'ONGOING REVIEW') {
-                                                                                    setOngoingReviewProtocol(protocol);
-                                                                                } else {
-                                                                                    setSelectedProtocol(protocol);
-                                                                                }
+                                                                                setOngoingReviewProtocol(protocol);
                                                                             }}
                                                                         >
-                                                                            <i className="bi bi-pencil-square me-1"></i>Evaluate
+                                                                            {myRev?.review_status === 'Completed' ? (
+                                                                                <><i className="bi bi-eye-fill me-1"></i>View Evaluation</>
+                                                                            ) : (
+                                                                                <><i className="bi bi-pencil-square me-1"></i>Evaluate</>
+                                                                            )}
                                                                         </button>
                                                                     ) : protocol.status === 'CONSOLIDATION OF EVALUATION' ? (
                                                                         <button 

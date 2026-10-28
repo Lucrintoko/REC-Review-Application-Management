@@ -75,6 +75,12 @@ try {
     $applicantRow = $stmtApp->fetch(PDO::FETCH_ASSOC);
     $applicant_name = $applicantRow ? $applicantRow['first_name'] . ' ' . $applicantRow['last_name'] : 'Applicant';
 
+    // Get current_cycle from research_applications
+    $getCycle = "SELECT current_cycle FROM research_applications WHERE application_id = :application_id LIMIT 1";
+    $stmtCycle = $db->prepare($getCycle);
+    $stmtCycle->execute([':application_id' => $application_id]);
+    $currentCycle = intval($stmtCycle->fetchColumn() ?: 1);
+
     // 1. Find the active/pending 'Review Type Assessment' history row
     $findPending = "SELECT history_id FROM application_history 
                     WHERE application_id = :application_id 
@@ -171,9 +177,9 @@ try {
         // Reviewer Assignment Logic for protocol_reviews
         // ---------------------------------------------------------------------
         $assignReviewerStmt = $db->prepare("
-            INSERT INTO protocol_reviews (application_id, reviewer_id, reviewer_role, review_status, assigned_date)
-            VALUES (:app_id, :reviewer_id, :reviewer_role, 'In Progress', CURRENT_DATE)
-            ON CONFLICT (application_id, reviewer_id) 
+            INSERT INTO protocol_reviews (application_id, reviewer_id, reviewer_role, review_status, assigned_date, cycle_number)
+            VALUES (:app_id, :reviewer_id, :reviewer_role, 'In Progress', CURRENT_DATE, :cycle_number)
+            ON CONFLICT (application_id, reviewer_id, cycle_number) 
             DO UPDATE SET 
                 reviewer_role = EXCLUDED.reviewer_role,
                 review_status = 'In Progress',
@@ -185,10 +191,30 @@ try {
 
         if ($review_type === 'Exempted') {
             // Autonomous Fast-Track: Ethics Chair is sole reviewer
+            $chairId = $admin_id;
+            $stmtRole = $db->prepare("SELECT role FROM admins WHERE admin_id = :aid");
+            $stmtRole->execute([':aid' => $admin_id]);
+            $currentRole = $stmtRole->fetchColumn();
+
+            if (!in_array($currentRole, ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'])) {
+                $stmtChair = $db->query("
+                    SELECT admin_id 
+                    FROM admins 
+                    WHERE role IN ('Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair') 
+                    ORDER BY admin_id ASC 
+                    LIMIT 1
+                ");
+                $lookupChairId = $stmtChair->fetchColumn();
+                if ($lookupChairId) {
+                    $chairId = intval($lookupChairId);
+                }
+            }
+
             $assignReviewerStmt->execute([
                 ':app_id'        => $application_id,
-                ':reviewer_id'   => $admin_id,
-                ':reviewer_role' => 'Ethics Chair'
+                ':reviewer_id'   => $chairId,
+                ':reviewer_role' => 'Ethics Chair',
+                ':cycle_number'  => $currentCycle
             ]);
         } elseif ($review_type === 'Expedited') {
             // 2 Primary Reviewers and 1 Non-Primary Reviewer
@@ -238,7 +264,8 @@ try {
                 $assignReviewerStmt->execute([
                     ':app_id'        => $application_id,
                     ':reviewer_id'   => $er['id'],
-                    ':reviewer_role' => $er['role']
+                    ':reviewer_role' => $er['role'],
+                    ':cycle_number'  => $currentCycle
                 ]);
             }
         } elseif ($review_type === 'Full Board') {
@@ -256,7 +283,8 @@ try {
                 $assignReviewerStmt->execute([
                     ':app_id'        => $application_id,
                     ':reviewer_id'   => $ar['admin_id'],
-                    ':reviewer_role' => $ar['role']
+                    ':reviewer_role' => $ar['role'],
+                    ':cycle_number'  => $currentCycle
                 ]);
             }
         }
@@ -283,5 +311,11 @@ try {
     }
     http_response_code(500);
     echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
+} catch (Exception $e) {
+    if (isset($db) && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    http_response_code(400);
+    echo json_encode(["success" => false, "message" => $e->getMessage()]);
 }
 ?>
