@@ -74,7 +74,7 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
         : isDecisionIssued
             ? "Decision letter issued. Awaiting revised protocol submission by proponent."
             : isPaymentReady
-            ? "Official receipt submitted. Click to inspect and verify payment."
+            ? "Official receipt submitted. Click to inspect receipt photo and verify payment."
             : isTerminal
                 ? "Protocol review lifecycle is completed"
                 : "Click to advance protocol workflow status";
@@ -99,8 +99,8 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
         if (isPaymentReady) {
             return (
                 <>
-                    <i className="bi bi-shield-check me-1"></i>
-                    Verify Payment
+                    <i className="bi bi-receipt-cutoff me-1"></i>
+                    Verify OR Payment
                 </>
             );
         }

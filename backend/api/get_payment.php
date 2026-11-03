@@ -20,7 +20,8 @@ if (isset($_GET['application_id'])) {
                      amount, 
                      TO_CHAR(payment_date, 'FMMonth DD, YYYY') as \"paymentDate\",
                      payment_status as \"paymentStatus\",
-                     verification_notes as \"applicantNotes\"
+                     verification_notes as \"applicantNotes\",
+                     proof_of_payment as \"receiptFilePath\"
               FROM payments 
               WHERE application_id = :application_id 
               LIMIT 1";
@@ -34,6 +35,16 @@ if (isset($_GET['application_id'])) {
         $payment = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($payment) {
+            $receiptPath = $payment['receiptFilePath'] ?? null;
+            $receiptUrl = null;
+            if (!empty($receiptPath)) {
+                $cleanPath = ltrim($receiptPath, '/');
+                $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $receiptUrl = $scheme . $host . '/REC-Review-Application-Management/backend/' . $cleanPath;
+            }
+            $payment['receiptUrl'] = $receiptUrl;
+
             echo json_encode(['success' => true, 'data' => $payment]);
         } else {
             // No payment found for this application yet
