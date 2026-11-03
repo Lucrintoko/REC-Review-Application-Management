@@ -31,35 +31,13 @@ function App() {
         {/* For Admin Login */}
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* For Admin Home Page */}
-        <Route 
-          path="/admin/home"
-          element={
-            <AdminLayout>
-              <AdminHome />
-            </AdminLayout>
-          }
-        />
-
-        {/* For Admin Dashboard */}
-        <Route 
-          path="/admin/dashboard" 
-          element={
-            <AdminLayout>
-              <AdminDashboard />
-            </AdminLayout>
-          }
-        />
-
-        {/* For Admin Analytics */}
-        <Route 
-          path="/admin/analytics"
-          element={
-            <AdminLayout>
-              <AdminAnalytics />
-            </AdminLayout>
-          }
-        />
+        {/* Admin Section with Shared Layout */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/home" replace />} />
+          <Route path="home" element={<AdminHome />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
+        </Route>
 
         {/* Testing .jsx files and checking formats */}
         {/* For Applicant Form */}
