@@ -25,6 +25,18 @@ const MONTH_SHORT = [
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
+// Concise discipline subtitles for expanded institutional slicer tiles
+export const SHORT_DISCIPLINE_MAP = {
+    CSITE: 'Science & Tech',
+    CON: 'Nursing',
+    SEd: 'Education',
+    SLA: 'Liberal Arts',
+    SMA: 'Management',
+    GS: 'Grad School',
+    SOM: 'Medicine',
+    Law: 'Law'
+};
+
 export { ACADEMIC_COLLEGES, ALL_INSTITUTIONAL_UNITS, EXTERNAL_ENTITY_DEF };
 
 // Matches Protocol to its Academic Unit or External Entity
@@ -180,6 +192,7 @@ function AdminAnalytics() {
     const collegeAnalyticsData = useMemo(() => {
         // Evaluate all protocols active within the selected temporal reporting window
         const periodProtocols = protocolData.filter(protocol => {
+            if (protocol.status === 'DRAFT') return false;
             const parts = parseDateParts(protocol.submission_date);
             if (!parts) return false;
             if (reportMode === 'yearly') {
@@ -239,6 +252,11 @@ function AdminAnalytics() {
         };
     }, [collegeAnalyticsData]);
 
+    // Institutional Total Protocols in Selected Period (mathematical sum of all college totals)
+    const totalPeriodProtocols = useMemo(() => {
+        return collegeAnalyticsData.reduce((sum, c) => sum + c.total, 0);
+    }, [collegeAnalyticsData]);
+
     // FILTERED DATA (Responds to the Selected College by the User)
     const activeCollegeObject = useMemo(() => {
         if (selectedCollege === 'ALL') return null;
@@ -266,8 +284,9 @@ function AdminAnalytics() {
     // 2. Clearances Issued in Period (matching clearance_date)
     const periodClearances = useMemo(() => {
         return filteredProtocols.filter(protocol => {
+            if (protocol.status !== 'CLEARANCE GRANTED') return false;
             const clrParts = parseDateParts(protocol.clearance_date) || 
-                (protocol.status === 'CLEARANCE GRANTED' ? parseDateParts(protocol.decision_date || protocol.submission_date) : null);
+                parseDateParts(protocol.decision_date || protocol.submission_date);
             if (!clrParts) return false;
             if (reportMode === 'yearly') {
                 return clrParts.year === selectedYear;
@@ -315,10 +334,13 @@ function AdminAnalytics() {
                     }
                 }
 
-                const clrParts = parseDateParts(p.clearance_date);
-                if (clrParts && clrParts.year === selectedYear) {
-                    const mName = MONTH_SHORT[clrParts.month];
-                    if (counts[mName]) counts[mName].clearances += 1;
+                if (p.status === 'CLEARANCE GRANTED') {
+                    const clrParts = parseDateParts(p.clearance_date) || 
+                                     parseDateParts(p.decision_date || p.submission_date);
+                    if (clrParts && clrParts.year === selectedYear) {
+                        const mName = MONTH_SHORT[clrParts.month];
+                        if (counts[mName]) counts[mName].clearances += 1;
+                    }
                 }
             });
 
@@ -347,10 +369,13 @@ function AdminAnalytics() {
                 }
             }
 
-            const clrParts = parseDateParts(p.clearance_date);
-            if (clrParts && clrParts.year === selectedYear && clrParts.month === selectedMonth) {
-                const bucket = weekBuckets.find(w => clrParts.day >= w.minDay && clrParts.day <= w.maxDay);
-                if (bucket) bucket.clearances += 1;
+            if (p.status === 'CLEARANCE GRANTED') {
+                const clrParts = parseDateParts(p.clearance_date) || 
+                                 parseDateParts(p.decision_date || p.submission_date);
+                if (clrParts && clrParts.year === selectedYear && clrParts.month === selectedMonth) {
+                    const bucket = weekBuckets.find(w => clrParts.day >= w.minDay && clrParts.day <= w.maxDay);
+                    if (bucket) bucket.clearances += 1;
+                }
             }
         });
 
@@ -639,7 +664,7 @@ function AdminAnalytics() {
                                 <span className='text-muted ms-2'>({reportingDateSpan})</span>
                             </div>
                             <div className='d-flex align-items-center gap-3'>
-                                <span>Total Protocols: <strong className='text-dark'>{filteredProtocols.length}</strong></span>
+                                <span>All-Time Protocols: <strong className='text-dark'>{filteredProtocols.length}</strong></span>
                                 <span>Period Intake: <strong className='text-success'>{periodIntakeProtocols.length}</strong></span>
                                 <span>Period Clearances: <strong className='text-primary'>{periodClearances.length}</strong></span>
                             </div>
@@ -666,7 +691,209 @@ function AdminAnalytics() {
 
                 {!isLoading && !fetchError && (
                     <>
-                        {/* EXECUTIVE STAT TILES */}
+                        {/* =========================================================================
+                            1. ELEVATED INSTITUTIONAL SCOPE SLICER DECK (Model A - Expansive Full-Width)
+                            ========================================================================= */}
+                        <div className='d-print-none mb-3'>
+                            {/* Header Context Label with Protocol Count & Reset Button */}
+                            <div className='d-flex align-items-center justify-content-between mb-2 px-1 flex-wrap gap-2'>
+                                <div className='d-flex align-items-center gap-2'>
+                                    <span className='text-secondary small fw-bold text-uppercase font-monospace' style={{ fontSize: '0.72rem', letterSpacing: '0.6px' }}>
+                                        <i className='bi bi-funnel-fill text-primary me-1'></i>Institutional Scope Slicer
+                                    </span>
+                                    <span className='text-body-tertiary'>•</span>
+                                    <span className='text-secondary small' style={{ fontSize: '0.75rem' }}>
+                                        Select an academic unit or external sector to isolate live executive telemetry
+                                    </span>
+                                </div>
+                                {selectedCollege !== 'ALL' && (
+                                    <button 
+                                        type='button' 
+                                        className='btn btn-sm btn-outline-danger rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5 shadow-xs transition-all'
+                                        style={{ fontSize: '0.72rem', minHeight: '28px' }}
+                                        onClick={() => setSelectedCollege('ALL')}
+                                        title='Reset scope to Campus Overview'
+                                    >
+                                        <i className='bi bi-arrow-counterclockwise'></i>
+                                        <span>Reset to All Units</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Full-Width Expansive Segmented Deck */}
+                            <div 
+                                className='bg-white p-2 rounded-4 border shadow-sm d-flex flex-wrap flex-xl-nowrap align-items-stretch gap-2 w-100 overflow-x-auto'
+                                role='tablist'
+                                aria-label='Institutional Scope Filter'
+                                style={{ scrollbarWidth: 'thin' }}
+                            >
+                                {/* Master "ALL UNITS" Tile */}
+                                <button
+                                    type='button'
+                                    role='tab'
+                                    aria-selected={selectedCollege === 'ALL'}
+                                    onClick={() => setSelectedCollege('ALL')}
+                                    title={`All Units - Campus Overview (${totalPeriodProtocols} protocols active)`}
+                                    className={`btn btn-sm rounded-3 text-center d-flex flex-column justify-content-center align-items-center flex-fill transition-all border ${
+                                        selectedCollege === 'ALL'
+                                            ? 'btn-primary border-primary shadow-sm text-white'
+                                            : 'btn-light bg-body-tertiary border-secondary-subtle text-dark hover-bg-light'
+                                    }`}
+                                    style={{ minHeight: '52px', minWidth: '105px' }}
+                                >
+                                    <div className='d-flex align-items-center justify-content-center gap-1.5 w-100'>
+                                        <i className={`bi bi-grid-fill ${selectedCollege === 'ALL' ? 'text-white' : 'text-primary'}`} style={{ fontSize: '0.85rem' }}></i>
+                                        <span className='fw-bold' style={{ fontSize: '0.82rem' }}>All Units</span>
+                                        <span className={`badge rounded-pill ms-0.5 ${
+                                            selectedCollege === 'ALL' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'
+                                        }`} style={{ fontSize: '0.68rem' }}>
+                                            {totalPeriodProtocols}
+                                        </span>
+                                    </div>
+                                    <span className={`small text-truncate mt-0.5 ${selectedCollege === 'ALL' ? 'text-white-50' : 'text-muted'}`} style={{ fontSize: '0.67rem' }}>
+                                        Campus Overview
+                                    </span>
+                                </button>
+
+                                {/* Vertical Demarcation Line (Desktop) */}
+                                <div className='vr d-none d-xl-block my-1 opacity-25 flex-shrink-0' style={{ minHeight: '38px' }}></div>
+
+                                {/* 8 Internal Academic College Tiles (Fluidly Distributed via flex-fill) */}
+                                {internalCollegesData.map(c => {
+                                    const isSelected = selectedCollege === c.code;
+                                    const shortLabel = SHORT_DISCIPLINE_MAP[c.code] || c.name;
+
+                                    return (
+                                        <button
+                                            key={c.code}
+                                            type='button'
+                                            role='tab'
+                                            aria-selected={isSelected}
+                                            onClick={() => setSelectedCollege(prev => prev === c.code ? 'ALL' : c.code)}
+                                            title={`${c.fullName} (${c.total} protocols active in period)`}
+                                            className={`btn btn-sm rounded-3 text-center d-flex flex-column justify-content-center align-items-center flex-fill transition-all border ${
+                                                isSelected
+                                                    ? 'shadow-sm text-white'
+                                                    : 'btn-light bg-body-tertiary border-secondary-subtle text-dark hover-bg-light'
+                                            }`}
+                                            style={{ 
+                                                minHeight: '52px',
+                                                minWidth: '95px',
+                                                backgroundColor: isSelected ? c.accentColor : undefined,
+                                                borderColor: isSelected ? c.accentColor : undefined,
+                                                color: isSelected ? '#ffffff' : undefined
+                                            }}
+                                        >
+                                            <div className='d-flex align-items-center justify-content-center gap-1.5 w-100'>
+                                                <i 
+                                                    className={`bi ${c.icon || 'bi-building'} flex-shrink-0`}
+                                                    style={{ 
+                                                        fontSize: '0.82rem',
+                                                        color: isSelected ? '#ffffff' : c.accentColor 
+                                                    }}
+                                                />
+                                                <span className='fw-bold' style={{ fontSize: '0.82rem' }}>{c.code}</span>
+                                                <span className={`badge rounded-pill ms-0.5 ${
+                                                    isSelected ? 'bg-white bg-opacity-25 text-white' : 'bg-secondary-subtle text-secondary'
+                                                }`} style={{ fontSize: '0.68rem' }}>
+                                                    {c.total}
+                                                </span>
+                                            </div>
+                                            <span 
+                                                className={`small text-truncate w-100 px-1 mt-0.5 ${isSelected ? 'text-white-50' : 'text-muted'}`}
+                                                style={{ fontSize: '0.67rem' }}
+                                            >
+                                                {shortLabel}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+
+                                {/* Vertical Demarcation Line (Desktop) */}
+                                <div className='vr d-none d-xl-block my-1 opacity-25 flex-shrink-0' style={{ minHeight: '38px' }}></div>
+
+                                {/* External Partner Entities (EXT) Tile */}
+                                <button
+                                    type='button'
+                                    role='tab'
+                                    aria-selected={selectedCollege === externalEntityData.code}
+                                    onClick={() => setSelectedCollege(prev => prev === externalEntityData.code ? 'ALL' : externalEntityData.code)}
+                                    title={`${externalEntityData.fullName} (${externalEntityData.total} protocols active in period)`}
+                                    className={`btn btn-sm rounded-3 text-center d-flex flex-column justify-content-center align-items-center flex-fill transition-all border ${
+                                        selectedCollege === externalEntityData.code
+                                            ? 'shadow-sm text-white'
+                                            : 'btn-light bg-body-tertiary border-secondary-subtle text-dark hover-bg-light'
+                                    }`}
+                                    style={{ 
+                                        minHeight: '52px',
+                                        minWidth: '105px',
+                                        backgroundColor: selectedCollege === externalEntityData.code ? externalEntityData.accentColor : undefined,
+                                        borderColor: selectedCollege === externalEntityData.code ? externalEntityData.accentColor : undefined,
+                                        color: selectedCollege === externalEntityData.code ? '#ffffff' : undefined
+                                    }}
+                                >
+                                    <div className='d-flex align-items-center justify-content-center gap-1.5 w-100'>
+                                        <i 
+                                            className={`bi ${externalEntityData.icon} flex-shrink-0`}
+                                            style={{ 
+                                                fontSize: '0.82rem',
+                                                color: selectedCollege === externalEntityData.code ? '#ffffff' : externalEntityData.accentColor 
+                                            }}
+                                        />
+                                        <span className='fw-bold' style={{ fontSize: '0.82rem' }}>{externalEntityData.code}</span>
+                                        <span className={`badge rounded-pill ms-0.5 ${
+                                            selectedCollege === externalEntityData.code ? 'bg-white bg-opacity-25 text-white' : 'bg-info-subtle text-info-emphasis'
+                                        }`} style={{ fontSize: '0.68rem' }}>
+                                            {externalEntityData.total}
+                                        </span>
+                                    </div>
+                                    <span className={`small text-truncate mt-0.5 ${selectedCollege === externalEntityData.code ? 'text-white-50' : 'text-muted'}`} style={{ fontSize: '0.67rem' }}>
+                                        External Entities
+                                    </span>
+                                </button>
+                            </div>
+
+                            {/* Active Scope Collar Banner (Progressively disclosed when a specific unit is isolated) */}
+                            {selectedCollege !== 'ALL' && activeCollegeObject && (
+                                <div 
+                                    className='alert alert-dismissible d-flex align-items-center justify-content-between p-2.5 px-3 mt-2.5 mb-0 rounded-3 border shadow-xs fade show'
+                                    style={{ 
+                                        backgroundColor: `${activeCollegeObject.accentColor}12`, 
+                                        borderColor: `${activeCollegeObject.accentColor}40` 
+                                    }}
+                                    role='status'
+                                >
+                                    <div className='d-flex align-items-center gap-2.5 text-dark small'>
+                                        <span 
+                                            className='badge rounded-pill fw-bold text-white px-2.5 py-1 shadow-xs'
+                                            style={{ backgroundColor: activeCollegeObject.accentColor, fontSize: '0.74rem' }}
+                                        >
+                                            <i className={`bi ${activeCollegeObject.icon || 'bi-building'} me-1`}></i>
+                                            {activeCollegeObject.code}
+                                        </span>
+                                        <span className='fw-bold text-truncate'>
+                                            {activeCollegeObject.fullName}
+                                        </span>
+                                        <span className='text-secondary d-none d-md-inline'>
+                                            — Showing <strong className='text-dark'>{filteredProtocols.length}</strong> protocols in current reporting scope
+                                        </span>
+                                    </div>
+                                    <button
+                                        type='button'
+                                        className='btn btn-sm btn-outline-secondary rounded-pill py-1 px-3 ms-2 text-nowrap d-flex align-items-center gap-1 shadow-xs'
+                                        onClick={() => setSelectedCollege('ALL')}
+                                        title='Reset scope back to all university units'
+                                    >
+                                        <i className='bi bi-arrow-counterclockwise'></i>
+                                        <span className='small fw-semibold'>Reset Scope</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* =========================================================================
+                            2. EXECUTIVE STAT TILES (Reactivity wired to active scope filter)
+                            ========================================================================= */}
                         <ExecutiveKpiTiles 
                             reportMode={reportMode}
                             selectedYear={selectedYear}
@@ -679,7 +906,9 @@ function AdminAnalytics() {
                             monthShortNames={MONTH_SHORT}
                         />
 
-                        {/* INSTITUTIONAL & EXTERNAL REVIEW DISTRIBUTION HYBRID SECTION */}
+                        {/* =========================================================================
+                            3. FULL-WIDTH INSTITUTIONAL & EXTERNAL REVIEW DISTRIBUTION SECTION
+                            ========================================================================= */}
                         <div className='card border-0 shadow-sm rounded-4 mb-4'>
                             <div className='card-body p-3 p-md-4'>
                                 {/* Section Header */}
@@ -687,174 +916,68 @@ function AdminAnalytics() {
                                     <div>
                                         <h5 className='fw-bold mb-1 text-dark d-flex align-items-center gap-2'>
                                             <i className='bi bi-buildings text-primary'></i>
-                                            <span>Institutional & External Review Distribution</span>
+                                            <span>Comparative Institutional Protocol Volume & Clearance Status</span>
                                         </h5>
                                         <small className='text-secondary'>
-                                            Review workload, protocol volume, and clearance distribution across the 8 AdZU academic units and external partner institutions
+                                            Cross-campus review workload, protocol volume, and clearance status distribution across all 8 AdZU academic units and external partner institutions
                                         </small>
                                     </div>
-                                    {selectedCollege !== 'ALL' && (
-                                        <button 
-                                            type='button'
-                                            className='btn btn-sm btn-outline-danger rounded-pill d-flex align-items-center gap-1 shadow-xs'
-                                            onClick={() => setSelectedCollege('ALL')}
-                                        >
-                                            <i className='bi bi-x-circle'></i>
-                                            <span>Reset Focus ({selectedCollege})</span>
-                                        </button>
-                                    )}
+                                    <div className='d-flex align-items-center gap-2'>
+                                        <span className='badge bg-light text-secondary border font-monospace small px-2.5 py-1.5'>
+                                            {reportMode === 'monthly' ? `${MONTH_SHORT[selectedMonth]} ${selectedYear}` : `CY ${selectedYear}`}
+                                        </span>
+                                        {selectedCollege !== 'ALL' && (
+                                            <button 
+                                                type='button'
+                                                className='btn btn-sm btn-outline-danger rounded-pill d-flex align-items-center gap-1 shadow-xs'
+                                                onClick={() => setSelectedCollege('ALL')}
+                                                title={`Reset scope back to all units (Currently: ${selectedCollege})`}
+                                            >
+                                                <i className='bi bi-x-circle'></i>
+                                                <span>Reset Focus ({selectedCollege})</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className='row g-4'>
-                                    {/* Left: Stacked Horizontal Bar Chart (col-12 col-lg-7) */}
-                                    <div className='col-12 col-lg-7'>
-                                        <div className='p-3 bg-white rounded-3 border h-100 d-flex flex-column'>
-                                            <div className='d-flex justify-content-between align-items-center mb-2'>
-                                                <h6 className='fw-bold text-dark mb-0'>Protocol Volume & Clearance Status</h6>
-                                                <span className='badge bg-light text-secondary border font-monospace small'>
-                                                    {reportMode === 'monthly' ? `${MONTH_SHORT[selectedMonth]} ${selectedYear}` : `CY ${selectedYear}`}
-                                                </span>
-                                            </div>
-                                            <div style={{ width: '100%', height: 385 }}>
-                                                <ResponsiveContainer>
-                                                    <BarChart data={collegeAnalyticsData} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E9ECEF" />
-                                                        <XAxis type="number" tick={{ fontSize: 12, fill: '#6C757D' }} />
-                                                        <YAxis 
-                                                            dataKey="code" 
-                                                            type="category" 
-                                                            width={55} 
-                                                            tick={({ x, y, payload }) => {
-                                                                const isExt = payload.value === 'EXT';
-                                                                return (
-                                                                    <text 
-                                                                        x={x} 
-                                                                        y={y} 
-                                                                        dy={4} 
-                                                                        textAnchor="end" 
-                                                                        fontSize={11} 
-                                                                        fontWeight={isExt ? 'bold' : '600'} 
-                                                                        fill={isExt ? '#087990' : '#003366'}
-                                                                    >
-                                                                        {payload.value}
-                                                                    </text>
-                                                                );
-                                                            }} 
-                                                        />
-                                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                                                        <Legend iconType="circle" wrapperStyle={{ paddingTop: '8px', fontSize: '12px' }} />
-                                                        <Bar dataKey="cleared" name="Clearance Granted" stackId="col" fill="#198754" />
-                                                        <Bar dataKey="ongoing" name="Under Review" stackId="col" fill="#D4AF37" />
-                                                        <Bar dataKey="pending" name="Pending / Revisions" stackId="col" fill="#003366" radius={[0, 4, 4, 0]} />
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Right: Tiered Institutional Focus Matrix (col-12 col-lg-5) */}
-                                    <div className='col-12 col-lg-5'>
-                                        <div className='p-3 bg-white rounded-3 border h-100 d-flex flex-column'>
-                                            <div className='d-flex justify-content-between align-items-center mb-2'>
-                                                <h6 className='fw-bold text-dark mb-0'>Institutional Focus Matrix</h6>
-                                                <small className='text-muted fst-italic'>Click to isolate metrics</small>
-                                            </div>
-
-                                            {/* Row 1: The 8 Internal Academic Colleges (2 Cols x 4 Rows) */}
-                                            <div className='row g-2 align-content-start mb-2'>
-                                                {internalCollegesData.map(col => {
-                                                    const isSelected = selectedCollege === col.code;
+                                {/* Full-Width Horizontal Stacked Bar Chart */}
+                                <div style={{ width: '100%', height: 380 }}>
+                                    <ResponsiveContainer width='100%' height={380}>
+                                        <BarChart 
+                                            data={collegeAnalyticsData} 
+                                            layout='vertical' 
+                                            margin={{ top: 10, right: 30, left: 10, bottom: 5 }}
+                                        >
+                                            <CartesianGrid strokeDasharray='3 3' horizontal={true} vertical={false} stroke='#E9ECEF' />
+                                            <XAxis type='number' tick={{ fontSize: 12, fill: '#6C757D' }} />
+                                            <YAxis 
+                                                dataKey='code' 
+                                                type='category' 
+                                                width={55} 
+                                                tick={({ x, y, payload }) => {
+                                                    const isExt = payload.value === 'EXT';
                                                     return (
-                                                        <div key={col.code} className='col-6'>
-                                                            <div
-                                                                className={`p-2 rounded-3 border transition-all h-100 d-flex flex-column justify-content-between ${
-                                                                    isSelected 
-                                                                        ? 'border-primary bg-primary bg-opacity-10 shadow-sm' 
-                                                                        : 'bg-light bg-opacity-50 border-light-subtle hover-shadow'
-                                                                }`}
-                                                                style={{ cursor: 'pointer', transition: 'all 0.15s ease-in-out', minHeight: '70px' }}
-                                                                onClick={() => setSelectedCollege(prev => prev === col.code ? 'ALL' : col.code)}
-                                                                role='button'
-                                                                tabIndex={0}
-                                                                title={`${col.fullName} (${col.total} protocols)`}
-                                                            >
-                                                                <div className='d-flex justify-content-between align-items-center mb-1'>
-                                                                    <span 
-                                                                        className='badge rounded-pill px-2 py-1 small fw-bold text-white'
-                                                                        style={{ backgroundColor: col.accentColor, fontSize: '0.68rem' }}
-                                                                    >
-                                                                        <i className={`bi ${col.icon} me-1`}></i>
-                                                                        {col.code}
-                                                                    </span>
-                                                                    <strong className='fs-6 text-dark'>{col.total}</strong>
-                                                                </div>
-
-                                                                <div className='text-truncate fw-semibold text-secondary' style={{ fontSize: '0.72rem' }}>
-                                                                    {col.name}
-                                                                </div>
-
-                                                                <div className='d-flex justify-content-between align-items-center mt-1 pt-1 border-top border-light-subtle' style={{ fontSize: '0.68rem' }}>
-                                                                    <span className='text-success fw-semibold'>
-                                                                        <i className='bi bi-check-circle-fill me-1'></i>
-                                                                        {col.cleared} Clr
-                                                                    </span>
-                                                                    <span className='text-muted'>{col.rate}%</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                        <text 
+                                                            x={x} 
+                                                            y={y} 
+                                                            dy={4} 
+                                                            textAnchor='end' 
+                                                            fontSize={11} 
+                                                            fontWeight={isExt ? 'bold' : '600'} 
+                                                            fill={isExt ? '#087990' : '#003366'}
+                                                        >
+                                                            {payload.value}
+                                                        </text>
                                                     );
-                                                })}
-                                            </div>
-
-                                            {/* Row 2: Featured Full-Width External Entities Card (col-12) */}
-                                            <div className='mt-auto pt-2 border-top border-light-subtle'>
-                                                <div
-                                                    className={`p-2 p-md-3 rounded-3 border transition-all ${
-                                                        selectedCollege === 'EXT' 
-                                                            ? 'border-info bg-info bg-opacity-10 shadow-sm' 
-                                                            : 'bg-info-subtle bg-opacity-25 border-info-subtle hover-shadow'
-                                                    }`}
-                                                    style={{ cursor: 'pointer', transition: 'all 0.15s ease-in-out' }}
-                                                    onClick={() => setSelectedCollege(prev => prev === 'EXT' ? 'ALL' : 'EXT')}
-                                                    role='button'
-                                                    tabIndex={0}
-                                                    title='External Entities & Partner Institutions (ZCMC, DOH CHD IX, WMSU, Brent Hospital, NGOs)'
-                                                >
-                                                    <div className='d-flex justify-content-between align-items-center mb-1'>
-                                                        <div className='d-flex align-items-center gap-2'>
-                                                            <span 
-                                                                className='badge rounded-pill px-2 py-1 small fw-bold text-white'
-                                                                style={{ backgroundColor: externalEntityData.accentColor }}
-                                                            >
-                                                                <i className={`bi ${externalEntityData.icon} me-1`}></i>
-                                                                {externalEntityData.code}
-                                                            </span>
-                                                            <strong className='text-dark' style={{ fontSize: '0.82rem' }}>
-                                                                {externalEntityData.name}
-                                                            </strong>
-                                                        </div>
-                                                        <strong className='fs-6 text-dark'>{externalEntityData.total}</strong>
-                                                    </div>
-
-                                                    <p className='text-muted small mb-2 lh-sm' style={{ fontSize: '0.70rem' }}>
-                                                        ZCMC, DOH CHD IX, WMSU, Brent Hospital, Pharma & NGOs
-                                                    </p>
-
-                                                    <div className='d-flex justify-content-between align-items-center pt-1 border-top border-info-subtle' style={{ fontSize: '0.72rem' }}>
-                                                        <span className='text-info-emphasis fw-semibold'>
-                                                            <i className='bi bi-activity me-1'></i>
-                                                            {externalEntityData.ongoing} Under Review
-                                                        </span>
-                                                        <span className='text-success fw-bold'>
-                                                            <i className='bi bi-check-circle-fill me-1'></i>
-                                                            {externalEntityData.cleared} Cleared ({externalEntityData.rate}%)
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
+                                                }} 
+                                            />
+                                            <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                                            <Legend iconType='circle' wrapperStyle={{ paddingTop: '8px', fontSize: '12px' }} />
+                                            <Bar dataKey='ongoing' name='Ongoing Review' stackId='col' fill='#D4AF37' />
+                                            <Bar dataKey='pending' name='Pending / Revisions' stackId='col' fill='#003366' />
+                                            <Bar dataKey='cleared' name='Clearance Granted' stackId='col' fill='#198754' radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
                         </div>

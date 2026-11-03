@@ -21,7 +21,13 @@ export function ExecutiveKpiTiles({
     // 1. COMPUTED METRICS & WORKLOAD DERIVATIONS
     // -------------------------------------------------------------------------
 
-    // Card 1: Intake Metrics
+    // Card 1: Submitted Protocols (Aligned identically with AdminHome.jsx)
+    const totalProtocols = filteredProtocols.length;
+    const totalActiveProtocols = useMemo(() => {
+        return filteredProtocols.filter(p => !['DRAFT', 'REJECTED', 'WITHDRAWN'].includes(p.status)).length;
+    }, [filteredProtocols]);
+
+    // Period Intake Metrics (used for Card 2 yield context)
     const intakeCount = periodIntakeProtocols.length;
     const periodLabel = reportMode === 'yearly' 
         ? `CY ${selectedYear}` 
@@ -29,6 +35,10 @@ export function ExecutiveKpiTiles({
 
     // Card 2: Clearances & Clearance Yield Rate
     const clearanceCount = periodClearances.length;
+    const totalClearancesAllTime = useMemo(() => {
+        return filteredProtocols.filter(p => p.status === 'CLEARANCE GRANTED').length;
+    }, [filteredProtocols]);
+
     const clearanceYieldRate = useMemo(() => {
         if (intakeCount === 0) return 0;
         return Math.round((clearanceCount / intakeCount) * 100);
@@ -111,7 +121,8 @@ export function ExecutiveKpiTiles({
             <div className="row g-3 row-cols-1 row-cols-sm-2 row-cols-xl-4">
 
                 {/* =========================================================
-                    CARD 1: TOTAL INTAKE (AdZU Deep Blue #003366)
+                    CARD 1: SUBMITTED PROTOCOLS (AdZU Deep Blue #003366)
+                    Strategy 1: Dynamic Scope Badge + Period Intake Metric
                     ========================================================= */}
                 <div className="col">
                     <div 
@@ -123,14 +134,14 @@ export function ExecutiveKpiTiles({
                         <div className="d-flex justify-content-between align-items-start mb-2">
                             <div>
                                 <span className="text-uppercase text-secondary fw-bold small font-monospace tracking-wide" style={{ fontSize: '0.72rem', letterSpacing: '0.6px' }}>
-                                    Total Intake
+                                    Submitted Protocols
                                 </span>
                                 <div className="d-flex align-items-baseline gap-2 mt-1">
                                     <h2 className="fs-2 fw-bolder text-dark mb-0 lh-1">
                                         {intakeCount}
                                     </h2>
-                                    <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small fw-semibold" style={{ fontSize: '0.72rem' }}>
-                                        {periodLabel}
+                                    <span className="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle rounded-pill small fw-semibold" style={{ fontSize: '0.72rem' }}>
+                                        {periodLabel} Intake
                                     </span>
                                 </div>
                             </div>
@@ -143,11 +154,9 @@ export function ExecutiveKpiTiles({
                         </div>
 
                         <div className="d-flex align-items-center justify-content-between pt-3 mt-auto border-top border-light-subtle text-secondary small" style={{ fontSize: '0.75rem' }}>
-                            <span className="text-truncate">
-                                {selectedCollege !== 'ALL' ? (activeCollegeObject?.name || selectedCollege) : 'All Units & Partners'}
-                            </span>
-                            <span className="fw-medium text-dark font-monospace">
-                                {filteredProtocols.length} Total
+                            <span>{totalActiveProtocols} Active In-Flight</span>
+                            <span className="text-truncate ms-2 fw-medium text-dark font-monospace" style={{ fontSize: '0.72rem' }}>
+                                {selectedCollege !== 'ALL' ? (activeCollegeObject?.name || selectedCollege) : `${totalProtocols} All-Time`}
                             </span>
                         </div>
                     </div>
@@ -155,6 +164,7 @@ export function ExecutiveKpiTiles({
 
                 {/* =========================================================
                     CARD 2: CLEARANCES GRANTED (Emerald Green #198754)
+                    Strategy 1: Dynamic Scope Badge + Period Clearance Metric
                     ========================================================= */}
                 <div className="col">
                     <div 
@@ -166,7 +176,7 @@ export function ExecutiveKpiTiles({
                         <div className="d-flex justify-content-between align-items-start mb-2">
                             <div>
                                 <span className="text-uppercase text-secondary fw-bold small font-monospace tracking-wide" style={{ fontSize: '0.72rem', letterSpacing: '0.6px' }}>
-                                    Clearances Issued
+                                    Clearances Granted
                                 </span>
                                 <div className="d-flex align-items-baseline gap-2 mt-1">
                                     <h2 className="fs-2 fw-bolder text-dark mb-0 lh-1">
@@ -174,7 +184,7 @@ export function ExecutiveKpiTiles({
                                     </h2>
                                     <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill small fw-semibold" style={{ fontSize: '0.72rem' }}>
                                         <i className="bi bi-arrow-up-right me-1"></i>
-                                        {clearanceYieldRate}% Yield
+                                        {clearanceYieldRate}% Period Yield
                                     </span>
                                 </div>
                             </div>
@@ -188,10 +198,10 @@ export function ExecutiveKpiTiles({
 
                         <div className="d-flex align-items-center justify-content-between pt-3 mt-auto border-top border-light-subtle text-secondary small" style={{ fontSize: '0.75rem' }}>
                             <span className="text-truncate">
-                                Formally Certified
+                                Certified in {periodLabel}
                             </span>
-                            <span className="text-success fw-semibold">
-                                {clearanceCount > 0 ? 'Approvals Logged' : 'Pending Approvals'}
+                            <span className="text-success fw-semibold font-monospace" style={{ fontSize: '0.72rem' }}>
+                                {totalClearancesAllTime} All-Time
                             </span>
                         </div>
                     </div>
@@ -210,7 +220,7 @@ export function ExecutiveKpiTiles({
                         <div className="d-flex justify-content-between align-items-start mb-2">
                             <div>
                                 <span className="text-uppercase text-secondary fw-bold small font-monospace tracking-wide" style={{ fontSize: '0.72rem', letterSpacing: '0.6px' }}>
-                                    Active Workload
+                                    Ongoing Review
                                 </span>
                                 <div className="d-flex align-items-baseline gap-2 mt-1">
                                     <h2 className="fs-2 fw-bolder text-dark mb-0 lh-1">
