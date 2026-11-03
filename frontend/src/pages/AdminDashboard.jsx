@@ -80,9 +80,13 @@ function AdminDashboard() {
     // Ingest URL Search Parameters for deep-linking
     const urlSearchParam = searchParams.get('search') || '';
     const urlStatusParam = searchParams.get('status') || '';
+    const urlTypeParam = searchParams.get('type') || '';
 
     // For Status Filtering (reset to 'All' if a specific protocol search is present)
     const [filterStatus, setFilterStatus] = useState(urlSearchParam ? 'All' : (urlStatusParam || 'All'));
+
+    // For Review Track Filtering (from URL deep-linking: EXEMPTED, EXPEDITED, FULL BOARD, UNDETERMINED)
+    const [filterType, setFilterType] = useState(urlTypeParam ? urlTypeParam.toUpperCase() : 'All');
 
     // Tracking of what user is typing
     const [searchInput, setSearchInput] = useState(urlSearchParam);
@@ -94,12 +98,19 @@ function AdminDashboard() {
     useEffect(() => {
         const q = searchParams.get('search') || '';
         const st = searchParams.get('status') || '';
+        const tp = searchParams.get('type') || '';
         if (q) {
             setSearchInput(q);
             setActiveSearchQuery(q);
             setFilterStatus('All'); // Prevent search query from being masked by existing status filter
         } else if (st && st !== 'All') {
             setFilterStatus(st);
+        }
+
+        if (tp && tp !== 'All') {
+            setFilterType(tp.toUpperCase());
+        } else if (!tp) {
+            setFilterType('All');
         }
     }, [searchParams]);
 
@@ -123,6 +134,7 @@ function AdminDashboard() {
         setSearchInput('');
         setActiveSearchQuery('');
         setFilterStatus('All');
+        setFilterType('All');
         setSearchParams({});
     };
 
@@ -225,6 +237,17 @@ function AdminDashboard() {
             }
         }
 
+        // Review Track Filter Logic (from URL deep-linking or active track selection)
+        let matchesType = true;
+        if (filterType !== 'All') {
+            const normalizedFilter = filterType.replace('_', ' ').toUpperCase();
+            if (normalizedFilter === 'UNDETERMINED') {
+                matchesType = !['EXEMPTED', 'EXPEDITED', 'FULL BOARD'].includes(protocol.type);
+            } else {
+                matchesType = protocol.type === normalizedFilter;
+            }
+        }
+
         // Multi-field Protocol Search Logic (ID, Protocol Code, Title, Researchers)
         const query = (activeSearchQuery || '').trim().toLowerCase();
         const matchesSearch = !query ||
@@ -235,7 +258,7 @@ function AdminDashboard() {
             (Array.isArray(protocol.researchers) && protocol.researchers.some(r => r.toLowerCase().includes(query)));
 
         // Protocol Passes if it matches all Logics
-        return matchesStatus && matchesSearch;
+        return matchesStatus && matchesSearch && matchesType;
     });
 
     // Sorting of Protocols
@@ -403,7 +426,26 @@ function AdminDashboard() {
                                 <div className='d-flex justify-content-between align-items-center mb-4'>
 
                                     {/* Left Side */}
-                                    <h5 className='card-title fw-bold mb-0'>Research Protocols</h5>
+                                    <div className="d-flex align-items-center gap-2 flex-wrap">
+                                        <h5 className='card-title fw-bold mb-0'>Research Protocols</h5>
+                                        {filterType !== 'All' && (
+                                            <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small fw-semibold d-inline-flex align-items-center gap-1">
+                                                Track: {filterType}
+                                                <button
+                                                    type="button"
+                                                    className="btn-close ms-1"
+                                                    style={{ fontSize: '0.60rem' }}
+                                                    aria-label="Clear review track filter"
+                                                    onClick={() => {
+                                                        setFilterType('All');
+                                                        const nextParams = new URLSearchParams(searchParams);
+                                                        nextParams.delete('type');
+                                                        setSearchParams(nextParams);
+                                                    }}
+                                                />
+                                            </span>
+                                        )}
+                                    </div>
 
                                     {/* Right Side */}
                                     <div className='btn-group shadow-sm'>
@@ -428,7 +470,7 @@ function AdminDashboard() {
                                 </div>
 
                                 {/* Contextual Active Filter & Triage Banner */}
-                                {(activeSearchQuery || filterStatus !== 'All') && (
+                                {(activeSearchQuery || filterStatus !== 'All' || filterType !== 'All') && (
                                     <div className="alert alert-primary-subtle border border-primary-subtle rounded-3 py-2 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 text-primary-emphasis">
                                         <div className="d-flex align-items-center gap-2 small">
                                             <i className="bi bi-funnel-fill text-primary fs-6"></i>
@@ -440,19 +482,42 @@ function AdminDashboard() {
                                                 {filterStatus !== 'All' && (
                                                     <>Status: <strong className="bg-white px-2 py-0.5 rounded border border-primary-subtle">{filterStatus}</strong></>
                                                 )}
+                                                {(activeSearchQuery || filterStatus !== 'All') && filterType !== 'All' && <span className="mx-2 text-secondary">&bull;</span>}
+                                                {filterType !== 'All' && (
+                                                    <>Review Track: <strong className="bg-white px-2 py-0.5 rounded border border-primary-subtle">{filterType}</strong></>
+                                                )}
                                                 <span className="text-secondary ms-2">({sortedProtocols.length} protocol{sortedProtocols.length !== 1 ? 's' : ''} matched)</span>
                                             </span>
                                         </div>
-                                        <button 
-                                            type="button" 
-                                            className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs"
-                                            style={{ fontSize: '0.75rem', minHeight: '30px' }}
-                                            onClick={handleClearFilters}
-                                            title="Clear all active filters and display complete protocol registry"
-                                        >
-                                            <i className="bi bi-x-circle"></i>
-                                            <span>Clear Filter</span>
-                                        </button>
+                                        <div className="d-flex align-items-center gap-2">
+                                            {filterType !== 'All' && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs"
+                                                    style={{ fontSize: '0.75rem', minHeight: '30px' }}
+                                                    onClick={() => {
+                                                        setFilterType('All');
+                                                        const nextParams = new URLSearchParams(searchParams);
+                                                        nextParams.delete('type');
+                                                        setSearchParams(nextParams);
+                                                    }}
+                                                    title="Dismiss Review Track filter"
+                                                >
+                                                    <i className="bi bi-x-circle"></i>
+                                                    <span>Clear Track</span>
+                                                </button>
+                                            )}
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs"
+                                                style={{ fontSize: '0.75rem', minHeight: '30px' }}
+                                                onClick={handleClearFilters}
+                                                title="Clear all active filters and display complete protocol registry"
+                                            >
+                                                <i className="bi bi-arrow-counterclockwise"></i>
+                                                <span>Clear All</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 
