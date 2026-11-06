@@ -535,13 +535,14 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
     const isNonPrimaryReviewer = role === 'Non-Primary Reviewer';
     const isChair = role === 'Ethics Chair' || role === 'Ethics Committee Chair' || role === 'Ethics Research Board Chair';
     const isSecretariat = role === 'Secretariat';
-    const isExemptedChairAutonomous = isChair && (
-        (protocol?.type || '').toUpperCase() === 'EXEMPTED' || 
-        (protocol?.review_type || '').toUpperCase() === 'EXEMPTED'
-    );
+    
+    const reviewTypeUpper = ((protocol?.type || protocol?.review_type || '')).trim().toUpperCase();
+    const isExemptedChairAutonomous = isChair && reviewTypeUpper === 'EXEMPTED';
+    const isFullBoardChair = isChair && reviewTypeUpper === 'FULL BOARD';
+    const isChairEvaluating = isExemptedChairAutonomous || isFullBoardChair;
     
     // Evaluation View Mode:
-    // If Chair/Secretariat (and not autonomous Exempted), oversight mode is active.
+    // Secretariat always inspects committee reviews; Chair inspects other reviewers on Full Board/Expedited
     const isOversightMode = (isChair || isSecretariat) && !isExemptedChairAutonomous;
 
     // Assigned Reviewers Pool
@@ -552,34 +553,60 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         return [];
     }, [protocol?.assigned_reviewers]);
 
-    // Active reviewer in oversight mode (defaults to first assigned reviewer or current user)
+    // Active reviewer selection (defaults to current user if assigned, or first assigned reviewer)
     const [selectedReviewerId, setSelectedReviewerId] = useState(() => {
+        if (isChair || isPrimaryReviewer || isNonPrimaryReviewer) {
+            const myAssignment = assignedReviewers.find(r => 
+                String(r.reviewer_id) === String(adminId) ||
+                (isChair && ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(r.reviewer_role))
+            );
+            if (myAssignment) return myAssignment.reviewer_id;
+        }
         if (isOversightMode && assignedReviewers.length > 0) {
             return assignedReviewers[0].reviewer_id;
         }
         return adminId;
     });
 
+    // Ensure selectedReviewerId syncs if assignedReviewers populates after mount
+    useEffect(() => {
+        if (assignedReviewers.length > 0) {
+            const myAssignment = assignedReviewers.find(r => 
+                String(r.reviewer_id) === String(adminId) ||
+                (isChair && ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(r.reviewer_role))
+            );
+            if (myAssignment && (!selectedReviewerId || selectedReviewerId === adminId)) {
+                setSelectedReviewerId(myAssignment.reviewer_id);
+            }
+        }
+    }, [assignedReviewers, adminId, isChair]);
+
     // Find the active review record
     const activeReviewRecord = useMemo(() => {
-        if (isOversightMode) {
-            return assignedReviewers.find(r => String(r.reviewer_id) === String(selectedReviewerId)) || assignedReviewers[0] || null;
+        if (assignedReviewers.length > 0) {
+            const matchById = assignedReviewers.find(r => String(r.reviewer_id) === String(selectedReviewerId));
+            if (matchById) return matchById;
         }
-        return assignedReviewers.find(r => 
-            String(r.reviewer_id) === String(adminId) ||
-            (isChair && ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(r.reviewer_role))
-        ) || null;
-    }, [assignedReviewers, isOversightMode, selectedReviewerId, adminId, isChair]);
+        if (isChair) {
+            const chairMatch = assignedReviewers.find(r => 
+                ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(r.reviewer_role)
+            );
+            if (chairMatch) return chairMatch;
+        }
+        return assignedReviewers[0] || null;
+    }, [assignedReviewers, selectedReviewerId, isChair]);
 
-    // Determine target reviewer role for UI switching (Primary gets Form 11 + 12; Non-Primary gets Form 12 only)
+    // Determine target reviewer role for UI switching (Primary gets Form 11 + 12; Non-Primary gets Form 12 only; Chair on Full Board/Exempted gets Form 11 + 12)
     const activeTargetRole = useMemo(() => {
-        if (isOversightMode && activeReviewRecord) {
+        if (activeReviewRecord) {
             return activeReviewRecord.reviewer_role;
         }
         return role;
-    }, [isOversightMode, activeReviewRecord, role]);
+    }, [activeReviewRecord, role]);
 
-    const activeCanViewForm11 = activeTargetRole === 'Primary Reviewer' || isExemptedChairAutonomous;
+    const activeCanViewForm11 = activeTargetRole === 'Primary Reviewer' || 
+        activeTargetRole === 'Ethics Chair' || 
+        isChairEvaluating;
 
     // Active Form Tab: 'form11' vs 'form12'
     const [activeFormTab, setActiveFormTab] = useState(() => {
@@ -593,14 +620,26 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         }
     }, [activeCanViewForm11, activeFormTab]);
 
-    // Read-Only Enforcement: True if oversight mode OR reviewer already submitted evaluation OR protocol is past ongoing review
+    // Check if the currently viewed reviewer is the logged-in user
+    const isViewingSelf = useMemo(() => {
+        if (isExemptedChairAutonomous) return true;
+        if (!selectedReviewerId || !adminId) return false;
+        if (String(selectedReviewerId) === String(adminId)) return true;
+        if (isChair && activeReviewRecord && ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(activeReviewRecord.reviewer_role)) {
+            return true;
+        }
+        return false;
+    }, [isExemptedChairAutonomous, selectedReviewerId, adminId, isChair, activeReviewRecord]);
+
+    // Read-Only Enforcement: True if Secretariat OR inspecting another reviewer OR current reviewer already submitted OR protocol not in ongoing review
     const isReadOnly = useMemo(() => {
-        if (isOversightMode) return true;
-        if (activeReviewRecord?.review_status === 'Completed') return true;
         const statusUpper = (protocol?.status || '').toUpperCase();
         if (statusUpper && statusUpper !== 'ONGOING REVIEW') return true;
+        if (isSecretariat) return true;
+        if (!isViewingSelf) return true; // Inspecting another committee member's worksheet
+        if (activeReviewRecord?.review_status === 'Completed') return true;
         return false;
-    }, [isOversightMode, activeReviewRecord, protocol?.status]);
+    }, [isSecretariat, isViewingSelf, activeReviewRecord?.review_status, protocol?.status]);
 
     // Appeal & Multi-Cycle Re-deliberation Context
     const parsedFormData = useMemo(() => {
@@ -734,33 +773,34 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
     }, [protocolDocuments, selectedDoc]);
 
     // Form State & Storage Handling
-    const localStorageKeyForm11 = `rec_eval_${protocol?.application_id}_f11_${isOversightMode ? selectedReviewerId : adminId}`;
-    const localStorageKeyForm12 = `rec_eval_${protocol?.application_id}_f12_${isOversightMode ? selectedReviewerId : adminId}`;
+    const activeStorageReviewerId = isViewingSelf ? adminId : selectedReviewerId;
+    const localStorageKeyForm11 = `rec_eval_${protocol?.application_id}_f11_${activeStorageReviewerId}`;
+    const localStorageKeyForm12 = `rec_eval_${protocol?.application_id}_f12_${activeStorageReviewerId}`;
 
     const [form11Data, setForm11Data] = useState(() => {
         const cached = localStorage.getItem(localStorageKeyForm11);
         if (cached) {
             try { 
-                return normalizeForm11Data(JSON.parse(cached), protocol, adminName, isPrimaryReviewer ? "Yes" : "No"); 
+                return normalizeForm11Data(JSON.parse(cached), protocol, adminName, (isChairEvaluating || isPrimaryReviewer) ? "Yes" : "No"); 
             } catch (e) { /* fallback */ }
         }
-        return buildInitialForm11(protocol, adminName, isPrimaryReviewer ? "Yes" : "No");
+        return buildInitialForm11(protocol, adminName, (isChairEvaluating || isPrimaryReviewer) ? "Yes" : "No");
     });
 
     const [form12Data, setForm12Data] = useState(() => {
         const cached = localStorage.getItem(localStorageKeyForm12);
         if (cached) {
             try { 
-                return normalizeForm12Data(JSON.parse(cached), protocol, adminName, isPrimaryReviewer ? "Yes" : "No"); 
+                return normalizeForm12Data(JSON.parse(cached), protocol, adminName, (isChairEvaluating || isPrimaryReviewer) ? "Yes" : "No"); 
             } catch (e) { /* fallback */ }
         }
-        return buildInitialForm12(protocol, adminName, isPrimaryReviewer ? "Yes" : "No");
+        return buildInitialForm12(protocol, adminName, (isChairEvaluating || isPrimaryReviewer) ? "Yes" : "No");
     });
 
     const [lastSavedTime, setLastSavedTime] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-        // Guard against clobbering in-memory state on re-renders or tab switches
+    // Guard against clobbering in-memory state on re-renders or tab switches
     const lastHydratedReviewerRef = useRef(null);
 
     // State Synchronization Effect: ONLY runs when switching selected reviewer or protocol
@@ -775,10 +815,10 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
 
         const currentReview = assignedReviewers.find(r => 
             String(r.reviewer_id) === String(selectedReviewerId) ||
-            (isChair && !isOversightMode && ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(r.reviewer_role))
+            (isChair && isViewingSelf && ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(r.reviewer_role))
         );
-        const targetRole = isOversightMode && currentReview ? currentReview.reviewer_role : role;
-        const targetCanViewF11 = targetRole === 'Primary Reviewer' || isExemptedChairAutonomous;
+        const targetRole = currentReview ? currentReview.reviewer_role : role;
+        const targetCanViewF11 = targetRole === 'Primary Reviewer' || targetRole === 'Ethics Chair' || isChairEvaluating;
 
         // 1. Ingest Raw Submissions from DB Record
         let f11Raw = null;
@@ -808,8 +848,8 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
         }
 
         // 2. Fallback to localStorage drafts if no DB submission exists
-        const cacheKey11 = `rec_eval_${protocol.application_id}_f11_${selectedReviewerId}`;
-        const cacheKey12 = `rec_eval_${protocol.application_id}_f12_${selectedReviewerId}`;
+        const cacheKey11 = `rec_eval_${protocol.application_id}_f11_${activeStorageReviewerId}`;
+        const cacheKey12 = `rec_eval_${protocol.application_id}_f12_${activeStorageReviewerId}`;
         if (!f11Raw) {
             const cached11 = localStorage.getItem(cacheKey11);
             if (cached11) { try { f11Raw = JSON.parse(cached11); } catch (e) {} }
@@ -842,7 +882,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
 
         setForm11Data(normF11);
         setForm12Data(normF12);
-    }, [selectedReviewerId, protocol?.application_id, assignedReviewers, isOversightMode, isExemptedChairAutonomous, role, adminName]);
+    }, [selectedReviewerId, protocol?.application_id, assignedReviewers, isOversightMode, isViewingSelf, isChairEvaluating, activeStorageReviewerId, role, adminName]);
 
     // Continuous Auto-Save Effect: Persists in-memory inputs across tab switches & browser reloads
     useEffect(() => {
@@ -1032,7 +1072,9 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                     </div>
                     <div class="alert alert-warning py-2 px-3 small mb-0 border-warning-subtle">
                         <i class="bi bi-shield-lock-fill me-1"></i>
-                        Once submitted, your responses will be permanently locked and forwarded to the Ethics Chair for consolidation.
+                        ${isChair 
+                            ? 'Once submitted, your official evaluation will be permanently locked and recorded in the protocol committee ledger.'
+                            : 'Once submitted, your responses will be permanently locked and forwarded to the Ethics Chair for consolidation.'}
                     </div>
                 </div>
             `,
@@ -1200,7 +1242,14 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
 
                             {/* Header Actions & Close Button */}
                             <div className="d-flex align-items-center gap-3">
-                                {isOversightMode && (
+                                {isChairEvaluating ? (
+                                    <div className="text-end d-none d-md-block">
+                                        <span className="text-muted small d-block">Official Evaluation</span>
+                                        <span className="badge bg-primary-subtle text-primary border border-primary px-2 py-1">
+                                            <i className="bi bi-pencil-square me-1"></i>Ethics Chair Evaluator
+                                        </span>
+                                    </div>
+                                ) : isOversightMode && (
                                     <div className="text-end d-none d-md-block">
                                         <span className="text-muted small d-block">Committee Oversight</span>
                                         <span className="badge bg-info-subtle text-info-emphasis border border-info px-2 py-1">
@@ -1609,6 +1658,32 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                         </div>
                                                         <span className="badge bg-success font-monospace">Consolidation Phase</span>
                                                     </div>
+                                                ) : isFullBoardChair && isViewingSelf && !isReadOnly ? (
+                                                    <div className="alert alert-primary py-2 px-3 d-flex align-items-center justify-content-between mb-2 rounded-3 border-primary-subtle bg-primary-subtle bg-opacity-25">
+                                                        <div className="d-flex align-items-center gap-2 small">
+                                                            <i className="bi bi-pencil-square fs-5 text-primary"></i>
+                                                            <div>
+                                                                <strong className="text-primary-emphasis">Ethics Chair Evaluation Worksheet:</strong>
+                                                                <span className="d-block text-secondary" style={{ fontSize: '0.78rem' }}>
+                                                                    You are evaluating this Full Board protocol. Complete both Form 11 & Form 12 and submit below.
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <span className="badge bg-primary font-monospace">Evaluating</span>
+                                                    </div>
+                                                ) : isFullBoardChair && !isViewingSelf ? (
+                                                    <div className="alert alert-info py-2 px-3 d-flex align-items-center justify-content-between mb-2 rounded-3 border-info-subtle">
+                                                        <div className="d-flex align-items-center gap-2 small">
+                                                            <i className="bi bi-eye-fill fs-5 text-info"></i>
+                                                            <div>
+                                                                <strong className="text-info-emphasis">Monitoring Committee Reviewer:</strong>
+                                                                <span className="d-block text-secondary" style={{ fontSize: '0.78rem' }}>
+                                                                    Inspecting {activeReviewRecord?.reviewer_name || 'Reviewer'}'s evaluation. Select your card to return to your evaluation.
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <span className="badge bg-secondary font-monospace">👁️ View-Only</span>
+                                                    </div>
                                                 ) : (
                                                     <div className="alert alert-info py-2 px-3 d-flex align-items-center justify-content-between mb-2 rounded-3 border-info-subtle">
                                                         <div className="d-flex align-items-center gap-2 small">
@@ -1632,6 +1707,9 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                     {assignedReviewers.map((rev) => {
                                                         const isSelected = String(rev.reviewer_id) === String(selectedReviewerId);
                                                         const isDone = rev.review_status === 'Completed';
+                                                        const isCurrentAdmin = String(rev.reviewer_id) === String(adminId) ||
+                                                            (isChair && ['Ethics Chair', 'Ethics Committee Chair', 'Ethics Research Board Chair'].includes(rev.reviewer_role));
+
                                                         return (
                                                             <button
                                                                 key={rev.reviewer_id}
@@ -1645,9 +1723,16 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                                 style={{ minWidth: '180px' }}
                                                             >
                                                                 <div className="d-flex justify-content-between align-items-center mb-1">
-                                                                    <span className="badge bg-white text-dark border font-monospace" style={{ fontSize: '0.68rem' }}>
-                                                                        {rev.reviewer_role}
-                                                                    </span>
+                                                                    <div className="d-flex align-items-center gap-1">
+                                                                        <span className="badge bg-white text-dark border font-monospace" style={{ fontSize: '0.68rem' }}>
+                                                                            {rev.reviewer_role}
+                                                                        </span>
+                                                                        {isCurrentAdmin && (
+                                                                            <span className="badge bg-primary text-white" style={{ fontSize: '0.62rem' }}>
+                                                                                You
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                     {isDone ? (
                                                                         <span className={`badge ${
                                                                             rev.recommendation === 'Approved' ? 'bg-success text-white' :
@@ -1695,7 +1780,7 @@ function OngoingReviewModal({ protocol, onClose, onRefresh }) {
                                                     <i className="bi bi-shield-check me-1"></i>Locked
                                                 </span>
                                             </div>
-                                        ) : isOversightMode ? (
+                                        ) : (isOversightMode && !isViewingSelf) ? (
                                             <div className="alert alert-secondary border py-2 px-3 rounded-3 d-flex justify-content-between align-items-center mb-3">
                                                 <div className="d-flex align-items-center gap-2 small">
                                                     <i className="bi bi-clock-history text-secondary fs-5"></i>

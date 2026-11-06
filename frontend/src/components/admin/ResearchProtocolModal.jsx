@@ -9,6 +9,7 @@ import RevisionsVerificationModal from "./RevisionsVerificationModal";
 function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
     const role = localStorage.getItem('adminRole') || "Staff";
     const isReviewerRole = role === 'Primary Reviewer' || role === 'Non-Primary Reviewer';
+    const isChair = role === 'Ethics Chair' || role === 'Ethics Committee Chair' || role === 'Ethics Research Board Chair';
     const [showTable, setShowTable] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showReviewTypeModal, setShowReviewTypeModal] = useState(false);
@@ -53,6 +54,10 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
 
     // Status Categorization & Action Availability Guards
     const statusUpper = (protocol?.status || '').trim().toUpperCase();
+    const reviewTypeUpper = ((protocol?.type || protocol?.review_type || '')).trim().toUpperCase();
+    const isChairEvaluator = isChair && (reviewTypeUpper === 'EXEMPTED' || reviewTypeUpper === 'FULL BOARD');
+    const canEvaluateProtocol = isReviewerRole || isChairEvaluator;
+
     const isAwaitingPayment = ['PROTOCOLS SUBMITTED', 'PAYMENT PENDING'].includes(statusUpper);
     const isPaymentReady = ['PAYMENT SUBMITTED', 'PAYMENT VERIFIED', 'PAYMENT VERIFICATION'].includes(statusUpper);
     const isReviewType = ['TYPE OF REVIEW', 'DETERMINING REVIEW TYPE'].includes(statusUpper);
@@ -77,7 +82,9 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
             ? "Official receipt submitted. Click to inspect receipt photo and verify payment."
             : isTerminal
                 ? "Protocol review lifecycle is completed"
-                : "Click to advance protocol workflow status";
+                : canEvaluateProtocol && isOngoingReview
+                    ? "Evaluate research protocol submission"
+                    : "Click to advance protocol workflow status";
 
     const getButtonContent = () => {
         if (isAwaitingPayment) {
@@ -108,7 +115,7 @@ function ResearchProtocolModal ({ protocol, onClose, onRefresh }) {
             return (
                 <>
                     <i className="bi bi-search me-1"></i>
-                    {isReviewerRole
+                    {canEvaluateProtocol
                         ? 'Evaluate Protocol'
                         : `Monitor Reviews (${protocol.reviews_completed || 0}/${protocol.reviews_total || 0})`}
                 </>
